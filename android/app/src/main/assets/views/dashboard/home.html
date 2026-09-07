@@ -1,0 +1,27 @@
+<nav class="navbar glass">
+    <h3>Dashboard</h3>
+    <button id="logout-btn" class="btn-icon">Logout</button>
+</nav>
+<div class="dashboard-content">
+    <div class="welcome-card glass">
+        <h4>Hello, <span>{{name}}</span></h4>
+        <p>Role: <span>{{role_name}}</span></p>
+    </div>
+
+    <div class="stats-grid mt-4">
+        <div class="stat-card glass">
+            <h5>Total Users</h5>
+            <h2 id="total-users">--</h2>
+        </div>
+    </div>
+
+    <div class="data-section glass mt-4">
+        <div class="d-flex justify-between align-center mb-3">
+            <h4>Recent Users</h4>
+            <button id="load-users-btn" class="btn-secondary btn-sm">Refresh</button>
+        </div>
+        <div id="users-list" class="list-container">
+            <!-- Users will be populated dynamically -->
+        </div>
+    </div>
+</div>

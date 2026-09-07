@@ -1,0 +1,46 @@
+# Security & credentials
+storage/*.key
+storage/app_secret.key
+.env
+.env.*
+
+# SQLite databases & runtime locks
+database/*.db
+database/*.db-shm
+database/*.db-wal
+database/*.backup*
+*.sqlite
+*.sqlite3
+
+# Logs & temporary files
+*.log
+storage/*.log
+php_errors.log
+storage/cache/
+storage/sessions/
+
+# User uploads & ephemeral storage
+storage/roster_uploads/*
+!storage/roster_uploads/.gitkeep
+
+# Composer dependencies
+/vendor/
+
+# OS & Editor files
+.DS_Store
+.idea/
+.vscode/
+Thumbs.db
+
+# Backups & archives
+*.tar.gz
+*.tgz
+*.zip
+_legacy_*/
+_template_examples_*/
+
+# Android build & release artifacts
+*.apk
+*.aab
+*.jks
+*.keystore

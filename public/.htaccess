@@ -1,0 +1,30 @@
+RewriteEngine On
+
+# Redirect to index.php if the request is not for an existing file or directory
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php/$1 [L]
+
+# Disable directory browsing
+Options -Indexes
+
+# Block access to sensitive files
+<FilesMatch "\.(htaccess|htpasswd|ini|log|sh|inc|bak|psd|sql|sqlite|sqlite3|db|db3|env)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block dotfiles (e.g. .DS_Store, .env, .git)
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block the entire database directory as a defense-in-depth measure
+RedirectMatch 404 /database/
+
+# Block direct access to JS files unless referred from your domain
+#<FilesMatch "\.(js)$">
+#    RewriteCond %{HTTP_REFERER} !^http?://(www\.)?redenvelope\.local/ [NC]
+#    RewriteRule ^.*$ - [F,L]
+#</FilesMatch>

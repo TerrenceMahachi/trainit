@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Trainit badge</title>
+  <desc id="desc">Gold rounded-square badge with the Trainit geometric plum emblem.</desc>
+  <rect width="1024" height="1024" rx="128" fill="#FFCC00"/>
+  <g fill="#2A114B">
+    <path d="M512 190 668 290 668 584 512 483 356 584 356 290 512 190ZM512 252 399 325 399 506 490 447 490 299 512 252ZM534 299 534 447 625 506 625 325 534 252 534 299Z"/>
+    <path d="M512 622A104 104 0 1 1 512 830A104 104 0 0 1 512 622ZM512 666A60 60 0 1 0 512 786A60 60 0 0 0 512 666Z"/>
+  </g>
+</svg>

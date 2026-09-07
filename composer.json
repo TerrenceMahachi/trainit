@@ -1,0 +1,19 @@
+{
+    "name": "terrencemahachi/mara",
+    "description": "mara",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "authors": [
+        {
+            "name": "aytronics",
+            "email": "aytronics@gmail.com"
+        }
+    ],
+    "require": {
+        "thiagoalessio/tesseract_ocr": "^2.13"
+    }
+}

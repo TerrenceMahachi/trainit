@@ -1,0 +1,27 @@
+RewriteEngine On
+
+# No directory listings anywhere in the project.
+Options -Indexes
+
+# --- Block direct web access to application internals ----------------------
+# These directories/files live at the project root (outside public/) and must
+# never be reachable over HTTP. They are served a 403.
+RewriteRule ^(app|database|routes|views|boilerplate|storage|tests|config|docs|_legacy_static_[^/]+|_template_examples_[^/]+|bootstrap\.php|config\.php|composer\.(json|lock))(/|$) - [F,L]
+
+# vendor/ holds Composer packages. The app loads Bootstrap / Font Awesome CSS
+# and fonts from here, so allow ONLY static front-end asset files and block
+# everything else (PHP library code, composer internals, etc.).
+RewriteCond %{REQUEST_URI} !\.(css|js|map|woff2?|ttf|eot|otf|svg|png|jpe?g|gif|ico)$ [NC]
+RewriteRule ^vendor/ - [F,L]
+
+# --- Front controller routing --------------------------------------------
+# Root request goes straight to the public front controller.
+RewriteRule ^$ public/index.php [L]
+
+# Serve real asset files/dirs that exist at the project root (assets/, favicon).
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Everything else is handled by the public front controller.
+RewriteRule ^(.*)$ public/index.php [L]

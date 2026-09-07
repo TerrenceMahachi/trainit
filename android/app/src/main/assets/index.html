@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="debug-log" style="position: fixed; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.85); color: #ff5555; font-family: monospace; font-size: 11px; padding: 10px; max-height: 150px; overflow-y: auto; z-index: 10000; border-top: 2px solid red; display: none;">
+        <strong>JS Errors:</strong><br>
+    </div>
+    <script>
+        window.onerror = function(message, source, lineno, colno, error) {
+            const debugLog = document.getElementById('debug-log');
+            if (debugLog) {
+                debugLog.style.display = 'block';
+                debugLog.innerHTML += `[${lineno}:${colno}] ${message}<br>`;
+            }
+            return false;
+        };
+        // Also catch unhandled promise rejections
+        window.onunhandledrejection = function(event) {
+            const debugLog = document.getElementById('debug-log');
+            if (debugLog) {
+                debugLog.style.display = 'block';
+                debugLog.innerHTML += `[Promise] ${event.reason}<br>`;
+            }
+        };
+    </script>
+    <div id="mainContent"></div>
+    
+    <script src="js/app.js"></script>
+</body>
+</html>
