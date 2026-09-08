@@ -87,4 +87,12 @@ class Staffprofile extends Model
     {
         return $this->belongsTo(User::class, 'reg_by');
     }
+
+    public function __get($key)
+    {
+        if ($key === 'name') {
+            return trim(($this->attributes['first_name'] ?? '') . ' ' . ($this->attributes['surname'] ?? ''));
+        }
+        return parent::__get($key);
+    }
 }
