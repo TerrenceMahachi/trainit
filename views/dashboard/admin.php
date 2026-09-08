@@ -59,14 +59,20 @@ $recentApplications = App\Models\Rosterapplication::findByQuery(
                         </div>
                     </div>
                     <div class="d-flex gap-2 flex-wrap">
-                        <a href="<?= $siteConfig->siteUrl; ?>/admin/staff" class="btn btn-dark fw-bold px-3 py-2 shadow-sm" style="background: #2A114B;">
-                            <i class="fa fa-id-badge me-1 text-warning"></i> Staff Directory
+                        <a href="<?= $siteConfig->siteUrl; ?>/staff/portal" class="btn btn-warning text-dark fw-bold px-3 py-2 shadow-sm">
+                            <i class="fa fa-user-circle me-1"></i> Staff Portal
                         </a>
-                        <a href="<?= $siteConfig->siteUrl; ?>/admin/staff/create" class="btn btn-warning text-dark fw-bold px-3 py-2 shadow-sm">
-                            <i class="fa fa-user-plus me-1"></i> Register Staff
+                        <a href="<?= $siteConfig->siteUrl; ?>/admin/staff-approvals" class="btn btn-danger fw-bold px-3 py-2 shadow-sm">
+                            <i class="fa fa-stamp me-1"></i> Approvals Queue
+                        </a>
+                        <a href="<?= $siteConfig->siteUrl; ?>/admin/staff" class="btn btn-dark fw-bold px-3 py-2 shadow-sm" style="background: #2A114B;">
+                            <i class="fa fa-id-badge me-1 text-warning"></i> Directory
+                        </a>
+                        <a href="<?= $siteConfig->siteUrl; ?>/admin/staff/create" class="btn btn-outline-dark fw-bold px-3 py-2">
+                            <i class="fa fa-user-plus me-1"></i> Register
                         </a>
                         <a href="<?= $siteConfig->siteUrl; ?>/admin/staff/export-p4" class="btn btn-outline-success fw-bold px-3 py-2">
-                            <i class="fa fa-file-excel me-1"></i> Export NSSA P4
+                            <i class="fa fa-file-excel me-1"></i> NSSA P4
                         </a>
                     </div>
                 </div>

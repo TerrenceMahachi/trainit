@@ -84,7 +84,11 @@ $navActive = function ($item) use ($currentUrl) {
                             <?php if ($navUser): ?>
                                 <li class="list-group-item border-0 text-black-50 fw-bold"><?= htmlspecialchars($navUser->role()->name) ?></li>
                                 <?php if (in_array((int)$navUser->role, [1, 6, 7, 8], true)): ?>
-                                    <li class="list-group-item border-0"><a class="text-primary fw-bold" href="<?= $siteConfig->siteUrl ?>/admin/staff"><i class="fa fa-id-badge me-1"></i> Staff Directory</a></li>
+                                    <li class="list-group-item border-0"><a class="text-primary fw-bold" href="<?= $siteConfig->siteUrl ?>/staff/portal"><i class="fa fa-user-circle me-1"></i> Staff Self-Service</a></li>
+                                    <li class="list-group-item border-0"><a class="text-dark fw-bold" href="<?= $siteConfig->siteUrl ?>/admin/staff"><i class="fa fa-id-badge me-1"></i> Staff Directory</a></li>
+                                    <?php if ((int)$navUser->role === 1): ?>
+                                        <li class="list-group-item border-0"><a class="text-danger fw-bold" href="<?= $siteConfig->siteUrl ?>/admin/staff-approvals"><i class="fa fa-shield-alt me-1"></i> Approvals Queue</a></li>
+                                    <?php endif; ?>
                                     <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/dashboard"><i class="fa fa-tachometer-alt me-1"></i> Admin Command Center</a></li>
                                 <?php endif; ?>
                                 <li class="list-group-item border-0"><a class="text-success" href="<?= $siteConfig->siteUrl ?>/edit-profile">Edit profile</a></li>

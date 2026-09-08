@@ -7,6 +7,21 @@ use App\Models\Role;
 use App\Models\Login;
 use App\Models\Staffprofile;
 use App\Models\StaffInvite;
+use App\Models\Staffdocument;
+use App\Models\Documenttype;
+use App\Models\Verificationstatus;
+use App\Models\Documentverification;
+use App\Models\Documentvalidity;
+use App\Models\Staffleave;
+use App\Models\Leavetype;
+use App\Models\Leavestatus;
+use App\Models\Staffleaveapproval;
+use App\Models\Staffleaveattachment;
+use App\Models\Stafftimeentry;
+use App\Models\Activitycategory;
+use App\Models\Stafftimeapproval;
+use App\Models\Department;
+use App\Models\Staffdepartmentassignment;
 use App\Helpers\Auth;
 use App\Helpers\Mailer;
 use DateTime;
@@ -556,11 +571,94 @@ class StaffController
         $profiles = Staffprofile::where('user', $user->iD);
         $profile = !empty($profiles) ? $profiles[0] : null;
 
+        $documents = [];
+        $leaves = [];
+        $timeEntries = [];
+        $deptAssignment = null;
+
+        if ($profile) {
+            // Documents with latest verification and validity
+            $rawDocs = Staffdocument::where('staffprofile', $profile->iD);
+            foreach ($rawDocs as $d) {
+                $verifications = Documentverification::where('staffdocument', $d->iD);
+                $latestVer = !empty($verifications) ? end($verifications) : null;
+                $validityList = Documentvalidity::where('staffdocument', $d->iD);
+                $validity = !empty($validityList) ? $validityList[0] : null;
+
+                $documents[] = [
+                    'doc'          => $d,
+                    'type'         => $d->documenttype(),
+                    'verification' => $latestVer,
+                    'status'       => $latestVer ? $latestVer->verificationstatus() : null,
+                    'auditor'      => $latestVer ? $latestVer->creator() : null,
+                    'validity'     => $validity
+                ];
+            }
+
+            // Leaves with latest approval and attachment
+            $rawLeaves = Staffleave::where('staffprofile', $profile->iD);
+            foreach ($rawLeaves as $l) {
+                $approvals = Staffleaveapproval::where('staffleave', $l->iD);
+                $latestAppr = !empty($approvals) ? end($approvals) : null;
+                $attachments = Staffleaveattachment::where('staffleave', $l->iD);
+                $att = !empty($attachments) ? $attachments[0] : null;
+
+                $leaves[] = [
+                    'leave'      => $l,
+                    'type'       => $l->leavetype(),
+                    'approval'   => $latestAppr,
+                    'status'     => $latestAppr ? $latestAppr->leavestatus() : null,
+                    'manager'    => $latestAppr ? $latestAppr->creator() : null,
+                    'attachment' => $att
+                ];
+            }
+
+            // Time entries with latest approval
+            $rawTime = Stafftimeentry::where('staffprofile', $profile->iD);
+            foreach ($rawTime as $t) {
+                $approvals = Stafftimeapproval::where('stafftimeentry', $t->iD);
+                $latestAppr = !empty($approvals) ? end($approvals) : null;
+
+                $timeEntries[] = [
+                    'entry'      => $t,
+                    'category'   => $t->activitycategory(),
+                    'approval'   => $latestAppr,
+                    'supervisor' => $latestAppr ? $latestAppr->creator() : null
+                ];
+            }
+
+            // Department Assignment
+            $deptAssignments = Staffdepartmentassignment::where('staffprofile', $profile->iD);
+            if (!empty($deptAssignments)) {
+                $deptAssignment = [
+                    'assignment' => $deptAssignments[0],
+                    'department' => $deptAssignments[0]->department()
+                ];
+            }
+        }
+
+        $allDocTypes = Documenttype::all();
+        $allLeaveTypes = Leavetype::all();
+        $allVerStatuses = Verificationstatus::all();
+        $allLeaveStatuses = Leavestatus::all();
+        $allActivityCats = Activitycategory::all();
+        $allDepartments = Department::all();
+
         $data = [
-            'title'   => "Staff Profile – {$user->name}",
-            'user'    => $user,
-            'profile' => $profile,
-            'role'    => $user->role()
+            'title'            => "Staff Profile – {$user->name}",
+            'user'             => $user,
+            'profile'          => $profile,
+            'role'             => $user->role(),
+            'documents'        => $documents,
+            'leaves'           => $leaves,
+            'timeEntries'      => $timeEntries,
+            'deptAssignment'   => $deptAssignment,
+            'allDocTypes'      => $allDocTypes,
+            'allLeaveTypes'    => $allLeaveTypes,
+            'allVerStatuses'   => $allVerStatuses,
+            'allLeaveStatuses' => $allLeaveStatuses,
+            'allActivityCats'  => $allActivityCats,
+            'allDepartments'   => $allDepartments
         ];
 
         echo view('staff.view', compact('data'));
@@ -785,6 +883,584 @@ class StaffController
     }
 
     /**
+     * Upload Staff Document (POST).
+     */
+    public function uploadDocumentAction()
+    {
+        global $siteConfig;
+        if (!Auth::check()) {
+            header("Location: " . $siteConfig->siteUrl . "/login");
+            exit;
+        }
+
+        $staffprofileId = (int)($_POST['staffprofile_id'] ?? 0);
+        $docTypeId = (int)($_POST['documenttype_id'] ?? 0);
+        $title = trim($_POST['title'] ?? '');
+        $issueDate = trim($_POST['issue_date'] ?? '');
+        $expiryDate = trim($_POST['expiry_date'] ?? '');
+        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/admin/staff');
+
+        $profile = Staffprofile::find($staffprofileId);
+        if (!$profile) {
+            $_SESSION['flash_error'] = 'Staff profile not found.';
+            header("Location: " . $redirectUrl);
+            exit;
+        }
+
+        // Authorization: Admin or own profile
+        if (!Auth::isAdmin() && Auth::id() !== (int)$profile->user) {
+            $_SESSION['flash_error'] = 'Unauthorized to upload documents for this staff member.';
+            header("Location: " . $redirectUrl);
+            exit;
+        }
+
+        if (!$docTypeId || empty($title) || empty($_FILES['document_file']['name'])) {
+            $_SESSION['flash_error'] = 'Please complete all required document upload fields.';
+            header("Location: " . $redirectUrl);
+            exit;
+        }
+
+        $uploadDir = _BASE_PATH . '/public/uploads/staff/docs/';
+        $relPath = $this->uploadDocument('document_file', $uploadDir, 'doc_' . $staffprofileId);
+
+        if (!$relPath) {
+            $_SESSION['flash_error'] = 'Document upload failed. Supported formats: PDF, JPG, PNG, DOC, DOCX (Max 10MB).';
+            header("Location: " . $redirectUrl);
+            exit;
+        }
+
+        $doc = Staffdocument::create([
+            'staffprofile' => $profile->iD,
+            'documenttype' => $docTypeId,
+            'title'        => $title,
+            'file_path'    => $relPath,
+            'file_size'    => (int)$_FILES['document_file']['size'],
+            'mime_type'    => $_FILES['document_file']['type'] ?? 'application/octet-stream',
+            'reg_by'       => Auth::id()
+        ]);
+
+        // Auto-create initial PENDING verification event
+        $pendingStatus = Verificationstatus::where('code', 'PENDING')[0] ?? null;
+        if ($pendingStatus) {
+            Documentverification::create([
+                'staffdocument'      => $doc->iD,
+                'verificationstatus' => $pendingStatus->iD,
+                'notes'              => 'Document uploaded by ' . (Auth::user()->name ?? 'User') . '; pending compliance audit.',
+                'reg_by'             => Auth::id()
+            ]);
+        }
+
+        // Record Documentvalidity if dates provided
+        if (!empty($expiryDate)) {
+            Documentvalidity::create([
+                'staffdocument' => $doc->iD,
+                'issue_date'    => !empty($issueDate) ? $issueDate : date('Y-m-d'),
+                'expiry_date'   => $expiryDate,
+                'reg_by'        => Auth::id()
+            ]);
+        }
+
+        $_SESSION['flash_success'] = 'Document "' . htmlspecialchars($title) . '" uploaded and filed successfully.';
+        header("Location: " . $redirectUrl);
+        exit;
+    }
+
+    /**
+     * Audit & Verify Staff Document (POST).
+     */
+    public function verifyDocumentAction()
+    {
+        global $siteConfig;
+        if (!Auth::check() || !Auth::isAdmin()) {
+            if ($this->isAjax()) {
+                echo json_encode(['status' => 'error', 'message' => 'Unauthorized access.']);
+                exit;
+            }
+            header("Location: " . $siteConfig->siteUrl . "/dashboard");
+            exit;
+        }
+
+        $docId = (int)($_POST['staffdocument_id'] ?? 0);
+        $verStatusId = (int)($_POST['verificationstatus_id'] ?? 0);
+        $notes = trim($_POST['notes'] ?? 'Audit verification completed by compliance administrator.');
+        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/admin/staff-approvals');
+
+        $doc = Staffdocument::find($docId);
+        if (!$doc) {
+            if ($this->isAjax()) {
+                echo json_encode(['status' => 'error', 'message' => 'Document not found.']);
+                exit;
+            }
+            $_SESSION['flash_error'] = 'Document not found.';
+            header("Location: " . $redirectUrl);
+            exit;
+        }
+
+        Documentverification::create([
+            'staffdocument'      => $doc->iD,
+            'verificationstatus' => $verStatusId,
+            'notes'              => $notes,
+            'reg_by'             => Auth::id()
+        ]);
+
+        if ($this->isAjax()) {
+            echo json_encode(['status' => 'success', 'message' => 'Document verification audit saved.']);
+            exit;
+        }
+
+        $_SESSION['flash_success'] = 'Document audit decision recorded successfully.';
+        header("Location: " . $redirectUrl);
+        exit;
+    }
+
+    /**
+     * Apply for Staff Leave (POST).
+     */
+    public function applyLeaveAction()
+    {
+        global $siteConfig;
+        if (!Auth::check()) {
+            header("Location: " . $siteConfig->siteUrl . "/login");
+            exit;
+        }
+
+        $staffprofileId = (int)($_POST['staffprofile_id'] ?? 0);
+        $leaveTypeId = (int)($_POST['leavetype_id'] ?? 0);
+        $startDate = trim($_POST['start_date'] ?? '');
+        $endDate = trim($_POST['end_date'] ?? '');
+        $daysRequested = (float)($_POST['days_requested'] ?? 1.0);
+        $reason = trim($_POST['reason'] ?? '');
+        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/staff/portal');
+
+        $profile = Staffprofile::find($staffprofileId);
+        if (!$profile) {
+            $_SESSION['flash_error'] = 'Staff profile not found.';
+            header("Location: " . $redirectUrl);
+            exit;
+        }
+
+        if (!Auth::isAdmin() && Auth::id() !== (int)$profile->user) {
+            $_SESSION['flash_error'] = 'Unauthorized.';
+            header("Location: " . $redirectUrl);
+            exit;
+        }
+
+        if (!$leaveTypeId || empty($startDate) || empty($endDate) || empty($reason)) {
+            $_SESSION['flash_error'] = 'Please fill in all leave application details.';
+            header("Location: " . $redirectUrl);
+            exit;
+        }
+
+        $leave = Staffleave::create([
+            'staffprofile'   => $profile->iD,
+            'leavetype'      => $leaveTypeId,
+            'start_date'     => $startDate,
+            'end_date'       => $endDate,
+            'days_requested' => $daysRequested,
+            'reason'         => $reason,
+            'reg_by'         => Auth::id()
+        ]);
+
+        // Supporting attachment if uploaded (doctor's note, exam timetable)
+        if (!empty($_FILES['attachment']['name'])) {
+            $uploadDir = _BASE_PATH . '/public/uploads/staff/leaves/';
+            $attRel = $this->uploadDocument('attachment', $uploadDir, 'leave_' . $leave->iD);
+            if ($attRel) {
+                Staffleaveattachment::create([
+                    'staffleave' => $leave->iD,
+                    'file_path'  => $attRel,
+                    'file_size'  => (int)$_FILES['attachment']['size'],
+                    'mime_type'  => $_FILES['attachment']['type'] ?? 'application/pdf',
+                    'reg_by'     => Auth::id()
+                ]);
+            }
+        }
+
+        // Record initial PENDING approval event
+        $pendingStatus = Leavestatus::where('code', 'PENDING')[0] ?? null;
+        if ($pendingStatus) {
+            Staffleaveapproval::create([
+                'staffleave'     => $leave->iD,
+                'leavestatus'    => $pendingStatus->iD,
+                'decision_notes' => 'Application submitted and awaiting manager review.',
+                'reg_by'         => Auth::id()
+            ]);
+        }
+
+        $_SESSION['flash_success'] = 'Leave application submitted successfully for ' . $daysRequested . ' working day(s).';
+        header("Location: " . $redirectUrl);
+        exit;
+    }
+
+    /**
+     * Decide Staff Leave (Approve / Reject) (POST).
+     */
+    public function decideLeaveAction()
+    {
+        global $siteConfig;
+        if (!Auth::check() || !Auth::isAdmin()) {
+            if ($this->isAjax()) {
+                echo json_encode(['status' => 'error', 'message' => 'Unauthorized access.']);
+                exit;
+            }
+            header("Location: " . $siteConfig->siteUrl . "/dashboard");
+            exit;
+        }
+
+        $leaveId = (int)($_POST['staffleave_id'] ?? 0);
+        $leaveStatusId = (int)($_POST['leavestatus_id'] ?? 0);
+        $notes = trim($_POST['decision_notes'] ?? 'Reviewed by line manager.');
+        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/admin/staff-approvals');
+
+        $leave = Staffleave::find($leaveId);
+        if (!$leave) {
+            if ($this->isAjax()) {
+                echo json_encode(['status' => 'error', 'message' => 'Leave application not found.']);
+                exit;
+            }
+            $_SESSION['flash_error'] = 'Leave application not found.';
+            header("Location: " . $redirectUrl);
+            exit;
+        }
+
+        Staffleaveapproval::create([
+            'staffleave'     => $leave->iD,
+            'leavestatus'    => $leaveStatusId,
+            'decision_notes' => $notes,
+            'reg_by'         => Auth::id()
+        ]);
+
+        if ($this->isAjax()) {
+            echo json_encode(['status' => 'success', 'message' => 'Leave decision saved.']);
+            exit;
+        }
+
+        $_SESSION['flash_success'] = 'Leave application decision recorded.';
+        header("Location: " . $redirectUrl);
+        exit;
+    }
+
+    /**
+     * Log Operational Time Entry (POST).
+     */
+    public function logTimeAction()
+    {
+        global $siteConfig;
+        if (!Auth::check()) {
+            header("Location: " . $siteConfig->siteUrl . "/login");
+            exit;
+        }
+
+        $staffprofileId = (int)($_POST['staffprofile_id'] ?? 0);
+        $catId = (int)($_POST['activitycategory_id'] ?? 0);
+        $workDate = trim($_POST['work_date'] ?? date('Y-m-d'));
+        $hours = (float)($_POST['hours'] ?? 0);
+        $summary = trim($_POST['task_summary'] ?? '');
+        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/staff/portal');
+
+        $profile = Staffprofile::find($staffprofileId);
+        if (!$profile) {
+            $_SESSION['flash_error'] = 'Staff profile not found.';
+            header("Location: " . $redirectUrl);
+            exit;
+        }
+
+        if (!Auth::isAdmin() && Auth::id() !== (int)$profile->user) {
+            $_SESSION['flash_error'] = 'Unauthorized.';
+            header("Location: " . $redirectUrl);
+            exit;
+        }
+
+        if (!$catId || $hours <= 0 || empty($summary)) {
+            $_SESSION['flash_error'] = 'Please enter valid activity hours and a task summary.';
+            header("Location: " . $redirectUrl);
+            exit;
+        }
+
+        Stafftimeentry::create([
+            'staffprofile'     => $profile->iD,
+            'activitycategory' => $catId,
+            'work_date'        => $workDate,
+            'hours'            => $hours,
+            'task_summary'     => $summary,
+            'reg_by'           => Auth::id()
+        ]);
+
+        $_SESSION['flash_success'] = 'Logged ' . number_format($hours, 1) . ' hours for ' . $workDate . '.';
+        header("Location: " . $redirectUrl);
+        exit;
+    }
+
+    /**
+     * Sign Off Staff Time Entry (POST).
+     */
+    public function signoffTimeAction()
+    {
+        global $siteConfig;
+        if (!Auth::check() || !Auth::isAdmin()) {
+            if ($this->isAjax()) {
+                echo json_encode(['status' => 'error', 'message' => 'Unauthorized access.']);
+                exit;
+            }
+            header("Location: " . $siteConfig->siteUrl . "/dashboard");
+            exit;
+        }
+
+        $timeEntryId = (int)($_POST['stafftimeentry_id'] ?? 0);
+        $isApproved = (int)($_POST['is_approved'] ?? 1);
+        $reviewNotes = trim($_POST['review_notes'] ?? 'Timesheet verified and signed off.');
+        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/admin/staff-approvals');
+
+        $entry = Stafftimeentry::find($timeEntryId);
+        if (!$entry) {
+            if ($this->isAjax()) {
+                echo json_encode(['status' => 'error', 'message' => 'Time entry not found.']);
+                exit;
+            }
+            $_SESSION['flash_error'] = 'Time entry not found.';
+            header("Location: " . $redirectUrl);
+            exit;
+        }
+
+        Stafftimeapproval::create([
+            'stafftimeentry' => $entry->iD,
+            'is_approved'    => $isApproved,
+            'review_notes'   => $reviewNotes,
+            'reg_by'         => Auth::id()
+        ]);
+
+        if ($this->isAjax()) {
+            echo json_encode(['status' => 'success', 'message' => 'Timesheet sign-off recorded.']);
+            exit;
+        }
+
+        $_SESSION['flash_success'] = 'Timesheet sign-off recorded successfully.';
+        header("Location: " . $redirectUrl);
+        exit;
+    }
+
+    /**
+     * Staff Self-Service Portal (GET /staff/portal).
+     */
+    public function selfService()
+    {
+        global $siteConfig;
+        if (!Auth::check()) {
+            header("Location: " . $siteConfig->siteUrl . "/login");
+            exit;
+        }
+
+        $user = Auth::user();
+        $profiles = Staffprofile::where('user', $user->iD);
+        
+        // If staff member has no profile yet, create standard default record
+        if (empty($profiles)) {
+            $nameParts = explode(' ', $user->name, 2);
+            $profile = Staffprofile::create([
+                'user'                 => $user->iD,
+                'employee_number'      => 'TRN-' . str_pad($user->iD, 3, '0', STR_PAD_LEFT),
+                'job_title'            => ($user->role() ? $user->role()->name : 'Staff Member'),
+                'department'           => 'Operations',
+                'station'              => 'Harare HQ',
+                'nature_of_employment' => 'ORDINARY',
+                'first_name'           => $nameParts[0],
+                'surname'              => $nameParts[1] ?? 'Staff',
+                'date_of_employment'   => date('Y-m-d'),
+                'reg_by'               => $user->iD
+            ]);
+        } else {
+            $profile = $profiles[0];
+        }
+
+        // Fetch user's documents
+        $documents = [];
+        $rawDocs = Staffdocument::where('staffprofile', $profile->iD);
+        foreach ($rawDocs as $d) {
+            $verifications = Documentverification::where('staffdocument', $d->iD);
+            $latestVer = !empty($verifications) ? end($verifications) : null;
+            $validityList = Documentvalidity::where('staffdocument', $d->iD);
+            $validity = !empty($validityList) ? $validityList[0] : null;
+
+            $documents[] = [
+                'doc'          => $d,
+                'type'         => $d->documenttype(),
+                'verification' => $latestVer,
+                'status'       => $latestVer ? $latestVer->verificationstatus() : null,
+                'auditor'      => $latestVer ? $latestVer->creator() : null,
+                'validity'     => $validity
+            ];
+        }
+
+        // Fetch user's leaves
+        $leaves = [];
+        $rawLeaves = Staffleave::where('staffprofile', $profile->iD);
+        foreach ($rawLeaves as $l) {
+            $approvals = Staffleaveapproval::where('staffleave', $l->iD);
+            $latestAppr = !empty($approvals) ? end($approvals) : null;
+            $attachments = Staffleaveattachment::where('staffleave', $l->iD);
+            $att = !empty($attachments) ? $attachments[0] : null;
+
+            $leaves[] = [
+                'leave'      => $l,
+                'type'       => $l->leavetype(),
+                'approval'   => $latestAppr,
+                'status'     => $latestAppr ? $latestAppr->leavestatus() : null,
+                'manager'    => $latestAppr ? $latestAppr->creator() : null,
+                'attachment' => $att
+            ];
+        }
+
+        // Fetch user's time entries (last 30 days)
+        $timeEntries = [];
+        $rawTime = Stafftimeentry::where('staffprofile', $profile->iD);
+        foreach ($rawTime as $t) {
+            $approvals = Stafftimeapproval::where('stafftimeentry', $t->iD);
+            $latestAppr = !empty($approvals) ? end($approvals) : null;
+
+            $timeEntries[] = [
+                'entry'      => $t,
+                'category'   => $t->activitycategory(),
+                'approval'   => $latestAppr,
+                'supervisor' => $latestAppr ? $latestAppr->creator() : null
+            ];
+        }
+
+        // Department assignment
+        $deptAssignments = Staffdepartmentassignment::where('staffprofile', $profile->iD);
+        $deptAssignment = !empty($deptAssignments) ? [
+            'assignment' => $deptAssignments[0],
+            'department' => $deptAssignments[0]->department()
+        ] : null;
+
+        $data = [
+            'title'            => 'Staff Self-Service Hub',
+            'user'             => $user,
+            'profile'          => $profile,
+            'role'             => $user->role(),
+            'documents'        => $documents,
+            'leaves'           => $leaves,
+            'timeEntries'      => $timeEntries,
+            'deptAssignment'   => $deptAssignment,
+            'allDocTypes'      => Documenttype::all(),
+            'allLeaveTypes'    => Leavetype::all(),
+            'allActivityCats'  => Activitycategory::all(),
+            'allDepartments'   => Department::all()
+        ];
+
+        echo view('staff.portal', compact('data'));
+        exit;
+    }
+
+    /**
+     * Unified Approvals & Compliance Queue (GET /admin/staff-approvals).
+     */
+    public function approvalsQueue()
+    {
+        global $siteConfig;
+        if (!Auth::check() || !Auth::isAdmin()) {
+            header("Location: " . $siteConfig->siteUrl . "/dashboard");
+            exit;
+        }
+
+        // 1. Pending Documents Queue
+        // All staff documents whose latest verification status is PENDING or have no verification
+        $allDocs = Staffdocument::all();
+        $pendingDocs = [];
+        foreach ($allDocs as $d) {
+            $verifications = Documentverification::where('staffdocument', $d->iD);
+            $latestVer = !empty($verifications) ? end($verifications) : null;
+            $verStatus = $latestVer ? $latestVer->verificationstatus() : null;
+
+            if (!$verStatus || $verStatus->code === 'PENDING') {
+                $pendingDocs[] = [
+                    'doc'          => $d,
+                    'staff'        => $d->staffprofile(),
+                    'type'         => $d->documenttype(),
+                    'verification' => $latestVer,
+                    'status'       => $verStatus
+                ];
+            }
+        }
+
+        // 2. Expiring Credentials Radar
+        // Documents where expiry_date <= 90 days from now
+        $today = date('Y-m-d');
+        $radarDate = date('Y-m-d', strtotime('+90 days'));
+        $allValidity = Documentvalidity::all();
+        $expiringDocs = [];
+        foreach ($allValidity as $v) {
+            if ($v->expiry_date <= $radarDate) {
+                $d = $v->staffdocument();
+                if ($d) {
+                    $expiringDocs[] = [
+                        'validity'  => $v,
+                        'doc'       => $d,
+                        'staff'     => $d->staffprofile(),
+                        'type'      => $d->documenttype(),
+                        'isExpired' => ($v->expiry_date < $today),
+                        'daysLeft'  => (int)ceil((strtotime($v->expiry_date) - time()) / 86400)
+                    ];
+                }
+            }
+        }
+
+        // 3. Pending Leave Applications Queue
+        $allLeaves = Staffleave::all();
+        $pendingLeaves = [];
+        foreach ($allLeaves as $l) {
+            $approvals = Staffleaveapproval::where('staffleave', $l->iD);
+            $latestAppr = !empty($approvals) ? end($approvals) : null;
+            $status = $latestAppr ? $latestAppr->leavestatus() : null;
+
+            if (!$status || $status->code === 'PENDING') {
+                $attachments = Staffleaveattachment::where('staffleave', $l->iD);
+                $pendingLeaves[] = [
+                    'leave'      => $l,
+                    'staff'      => $l->staffprofile(),
+                    'type'       => $l->leavetype(),
+                    'approval'   => $latestAppr,
+                    'status'     => $status,
+                    'attachment' => !empty($attachments) ? $attachments[0] : null
+                ];
+            }
+        }
+
+        // 4. Pending Timesheet Sign-Offs Queue
+        $allTime = Stafftimeentry::all();
+        $pendingTime = [];
+        foreach ($allTime as $t) {
+            $approvals = Stafftimeapproval::where('stafftimeentry', $t->iD);
+            if (empty($approvals)) {
+                $pendingTime[] = [
+                    'entry'    => $t,
+                    'staff'    => $t->staffprofile(),
+                    'category' => $t->activitycategory()
+                ];
+            }
+        }
+
+        $data = [
+            'title'            => 'Compliance & Approvals Queue',
+            'user'             => Auth::user(),
+            'pendingDocs'      => $pendingDocs,
+            'expiringDocs'     => $expiringDocs,
+            'pendingLeaves'    => $pendingLeaves,
+            'pendingTime'      => $pendingTime,
+            'allVerStatuses'   => Verificationstatus::all(),
+            'allLeaveStatuses' => Leavestatus::all()
+        ];
+
+        echo view('staff.approvals', compact('data'));
+        exit;
+    }
+
+    private function isAjax(): bool
+    {
+        return (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+            || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+    }
+
+    /**
      * File upload helper.
      */
     private function uploadDocument($fileKey, $targetDir, $prefix)
@@ -802,10 +1478,17 @@ class StaffController
             return null;
         }
 
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0775, true);
+        }
+
         $safeName = $prefix . '_' . time() . '.' . $ext;
-        $dest = $targetDir . $safeName;
+        $dest = rtrim($targetDir, '/') . '/' . $safeName;
 
         if (move_uploaded_file($tmp, $dest)) {
+            if (strpos($dest, '/public/') !== false) {
+                return substr($dest, strpos($dest, '/public/') + 8);
+            }
             return 'uploads/staff/' . $safeName;
         }
 

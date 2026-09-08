@@ -23,6 +23,7 @@ return [
     ['label' => 'Cloud',     'url' => '/cloud',     'roles' => ['guest', 'user', 'admin']],
     ['label' => 'Contact',   'url' => '/contact',   'roles' => ['guest', 'user', 'admin']],
     ['label' => 'Dashboard', 'url' => '/dashboard', 'roles' => ['user', 'admin']],
+    ['label' => 'Staff Portal', 'url' => '/staff/portal', 'roles' => ['admin', 'user']],
     ['label' => 'Staff Directory', 'url' => '/admin/staff', 'roles' => ['admin']],
 
     [
@@ -30,6 +31,7 @@ return [
         'roles' => ['admin'],
         'match' => '/admin',
         'children' => [
+            ['label' => 'Approvals & Compliance Queue', 'url' => '/admin/staff-approvals'],
             ['label' => 'Staff Directory (NSSA P4)', 'url' => '/admin/staff'],
             ['label' => 'Register Staff Member', 'url' => '/admin/staff/create'],
             ['label' => 'Talent Vetting Pipeline', 'url' => '/admin/roster'],

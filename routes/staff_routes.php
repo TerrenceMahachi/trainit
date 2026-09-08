@@ -61,3 +61,49 @@ $router->addRoute('POST', '/staff/onboard', function () {
     (new StaffController())->handleOnboardingSubmit();
     exit;
 });
+
+// 8. Staff Document Vault (Upload & Audit Verification)
+$router->addRoute('POST', '/admin/staff/documents/upload', function () {
+    (new StaffController())->uploadDocumentAction();
+    exit;
+});
+
+$router->addRoute('POST', '/admin/staff/documents/verify', function () {
+    (new StaffController())->verifyDocumentAction();
+    exit;
+});
+
+// 9. Staff Leave Management (Apply & Decision)
+$router->addRoute('POST', '/staff/leave/apply', function () {
+    (new StaffController())->applyLeaveAction();
+    exit;
+});
+
+$router->addRoute('POST', '/admin/staff/leave/decide', function () {
+    (new StaffController())->decideLeaveAction();
+    exit;
+});
+
+// 10. Operational Time Logging & Sign-Off
+$router->addRoute('POST', '/staff/time/log', function () {
+    (new StaffController())->logTimeAction();
+    exit;
+});
+
+$router->addRoute('POST', '/admin/staff/time/signoff', function () {
+    (new StaffController())->signoffTimeAction();
+    exit;
+});
+
+// 11. Staff Self-Service Hub
+$router->addRoute('GET', '/staff/portal', function () {
+    (new StaffController())->selfService();
+    exit;
+});
+
+// 12. Unified Approvals & Compliance Queue (Admin)
+$router->addRoute('GET', '/admin/staff-approvals', function () {
+    (new StaffController())->approvalsQueue();
+    exit;
+});
+
