@@ -86,10 +86,15 @@ $navActive = function ($item) use ($currentUrl) {
                                 <?php if (in_array((int)$navUser->role, [1, 6, 7, 8], true)): ?>
                                     <li class="list-group-item border-0"><a class="text-primary fw-bold" href="<?= $siteConfig->siteUrl ?>/staff/portal"><i class="fa fa-user-circle me-1"></i> Staff Self-Service</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark fw-bold" href="<?= $siteConfig->siteUrl ?>/admin/staff"><i class="fa fa-id-badge me-1"></i> Staff Directory</a></li>
+                                    <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/admin/clients"><i class="fa fa-building me-1"></i> Client Accounts</a></li>
+                                    <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/admin/requests"><i class="fa fa-ticket me-1"></i> Delivery Desk</a></li>
+                                    <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/admin/payroll"><i class="fa fa-money-check-dollar me-1"></i> Staff Payroll</a></li>
                                     <?php if ((int)$navUser->role === 1): ?>
                                         <li class="list-group-item border-0"><a class="text-danger fw-bold" href="<?= $siteConfig->siteUrl ?>/admin/staff-approvals"><i class="fa fa-shield-alt me-1"></i> Approvals Queue</a></li>
                                     <?php endif; ?>
                                     <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/dashboard"><i class="fa fa-tachometer-alt me-1"></i> Admin Command Center</a></li>
+                                <?php elseif ((int)$navUser->role === 3): ?>
+                                    <li class="list-group-item border-0"><a class="text-primary fw-bold" href="<?= $siteConfig->siteUrl ?>/client/portal"><i class="fa fa-building me-1"></i> Client Portal</a></li>
                                 <?php endif; ?>
                                 <li class="list-group-item border-0"><a class="text-success" href="<?= $siteConfig->siteUrl ?>/edit-profile">Edit profile</a></li>
                                 <li class="list-group-item border-0"><a class="text-warning" href="<?= $siteConfig->siteUrl ?>/logout">Logout</a></li>

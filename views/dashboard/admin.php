@@ -71,8 +71,43 @@ $recentApplications = App\Models\Rosterapplication::findByQuery(
                         <a href="<?= $siteConfig->siteUrl; ?>/admin/staff/create" class="btn btn-outline-dark fw-bold px-3 py-2">
                             <i class="fa fa-user-plus me-1"></i> Register
                         </a>
+                        <a href="<?= $siteConfig->siteUrl; ?>/admin/payroll" class="btn btn-outline-primary fw-bold px-3 py-2">
+                            <i class="fa fa-money-check-dollar me-1"></i> Payroll
+                        </a>
                         <a href="<?= $siteConfig->siteUrl; ?>/admin/staff/export-p4" class="btn btn-outline-success fw-bold px-3 py-2">
                             <i class="fa fa-file-excel me-1"></i> NSSA P4
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Client Partnerships & Service Delivery Operations Hub -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px; background: linear-gradient(135deg, #ffffff 0%, #f7f4fc 100%); border-left: 6px solid #2A114B !important;">
+                <div class="card-body p-4 d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center border shadow-sm" style="width: 54px; height: 54px; background: #2A114B; color: #FFCC00; flex-shrink: 0;">
+                            <i class="fa fa-building-circle-check fa-lg"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <h4 class="fw-bold text-dark mb-0">Client Operations & Service Delivery Desk</h4>
+                                <span class="badge bg-primary text-white fw-bold">Managed Retainers</span>
+                            </div>
+                            <p class="text-muted mb-0 small">Client organizations, retainer service plans, SLA triage, and talent assignment workspace.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="<?= $siteConfig->siteUrl; ?>/admin/clients" class="btn btn-dark fw-bold px-3 py-2 shadow-sm" style="background: #2A114B;">
+                            <i class="fa fa-building me-1 text-warning"></i> Client Accounts
+                        </a>
+                        <a href="<?= $siteConfig->siteUrl; ?>/admin/requests" class="btn btn-primary fw-bold px-3 py-2 shadow-sm">
+                            <i class="fa fa-ticket me-1"></i> Delivery Desk
+                        </a>
+                        <a href="<?= $siteConfig->siteUrl; ?>/admin/service-catalogue" class="btn btn-outline-secondary fw-bold px-3 py-2">
+                            <i class="fa fa-list-check me-1"></i> Service Catalogue
+                        </a>
+                        <a href="<?= $siteConfig->siteUrl; ?>/client/portal" target="_blank" class="btn btn-outline-primary fw-bold px-3 py-2">
+                            <i class="fa fa-desktop me-1"></i> Client Portal
                         </a>
                     </div>
                 </div>

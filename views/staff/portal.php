@@ -71,6 +71,9 @@ foreach ($timeEntries as $tItem) {
                     <button class="btn btn-outline-light px-3 py-2 fw-semibold rounded-3" data-bs-toggle="modal" data-bs-target="#selfTimeModal">
                         <i class="fa fa-clock me-1"></i> Log Hours
                     </button>
+                    <a href="<?= $siteConfig->siteUrl; ?>/admin/payroll" class="btn btn-outline-warning px-3 py-2 fw-semibold rounded-3">
+                        <i class="fa fa-money-check-dollar me-1"></i> Payslips
+                    </a>
                 </div>
             </div>
         </div>
