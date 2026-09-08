@@ -6,10 +6,14 @@
 global $siteConfig;
 $currentUrl = $_SERVER['REQUEST_URI'] ?? '';
 
-$navUser = $data['user'] ?? null;
+$navUser = \App\Helpers\Auth::user() ?? ($data['user'] ?? null);
+if (!$navUser && !empty($_COOKIE['user'])) {
+    $navUser = (new \App\Controllers\AccountController())->getUser($_COOKIE['user']);
+}
 $navRole = 'guest';
 if ($navUser) {
-    $navRole = ((int) $navUser->role()->iD === 1) ? 'admin' : 'user';
+    $roleId = (int) $navUser->role;
+    $navRole = ($roleId === 1 || in_array($roleId, [1, 6, 7, 8], true)) ? 'admin' : 'user';
 }
 
 $navItems = require _BASE_PATH . '/config/nav.php';
@@ -78,7 +82,11 @@ $navActive = function ($item) use ($currentUrl) {
                     <div class="dropdown-menu dropdown-menu-end border-0 rounded-3 text-center" style="max-width:500px">
                         <ul class="list-group m-2" aria-labelledby="dropdownMenuButton1">
                             <?php if ($navUser): ?>
-                                <li class="list-group-item border-0 text-black-50"><?= htmlspecialchars($navUser->role()->name) ?></li>
+                                <li class="list-group-item border-0 text-black-50 fw-bold"><?= htmlspecialchars($navUser->role()->name) ?></li>
+                                <?php if (in_array((int)$navUser->role, [1, 6, 7, 8], true)): ?>
+                                    <li class="list-group-item border-0"><a class="text-primary fw-bold" href="<?= $siteConfig->siteUrl ?>/admin/staff"><i class="fa fa-id-badge me-1"></i> Staff Directory</a></li>
+                                    <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/dashboard"><i class="fa fa-tachometer-alt me-1"></i> Admin Command Center</a></li>
+                                <?php endif; ?>
                                 <li class="list-group-item border-0"><a class="text-success" href="<?= $siteConfig->siteUrl ?>/edit-profile">Edit profile</a></li>
                                 <li class="list-group-item border-0"><a class="text-warning" href="<?= $siteConfig->siteUrl ?>/logout">Logout</a></li>
                             <?php else: ?>

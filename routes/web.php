@@ -90,18 +90,14 @@ $router->addRoute('GET', '/apk/download', function () {
 $router->addRoute('GET', '/dashboard', function () use ($router) {
     $router->authMiddleware();
     $us = (new AccountController())->getUser($_COOKIE['user']);
-    if ($us->role == "1") {
-        $data = ['title' => 'Administrator Dashboard', 'user' => $us];
+    if (in_array((int)$us->role, [1, 6, 7, 8], true)) {
+        $roleObj = $us->role();
+        $roleName = $roleObj ? $roleObj->name : 'Staff';
+        $data = ['title' => $roleName . ' Dashboard', 'user' => $us];
         echo view('dashboard.admin', compact('data'));
-    } else if ($us->role == "2") {
+    } else {
         $data = ['title' => 'Dashboard', 'user' => $us];
         echo view('dashboard.client', compact('data'));
-    } else if ($us->role == "3") {
-        $data = ['title' => 'Management Dashboard', 'user' => $us];
-        echo view('dashboard.manager', compact('data'));
-    } else if ($us->role == "5") {
-        $data = ['title' => 'Account Executive Dashboard', 'user' => $us];
-        echo view('dashboard.executive', compact('data'));
     }
     exit;
 });

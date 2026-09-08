@@ -31,6 +31,37 @@ $associateApps = $profileData['associate'];
     <section class="portal-dashboard-body py-4">
         <div class="container">
             
+            <?php if (\App\Helpers\Auth::isStaff() || in_array((int)($data['user']->role ?? 0), [1, 6, 7, 8], true)): ?>
+                <!-- Staff / Admin Quick-Switch Banner -->
+                <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; background: linear-gradient(135deg, #2A114B 0%, #3D1A6D 100%); color: #ffffff; border-left: 6px solid #FFCC00 !important;">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center border shadow-sm" style="width: 50px; height: 50px; background: #FFCC00; color: #2A114B; flex-shrink: 0;">
+                                <i class="fa fa-shield-alt fa-lg"></i>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <h5 class="fw-bold mb-0 text-white">Staff / Administrator View</h5>
+                                    <span class="badge bg-warning text-dark fw-bold">Internal Operations</span>
+                                </div>
+                                <p class="text-white-50 mb-0 small">You are logged in with staff privileges. Access the Staff Registration Hub or switch to the main Command Center.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="<?= $siteConfig->siteUrl; ?>/admin/staff" class="btn btn-warning text-dark fw-bold px-3 py-2 shadow-sm">
+                                <i class="fa fa-id-badge me-1"></i> Staff Directory
+                            </a>
+                            <a href="<?= $siteConfig->siteUrl; ?>/admin/staff/create" class="btn btn-outline-light fw-bold px-3 py-2 shadow-sm">
+                                <i class="fa fa-user-plus me-1"></i> Register Staff
+                            </a>
+                            <a href="<?= $siteConfig->siteUrl; ?>/dashboard" class="btn btn-light text-dark fw-bold px-3 py-2 shadow-sm">
+                                <i class="fa fa-tachometer-alt me-1"></i> Command Center
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <?php if (!$hasProfiles): ?>
                 <!-- ZERO-PROFILE STATE: Guide user to request Apprentice or Associate profile -->
                 <div class="portal-dashboard-grid mb-4">

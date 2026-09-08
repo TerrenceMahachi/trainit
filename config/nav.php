@@ -23,14 +23,17 @@ return [
     ['label' => 'Cloud',     'url' => '/cloud',     'roles' => ['guest', 'user', 'admin']],
     ['label' => 'Contact',   'url' => '/contact',   'roles' => ['guest', 'user', 'admin']],
     ['label' => 'Dashboard', 'url' => '/dashboard', 'roles' => ['user', 'admin']],
+    ['label' => 'Staff Directory', 'url' => '/admin/staff', 'roles' => ['admin']],
 
     [
         'label' => 'Admin',
         'roles' => ['admin'],
         'match' => '/admin',
         'children' => [
-            ['label' => 'User Accounts', 'url' => '/users'],
+            ['label' => 'Staff Directory (NSSA P4)', 'url' => '/admin/staff'],
+            ['label' => 'Register Staff Member', 'url' => '/admin/staff/create'],
             ['label' => 'Talent Vetting Pipeline', 'url' => '/admin/roster'],
+            ['label' => 'User Accounts', 'url' => '/users'],
             ['label' => 'Applicationtracks', 'url' => '/applicationtracks'],
             ['label' => 'Applicationstatuss', 'url' => '/applicationstatuss'],
             ['label' => 'Servicefunctions', 'url' => '/servicefunctions'],

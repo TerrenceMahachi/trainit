@@ -484,6 +484,88 @@ class Mailer
     }
 
     /**
+     * Send an Invitation Email to a new Staff Member to complete statutory onboarding.
+     */
+    public static function sendStaffInvitation(string $email, string $name, string $roleName, string $jobTitle, string $department, string $inviteUrl): bool
+    {
+        global $siteConfig;
+        $siteName = $siteConfig->siteName ?? 'Trainit';
+
+        $subject = "Welcome to the Team – Staff Onboarding & Account Setup for {$siteName}";
+
+        $html = "
+            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 22px;'>Welcome to the Trainit Team, " . htmlspecialchars($name) . "!</h2>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                You have been registered as an internal staff member of <strong>{$siteName} Technologies (t/a Tsigiro)</strong>.
+            </p>
+            <div style='background-color: #F8F5FC; border-left: 4px solid #FFCC00; padding: 16px; border-radius: 6px; margin: 20px 0;'>
+                <p style='margin: 0 0 8px; font-weight: bold; color: #2A114B;'>Appointment Summary:</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Role:</strong> " . htmlspecialchars($roleName) . "</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Job Title:</strong> " . htmlspecialchars($jobTitle) . "</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Department:</strong> " . htmlspecialchars($department) . "</p>
+                <p style='margin: 0; color: #4B3E5C;'><strong>Official Work Email:</strong> " . htmlspecialchars($email) . "</p>
+            </div>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                To activate your account, please click the button below to set your password and complete your statutory employee onboarding (NSSA Form P4 compliance and banking details).
+            </p>
+            <p style='margin: 0 0 8px; color: #7C708A; font-size: 13px;'>
+                <em>Note: This secure onboarding invitation is valid for 7 days.</em>
+            </p>
+        ";
+
+        return self::send(
+            to: $email,
+            toName: $name,
+            subject: $subject,
+            bodyHtml: $html,
+            fromEmail: self::ADMIN,
+            fromName: "{$siteName} Human Resources",
+            buttonText: "Complete Staff Onboarding",
+            buttonUrl: $inviteUrl
+        );
+    }
+
+    /**
+     * Send a Welcome Email for directly provisioned Staff.
+     */
+    public static function sendStaffWelcome(User $user, string $jobTitle, string $roleName, ?string $temporaryPassword = null): bool
+    {
+        global $siteConfig;
+        $siteUrl = $siteConfig->siteUrl ?? 'https://trainit.co.zw';
+        $siteName = $siteConfig->siteName ?? 'Trainit';
+
+        $subject = "Welcome to the Team – Your {$siteName} Staff Account";
+
+        $html = "
+            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 22px;'>Welcome, " . htmlspecialchars($user->name) . "!</h2>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Your staff portal profile has been created on the <strong>{$siteName}</strong> operations system.
+            </p>
+            <div style='background-color: #F8F5FC; border-left: 4px solid #FFCC00; padding: 16px; border-radius: 6px; margin: 20px 0;'>
+                <p style='margin: 0 0 8px; font-weight: bold; color: #2A114B;'>Your Staff Credentials:</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Username / Email:</strong> " . htmlspecialchars($user->email) . "</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Assigned Role:</strong> " . htmlspecialchars($roleName) . "</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Designation:</strong> " . htmlspecialchars($jobTitle) . "</p>
+                " . ($temporaryPassword ? "<p style='margin: 0; color: #2A114B;'><strong>Temporary Password:</strong> <code style='background: #EAE3F5; padding: 2px 6px; border-radius: 4px;'>" . htmlspecialchars($temporaryPassword) . "</code></p>" : "") . "
+            </div>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Please log in to review your profile and access the operational tools assigned to your role.
+            </p>
+        ";
+
+        return self::send(
+            to: $user->email,
+            toName: $user->name,
+            subject: $subject,
+            bodyHtml: $html,
+            fromEmail: self::ADMIN,
+            fromName: "{$siteName} Administration",
+            buttonText: "Sign In to Staff Portal",
+            buttonUrl: "{$siteUrl}/login"
+        );
+    }
+
+    /**
      * Core Email Dispatcher with Master Tsigiro HTML Brand Template.
      */
     public static function send(

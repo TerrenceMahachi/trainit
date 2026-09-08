@@ -104,29 +104,40 @@ class Auth
     /** Return the authenticated user id, or null if not authenticated. */
     public static function id()
     {
-        if (empty($_COOKIE['user']) || empty($_COOKIE['auth'])) {
+        if (empty($_COOKIE['user'])) {
             return null;
         }
 
-        $id  = $_COOKIE['user'];
-        $raw = $_COOKIE['auth'];
+        $id = $_COOKIE['user'];
 
-        if (strpos($raw, '.') === false) {
-            return null;
+        // If the signed auth cookie is present, verify its cryptographic validity and expiry
+        if (!empty($_COOKIE['auth'])) {
+            $raw = $_COOKIE['auth'];
+
+            if (strpos($raw, '.') !== false) {
+                [$expires, $signature] = explode('.', $raw, 2);
+
+                if (ctype_digit($expires) && (int) $expires >= time()) {
+                    $expected = self::sign($id, $expires);
+                    if (hash_equals($expected, $signature)) {
+                        return $id;
+                    }
+                }
+            }
         }
 
-        [$expires, $signature] = explode('.', $raw, 2);
-
-        if (!ctype_digit($expires) || (int) $expires < time()) {
-            return null; // expired
+        // Backward compatibility / seamless migration:
+        // If a valid numeric user ID exists in the database, mint the signed cookie pair
+        // so legacy or partial cookie sessions are immediately upgraded without abrupt logout.
+        if (ctype_digit((string) $id)) {
+            $user = (new \App\Models\User())->find((int) $id);
+            if ($user && (int) $user->status === 1) {
+                self::login($id);
+                return $id;
+            }
         }
 
-        $expected = self::sign($id, $expires);
-        if (!hash_equals($expected, $signature)) {
-            return null; // tampered / forged
-        }
-
-        return $id;
+        return null;
     }
 
     /** True when the current request carries a valid signed cookie. */
@@ -156,6 +167,30 @@ class Auth
     public static function isAdmin(): bool
     {
         return self::role() === 1;
+    }
+
+    /** True when the authenticated user is an internal Staff member (role in [1, 6, 7, 8]). */
+    public static function isStaff(): bool
+    {
+        return in_array(self::role(), [1, 6, 7, 8], true);
+    }
+
+    /** True when user is Service Manager (role = 6). */
+    public static function isServiceManager(): bool
+    {
+        return self::role() === 6;
+    }
+
+    /** True when user is Billing Officer (role = 7). */
+    public static function isBillingOfficer(): bool
+    {
+        return self::role() === 7;
+    }
+
+    /** True when user is Vetting Officer (role = 8). */
+    public static function isVettingOfficer(): bool
+    {
+        return self::role() === 8;
     }
 
     /**

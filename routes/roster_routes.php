@@ -105,7 +105,7 @@ $router->addRoute('POST', '/dashboard/application/onboarding', function () {
 // 6. Admin / Vetting Officer Console
 $router->addRoute('GET', '/admin/roster', function () {
     global $siteConfig;
-    if (!Auth::check() || !Auth::isAdmin()) {
+    if (!Auth::check() || (!Auth::isAdmin() && !Auth::isVettingOfficer())) {
         header("Location: " . $siteConfig->siteUrl . "/dashboard");
         exit;
     }
@@ -114,7 +114,7 @@ $router->addRoute('GET', '/admin/roster', function () {
 });
 
 $router->addRoute('POST', '/get-admin-roster-records', function () {
-    if (!Auth::check() || !Auth::isAdmin()) {
+    if (!Auth::check() || (!Auth::isAdmin() && !Auth::isVettingOfficer())) {
         header('Content-Type: application/json');
         echo json_encode(['status' => 0, 'msg' => 'Unauthorized']);
         exit;
@@ -127,7 +127,7 @@ $router->addRoute('POST', '/get-admin-roster-records', function () {
 
 $router->addRoute('GET', '/admin/roster/review', function () {
     global $siteConfig;
-    if (!Auth::check() || !Auth::isAdmin()) {
+    if (!Auth::check() || (!Auth::isAdmin() && !Auth::isVettingOfficer())) {
         header("Location: " . $siteConfig->siteUrl . "/dashboard");
         exit;
     }
@@ -137,7 +137,7 @@ $router->addRoute('GET', '/admin/roster/review', function () {
 });
 
 $router->addRoute('POST', '/admin/roster/assessment', function () {
-    if (!Auth::check() || !Auth::isAdmin()) {
+    if (!Auth::check() || (!Auth::isAdmin() && !Auth::isVettingOfficer())) {
         header('Content-Type: application/json');
         echo json_encode(['status' => 0, 'msg' => 'Unauthorized']);
         exit;

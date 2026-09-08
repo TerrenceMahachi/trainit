@@ -12,6 +12,7 @@ $pendingReviewCount = count(App\Models\Rosterapplication::findByQuery("SELECT iD
 $onRosterCount = count(App\Models\Rosterapplication::findByQuery("SELECT iD FROM rosterapplication WHERE applicationstatus = 5"));
 $onboardingCount = App\Models\Rosteronboarding::countAll();
 $totalUsers = App\Models\User::countAll();
+$staffCount = App\Models\Staffprofile::countAll();
 
 // Recent Applications
 $recentApplications = App\Models\Rosterapplication::findByQuery(
@@ -29,6 +30,9 @@ $recentApplications = App\Models\Rosterapplication::findByQuery(
                 <p class="portal-dashboard-intro">Overview of talent pipeline intake, vetting scoring, candidate onboarding, and system dictionary governance.</p>
             </div>
             <div class="d-flex gap-2 align-items-center">
+                <a href="<?= $siteConfig->siteUrl; ?>/admin/staff" class="btn btn-warning text-dark fw-bold shadow-sm px-3 py-2">
+                    <i class="fa fa-id-badge me-1"></i> Staff Directory
+                </a>
                 <a href="<?= $siteConfig->siteUrl; ?>/admin/roster" class="btn btn-success text-white fw-bold shadow-sm px-3 py-2">
                     <i class="fa fa-gavel me-1"></i> Talent Pipeline Console
                 </a>
@@ -38,6 +42,35 @@ $recentApplications = App\Models\Rosterapplication::findByQuery(
 
     <section class="portal-dashboard-body py-4">
         <div class="container">
+            
+            <!-- Staff & Operations Management Hub Banner -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; background: linear-gradient(135deg, #F8F5FC 0%, #FFFFFF 100%); border-left: 6px solid #2A114B !important;">
+                <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center border shadow-sm" style="width: 54px; height: 54px; background: #2A114B; color: #FFCC00; flex-shrink: 0;">
+                            <i class="fa fa-users-cog fa-lg"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <h4 class="fw-bold text-dark mb-0">Staff Registration & Operations Hub</h4>
+                                <span class="badge bg-warning text-dark fw-bold"><?= $staffCount; ?> Personnel</span>
+                            </div>
+                            <p class="text-muted mb-0 small">Internal employee registration, statutory onboarding (NSSA Form P4 compliance), and team directory.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="<?= $siteConfig->siteUrl; ?>/admin/staff" class="btn btn-dark fw-bold px-3 py-2 shadow-sm" style="background: #2A114B;">
+                            <i class="fa fa-id-badge me-1 text-warning"></i> Staff Directory
+                        </a>
+                        <a href="<?= $siteConfig->siteUrl; ?>/admin/staff/create" class="btn btn-warning text-dark fw-bold px-3 py-2 shadow-sm">
+                            <i class="fa fa-user-plus me-1"></i> Register Staff
+                        </a>
+                        <a href="<?= $siteConfig->siteUrl; ?>/admin/staff/export-p4" class="btn btn-outline-success fw-bold px-3 py-2">
+                            <i class="fa fa-file-excel me-1"></i> Export NSSA P4
+                        </a>
+                    </div>
+                </div>
+            </div>
             
             <!-- Top KPI Cards -->
             <div class="row g-3 mb-4">
@@ -286,6 +319,10 @@ $recentApplications = App\Models\Rosterapplication::findByQuery(
                             <h6 class="fw-bold mb-0 text-dark"><i class="fa fa-users-cog text-info me-2"></i> Commercials & Users</h6>
                         </div>
                         <div class="list-group list-group-flush small">
+                            <a href="<?= $siteConfig->siteUrl; ?>/admin/staff" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center fw-bold text-dark" style="background-color: #FDF9E7;">
+                                <span><i class="fa fa-id-badge text-warning me-2"></i>Staff & Operations</span>
+                                <span class="badge bg-warning text-dark"><?= App\Models\Staffprofile::countAll(); ?></span>
+                            </a>
                             <a href="<?= $siteConfig->siteUrl; ?>/users" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center fw-bold text-primary">
                                 <span>User Accounts</span>
                                 <span class="badge bg-primary"><?= $totalUsers; ?></span>
