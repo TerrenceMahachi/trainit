@@ -145,6 +145,16 @@ class Rosterapplication extends Model
         return count($res) > 0 ? $res[0] : null;
     }
 
+    public function documents()
+    {
+        return Rosterdocument::findByQuery("SELECT * FROM Rosterdocument WHERE rosterapplication = ? ORDER BY iD ASC", [$this->iD]);
+    }
+
+    public function statusEvents()
+    {
+        return Rosterstatusevent::findByQuery("SELECT * FROM Rosterstatusevent WHERE rosterapplication = ? ORDER BY iD ASC", [$this->iD]);
+    }
+
     public function status()
     {
         return $this->belongsTo(ItemStatus::class, 'status');

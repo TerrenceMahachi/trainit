@@ -34,6 +34,10 @@ use App\Models\Rosterreferee;
 use App\Models\Rosterjudgementresponse;
 use App\Models\Rosterassessment;
 use App\Models\Rosteronboarding;
+use App\Models\Documenttype;
+use App\Models\Rosterdocument;
+use App\Models\Rosterstatusevent;
+use App\Models\Login;
 use App\Helpers\Auth;
 use App\Helpers\Mailer;
 use Exception;
@@ -68,6 +72,602 @@ class RosterApplicationController
             'associate' => $associateApps,
             'has_profiles' => count($applications) > 0,
         ];
+    }
+
+    /**
+     * Helper to retrieve application owned by current user or accessible by admin/vetting officer.
+     */
+    public function getAuthorizedApplication(int $appId): ?Rosterapplication
+    {
+        $userId = Auth::id();
+        if ($appId <= 0) {
+            return null;
+        }
+        $apps = Rosterapplication::findByQuery("SELECT * FROM rosterapplication WHERE iD = ?", [$appId]);
+        if (empty($apps)) {
+            return null;
+        }
+        $app = $apps[0];
+        if ($userId && (int)$app->user === (int)$userId) {
+            return $app;
+        }
+        if (Auth::isAdmin() || Auth::isVettingOfficer()) {
+            return $app;
+        }
+        return null;
+    }
+
+    /**
+     * Helper to save a document file into Rosterdocument model.
+     */
+    public function saveRosterDocument(int $appId, string $docTypeCode, array $file, string $prefix): ?Rosterdocument
+    {
+        $filename = $this->uploadFile($file, $prefix);
+        if (!$filename) {
+            return null;
+        }
+
+        $docTypes = Documenttype::findByQuery("SELECT * FROM documenttype WHERE code = ?", [$docTypeCode]);
+        $docTypeId = !empty($docTypes) ? (int)$docTypes[0]->iD : 1;
+
+        $doc = new Rosterdocument();
+        $doc->rosterapplication = $appId;
+        $doc->documenttype = $docTypeId;
+        $doc->file_path = $filename;
+        $doc->original_name = $file['name'] ?? $filename;
+        $doc->file_size_kb = (int) round(($file['size'] ?? 0) / 1024);
+        $doc->reg_by = Auth::id() ?: 1;
+        $doc->save();
+
+        return $doc;
+    }
+
+    /**
+     * Helper to log status audit event.
+     */
+    public function logStatusEvent(int $appId, int $statusId, string $remarks): void
+    {
+        $event = new Rosterstatusevent();
+        $event->rosterapplication = $appId;
+        $event->applicationstatus = $statusId;
+        $event->remarks = $remarks;
+        $event->reg_by = Auth::id() ?: 1;
+        $event->save();
+    }
+
+    /**
+     * Render the Stage 1 Express Intake form initiated from the Opportunities page.
+     */
+    public function showExpressForm(string $track, ?int $appId = null)
+    {
+        global $siteConfig;
+        $trackCode = strtolower(trim($track));
+        $tracks = Applicationtrack::findByQuery("SELECT * FROM applicationtrack WHERE code = ?", [$trackCode]);
+        if (empty($tracks)) {
+            header("Location: " . $siteConfig->siteUrl . "/opportunities");
+            exit;
+        }
+        $trackObj = $tracks[0];
+
+        $application = null;
+        if ($appId) {
+            $application = $this->getAuthorizedApplication($appId);
+        }
+
+        $provinces = Zimprovince::findByQuery("SELECT * FROM zimprovince ORDER BY sort_order ASC");
+        $serviceFunctions = Servicefunction::findByQuery("SELECT * FROM servicefunction ORDER BY sort_order ASC");
+        $employmentStatuses = Employmentstatus::all();
+        $professionalBodies = Professionalbody::all();
+
+        $data = [
+            'title' => 'Express Apply: ' . $trackObj->name . ' Roster',
+            'track' => $trackObj,
+            'application' => $application,
+            'user' => Auth::check() ? (new AccountController())->getUser(Auth::id()) : null,
+            'provinces' => $provinces,
+            'serviceFunctions' => $serviceFunctions,
+            'employmentStatuses' => $employmentStatuses,
+            'professionalBodies' => $professionalBodies,
+        ];
+
+        $viewName = $trackCode === 'associate' ? 'roster.apply_express_associate' : 'roster.apply_express_apprentice';
+        return view($viewName, compact('data'));
+    }
+
+    /**
+     * Handle Stage 1 Express Intake Submission (Auto-provisions user if guest, creates draft application).
+     */
+    public function handleExpressSubmit()
+    {
+        global $siteConfig;
+
+        try {
+            $trackCode = strtolower(trim($_POST['track_code'] ?? 'apprentice'));
+            $tracks = Applicationtrack::findByQuery("SELECT * FROM applicationtrack WHERE code = ?", [$trackCode]);
+            $trackObj = !empty($tracks) ? $tracks[0] : null;
+            if (!$trackObj) {
+                throw new Exception('Invalid application track specified.');
+            }
+
+            $email = strtolower(trim($_POST['email'] ?? ''));
+            $legalName = trim($_POST['legal_name'] ?? '');
+            if (empty($email) || empty($legalName)) {
+                throw new Exception('Full legal name and email address are required.');
+            }
+
+            // 1. Authenticate or Provision User
+            $userId = Auth::id();
+            if (!$userId) {
+                $existingUsers = User::findByQuery("SELECT * FROM user WHERE email = ? LIMIT 1", [$email]);
+                if (!empty($existingUsers)) {
+                    $user = $existingUsers[0];
+                    $userId = (int)$user->iD;
+                } else {
+                    $user = new User();
+                    $user->name = $legalName;
+                    $user->email = $email;
+                    $user->role = 2; // candidate
+                    $user->status = 1;
+                    $user->save();
+                    $userId = (int)$user->iD;
+
+                    $tempPass = bin2hex(random_bytes(6));
+                    $login = new Login();
+                    $login->user = $userId;
+                    $login->password = password_hash($tempPass, PASSWORD_BCRYPT);
+                    $login->status = 1;
+                    $login->save();
+                }
+                Auth::login($userId);
+            }
+
+            // 2. Create or Update Core Application
+            $appId = (int)($_POST['application_id'] ?? 0);
+            $app = null;
+            if ($appId > 0) {
+                $app = $this->getAuthorizedApplication($appId);
+            }
+            if (!$app) {
+                $app = new Rosterapplication();
+                $app->user = $userId;
+                $app->applicationtrack = $trackObj->iD;
+                $app->applicationstatus = 1; // Draft
+                $app->reg_by = $userId;
+            }
+
+            $app->legal_name = $legalName;
+            $app->preferred_name = trim($_POST['preferred_name'] ?? '');
+            $app->email = $email;
+            $app->mobile_number = trim($_POST['mobile_number'] ?? '');
+            $app->city = trim($_POST['city'] ?? '');
+            $app->zimprovince = !empty($_POST['zimprovince']) ? (int)$_POST['zimprovince'] : null;
+            $app->primaryfunction = !empty($_POST['primaryfunction']) ? (int)$_POST['primaryfunction'] : 1;
+
+            if ($app->iD) {
+                $app->update();
+            } else {
+                $app->save();
+            }
+            $appId = (int)$app->iD;
+
+            // 3. Track-Specific Profile
+            if ($trackCode === 'apprentice') {
+                $appProfiles = Apprenticeprofile::findByQuery("SELECT * FROM apprenticeprofile WHERE rosterapplication = ?", [$appId]);
+                $appProfile = !empty($appProfiles) ? $appProfiles[0] : new Apprenticeprofile();
+                $appProfile->rosterapplication = $appId;
+                $appProfile->institution_name = trim($_POST['institution_name'] ?? '');
+                $appProfile->degree_programme = trim($_POST['degree_programme'] ?? '');
+                $appProfile->study_level = trim($_POST['study_level'] ?? '');
+                $appProfile->wrl_start_date = !empty($_POST['wrl_start_date']) ? $_POST['wrl_start_date'] : null;
+                $appProfile->wrl_duration_months = !empty($_POST['wrl_duration_months']) ? (int)$_POST['wrl_duration_months'] : 12;
+                $appProfile->is_wrl_attachment = 1;
+                $appProfile->reg_by = $userId;
+
+                if ($appProfile->iD) {
+                    $appProfile->update();
+                } else {
+                    $appProfile->save();
+                }
+            } elseif ($trackCode === 'associate') {
+                $assocProfiles = Associateprofile::findByQuery("SELECT * FROM associateprofile WHERE rosterapplication = ?", [$appId]);
+                $assocProfile = !empty($assocProfiles) ? $assocProfiles[0] : new Associateprofile();
+                $assocProfile->rosterapplication = $appId;
+                $assocProfile->years_experience = trim($_POST['years_experience'] ?? '');
+                $assocProfile->employmentstatus = !empty($_POST['employmentstatus']) ? (int)$_POST['employmentstatus'] : null;
+                $assocProfile->day_rate_expectation = !empty($_POST['day_rate_expectation']) ? (float)$_POST['day_rate_expectation'] : null;
+                $assocProfile->capacity_days_per_month = trim($_POST['capacity_days_per_month'] ?? '');
+                $assocProfile->reg_by = $userId;
+
+                if ($assocProfile->iD) {
+                    $assocProfile->update();
+                } else {
+                    $assocProfile->save();
+                }
+            }
+
+            // 4. File Upload (CV / Resume)
+            if (!empty($_FILES['cv_doc']['name'])) {
+                $this->saveRosterDocument($appId, 'CV_RESUME', $_FILES['cv_doc'], 'cv_' . $appId);
+            }
+
+            // 5. Log Status Event
+            $this->logStatusEvent($appId, 1, 'Stage 1: Express intake completed via Opportunities page');
+
+            $redirectUrl = $siteConfig->siteUrl . '/roster/apply/credentials?id=' . $appId;
+
+            // Handle AJAX vs standard POST
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                return ['status' => 1, 'redirect' => $redirectUrl, 'msg' => 'Express profile saved successfully!'];
+            }
+
+            header("Location: " . $redirectUrl);
+            exit;
+        } catch (Exception $e) {
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                return ['status' => 0, 'msg' => $e->getMessage()];
+            }
+            $_SESSION['flash_error'] = $e->getMessage();
+            header("Location: " . ($siteConfig->siteUrl . "/opportunities/apply/" . ($trackCode ?? 'apprentice')));
+            exit;
+        }
+    }
+
+    /**
+     * Render Stage 2: Credentials & Docs.
+     */
+    public function showCredentialsForm(int $appId)
+    {
+        global $siteConfig;
+        $app = $this->getAuthorizedApplication($appId);
+        if (!$app) {
+            header("Location: " . $siteConfig->siteUrl . "/opportunities");
+            exit;
+        }
+
+        $qualificationTypes = Qualificationtype::findByQuery("SELECT * FROM qualificationtype ORDER BY sort_order ASC");
+        $professionalBodies = Professionalbody::all();
+
+        $data = [
+            'title' => 'Step 2: Qualifications & Credentials',
+            'application' => $app,
+            'qualificationTypes' => $qualificationTypes,
+            'professionalBodies' => $professionalBodies,
+        ];
+
+        return view('roster.apply_credentials', compact('data'));
+    }
+
+    /**
+     * Handle Stage 2: Credentials Submission.
+     */
+    public function handleCredentialsSubmit()
+    {
+        global $siteConfig;
+        $appId = (int)($_POST['application_id'] ?? 0);
+        $app = $this->getAuthorizedApplication($appId);
+        if (!$app) {
+            header("Location: " . $siteConfig->siteUrl . "/opportunities");
+            exit;
+        }
+
+        $trackCode = $app->applicationtrack()->code ?? 'apprentice';
+
+        // 1. Primary Qualification Record
+        if (!empty($_POST['qualification_title'])) {
+            $quals = Rosterqualification::findByQuery("SELECT * FROM rosterqualification WHERE rosterapplication = ?", [$appId]);
+            $qual = !empty($quals) ? $quals[0] : new Rosterqualification();
+            $qual->rosterapplication = $appId;
+            $qual->qualificationtype = !empty($_POST['qualificationtype']) ? (int)$_POST['qualificationtype'] : 1;
+            $qual->title = trim($_POST['qualification_title']);
+            $qual->institution_name = trim($_POST['qualification_institution'] ?? '');
+            $qual->field_of_study = trim($_POST['field_of_study'] ?? '');
+            $qual->qualificationstatus = 1;
+            $qual->reg_by = Auth::id() ?: 1;
+
+            if ($qual->iD) {
+                $qual->update();
+            } else {
+                $qual->save();
+            }
+        }
+
+        // 2. Track Specific Fields
+        if ($trackCode === 'apprentice') {
+            $appProfile = $app->apprenticeProfile();
+            if ($appProfile) {
+                $appProfile->student_reg_number = trim($_POST['student_reg_number'] ?? '');
+                if (!empty($_POST['expected_completion_year'])) {
+                    $appProfile->expected_completion_date = trim($_POST['expected_completion_year']) . '-12-31';
+                }
+                $appProfile->update();
+            }
+            if (!empty($_FILES['wrl_letter_doc']['name'])) {
+                $this->saveRosterDocument($appId, 'WRL_LETTER', $_FILES['wrl_letter_doc'], 'wrl_let_' . $appId);
+            }
+            if (!empty($_FILES['transcript_doc']['name'])) {
+                $this->saveRosterDocument($appId, 'TRANSCRIPT', $_FILES['transcript_doc'], 'transcript_' . $appId);
+            }
+        } else {
+            $assocProfile = $app->associateProfile();
+            if ($assocProfile) {
+                if (!empty($_POST['professionalbody'])) {
+                    $assocProfile->professionalbody = (int)$_POST['professionalbody'];
+                }
+                $assocProfile->update();
+            }
+            if (!empty($_FILES['pro_cert_doc']['name'])) {
+                $this->saveRosterDocument($appId, 'PRO_CERT', $_FILES['pro_cert_doc'], 'pro_cert_' . $appId);
+            }
+            if (!empty($_FILES['tax_clearance_doc']['name'])) {
+                $this->saveRosterDocument($appId, 'RES_PRF', $_FILES['tax_clearance_doc'], 'tax_' . $appId);
+            }
+        }
+
+        // 3. National Identity
+        if (!empty($_POST['national_id_number'])) {
+            $onboardings = Rosteronboarding::findByQuery("SELECT * FROM rosteronboarding WHERE rosterapplication = ?", [$appId]);
+            $onboarding = !empty($onboardings) ? $onboardings[0] : new Rosteronboarding();
+            $onboarding->rosterapplication = $appId;
+            $onboarding->national_id_number = trim($_POST['national_id_number']);
+            $onboarding->reg_by = Auth::id() ?: 1;
+            if ($onboarding->iD) {
+                $onboarding->update();
+            } else {
+                $onboarding->save();
+            }
+        }
+        if (!empty($_FILES['national_id_doc']['name'])) {
+            $this->saveRosterDocument($appId, 'NAT_ID', $_FILES['national_id_doc'], 'nat_id_' . $appId);
+        }
+
+        $this->logStatusEvent($appId, 1, 'Stage 2: Credentials and identification uploaded');
+
+        header("Location: " . $siteConfig->siteUrl . "/roster/apply/skills?id=" . $appId);
+        exit;
+    }
+
+    /**
+     * Render Stage 3: Skills & Competency Matrix.
+     */
+    public function showSkillsForm(int $appId)
+    {
+        global $siteConfig;
+        $app = $this->getAuthorizedApplication($appId);
+        if (!$app) {
+            header("Location: " . $siteConfig->siteUrl . "/opportunities");
+            exit;
+        }
+
+        $funcId = (int)$app->primaryfunction;
+        $skillItems = Skillitem::findByQuery("SELECT * FROM skillitem WHERE servicefunction = ? ORDER BY sort_order ASC", [$funcId]);
+        if (empty($skillItems)) {
+            $skillItems = Skillitem::findByQuery("SELECT * FROM skillitem ORDER BY sort_order ASC LIMIT 12");
+        }
+        $proficiencyLevels = Proficiencylevel::findByQuery("SELECT * FROM proficiencylevel ORDER BY level_number ASC");
+
+        $existingSkills = Rosterskill::findByQuery("SELECT * FROM rosterskill WHERE rosterapplication = ?", [$appId]);
+        $existingSkillsMap = [];
+        foreach ($existingSkills as $sk) {
+            $existingSkillsMap[$sk->skillitem] = $sk->proficiencylevel;
+        }
+
+        $data = [
+            'title' => 'Step 3: Skills & Competency Matrix',
+            'application' => $app,
+            'skillItems' => $skillItems,
+            'proficiencyLevels' => $proficiencyLevels,
+            'existingSkillsMap' => $existingSkillsMap,
+        ];
+
+        return view('roster.apply_skills', compact('data'));
+    }
+
+    /**
+     * Handle Stage 3: Skills Submission.
+     */
+    public function handleSkillsSubmit()
+    {
+        global $siteConfig;
+        $appId = (int)($_POST['application_id'] ?? 0);
+        $app = $this->getAuthorizedApplication($appId);
+        if (!$app) {
+            header("Location: " . $siteConfig->siteUrl . "/opportunities");
+            exit;
+        }
+
+        $userId = Auth::id() ?: 1;
+        $funcId = (int)$app->primaryfunction;
+
+        foreach ($_POST as $key => $val) {
+            if (str_starts_with($key, 'skill_')) {
+                $skillItemId = (int)substr($key, 6);
+                $levelId = (int)$val;
+                if ($skillItemId > 0) {
+                    $existing = Rosterskill::findByQuery(
+                        "SELECT * FROM rosterskill WHERE rosterapplication = ? AND skillitem = ?",
+                        [$appId, $skillItemId]
+                    );
+                    if ($levelId > 0) {
+                        $sk = !empty($existing) ? $existing[0] : new Rosterskill();
+                        $sk->rosterapplication = $appId;
+                        $sk->servicefunction = $funcId;
+                        $sk->skillitem = $skillItemId;
+                        $sk->proficiencylevel = $levelId;
+                        $sk->reg_by = $userId;
+                        if ($sk->iD) {
+                            $sk->update();
+                        } else {
+                            $sk->save();
+                        }
+                    } elseif (!empty($existing)) {
+                        $existing[0]->delete();
+                    }
+                }
+            }
+        }
+
+        $this->logStatusEvent($appId, 1, 'Stage 3: Skills matrix competency ratings saved');
+
+        header("Location: " . $siteConfig->siteUrl . "/roster/apply/experience?id=" . $appId);
+        exit;
+    }
+
+    /**
+     * Render Stage 4: Practical Experience & Referees.
+     */
+    public function showExperienceForm(int $appId)
+    {
+        global $siteConfig;
+        $app = $this->getAuthorizedApplication($appId);
+        if (!$app) {
+            header("Location: " . $siteConfig->siteUrl . "/opportunities");
+            exit;
+        }
+
+        $refereeTimings = Refereecontacttiming::all();
+
+        $data = [
+            'title' => 'Step 4: Experience & Referees',
+            'application' => $app,
+            'refereeTimings' => $refereeTimings,
+        ];
+
+        return view('roster.apply_experience', compact('data'));
+    }
+
+    /**
+     * Handle Stage 4: Experience Submission.
+     */
+    public function handleExperienceSubmit()
+    {
+        global $siteConfig;
+        $appId = (int)($_POST['application_id'] ?? 0);
+        $app = $this->getAuthorizedApplication($appId);
+        if (!$app) {
+            header("Location: " . $siteConfig->siteUrl . "/opportunities");
+            exit;
+        }
+
+        $userId = Auth::id() ?: 1;
+
+        // 1. Work History
+        if (!empty($_POST['organization_name']) && !empty($_POST['position_title'])) {
+            $histories = Rosterworkhistory::findByQuery("SELECT * FROM rosterworkhistory WHERE rosterapplication = ?", [$appId]);
+            $wh = !empty($histories) ? $histories[0] : new Rosterworkhistory();
+            $wh->rosterapplication = $appId;
+            $wh->organization_name = trim($_POST['organization_name']);
+            $wh->position_title = trim($_POST['position_title']);
+            $wh->start_date = !empty($_POST['start_date']) ? $_POST['start_date'] : date('Y-m-d');
+            $wh->end_date = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
+            $wh->key_deliverables = trim($_POST['key_deliverables'] ?? '');
+            $wh->sectortype = 1;
+            $wh->engagementbasis = 1;
+            $wh->reg_by = $userId;
+
+            if ($wh->iD) {
+                $wh->update();
+            } else {
+                $wh->save();
+            }
+        }
+
+        // 2. Referee
+        if (!empty($_POST['referee_name']) && !empty($_POST['referee_email'])) {
+            $refs = Rosterreferee::findByQuery("SELECT * FROM rosterreferee WHERE rosterapplication = ?", [$appId]);
+            $ref = !empty($refs) ? $refs[0] : new Rosterreferee();
+            $ref->rosterapplication = $appId;
+            $ref->referee_name = trim($_POST['referee_name']);
+            $ref->organization = trim($_POST['referee_org'] ?? '');
+            $ref->position = trim($_POST['referee_pos'] ?? '');
+            $ref->relationship = trim($_POST['referee_relationship'] ?? '');
+            $ref->email = trim($_POST['referee_email']);
+            $ref->phone = trim($_POST['referee_phone'] ?? '');
+            $ref->refereecontacttiming = !empty($_POST['refereecontacttiming']) ? (int)$_POST['refereecontacttiming'] : 1;
+            $ref->refereeverificationstatus = 1;
+            $ref->reg_by = $userId;
+
+            if ($ref->iD) {
+                $ref->update();
+            } else {
+                $ref->save();
+            }
+        }
+
+        $this->logStatusEvent($appId, 1, 'Stage 4: Work deliverables and referee contact details saved');
+
+        header("Location: " . $siteConfig->siteUrl . "/roster/apply/review?id=" . $appId);
+        exit;
+    }
+
+    /**
+     * Render Stage 5: Review & Digital Declaration.
+     */
+    public function showReviewForm(int $appId)
+    {
+        global $siteConfig;
+        $app = $this->getAuthorizedApplication($appId);
+        if (!$app) {
+            header("Location: " . $siteConfig->siteUrl . "/opportunities");
+            exit;
+        }
+
+        $data = [
+            'title' => 'Step 5: Review & Digital Declaration',
+            'application' => $app,
+        ];
+
+        return view('roster.apply_review', compact('data'));
+    }
+
+    /**
+     * Handle Stage 5: Final Submission & Digital Signature.
+     */
+    public function handleFinalSubmit()
+    {
+        global $siteConfig;
+        $appId = (int)($_POST['application_id'] ?? 0);
+        $app = $this->getAuthorizedApplication($appId);
+        if (!$app) {
+            header("Location: " . $siteConfig->siteUrl . "/opportunities");
+            exit;
+        }
+
+        $app->e_signature = trim($_POST['e_signature'] ?? $app->legal_name);
+        $app->consent_timestamp = date('Y-m-d H:i:s');
+        $app->consent_ip_address = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        $app->applicationstatus = 2; // Submitted
+        $app->update();
+
+        $this->logStatusEvent($appId, 2, 'Stage 5: Final application submitted for vetting with digital signature');
+
+        // Send confirmation email
+        $candidate = (new User())->find($app->user);
+        if ($candidate) {
+            Mailer::sendApplicationSubmitted($app, $candidate);
+        }
+
+        header("Location: " . $siteConfig->siteUrl . "/roster/application/status?id=" . $appId);
+        exit;
+    }
+
+    /**
+     * Render Stage 6: Real-time Application Status & Milestones.
+     */
+    public function showStatusView(int $appId)
+    {
+        global $siteConfig;
+        $app = $this->getAuthorizedApplication($appId);
+        if (!$app) {
+            header("Location: " . $siteConfig->siteUrl . "/opportunities");
+            exit;
+        }
+
+        $data = [
+            'title' => 'Application Status: #' . $appId,
+            'application' => $app,
+        ];
+
+        return view('roster.apply_status', compact('data'));
     }
 
     /**
@@ -555,6 +1155,11 @@ class RosterApplicationController
 
         $destPath = $destDir . '/' . $filename;
         if (move_uploaded_file($file['tmp_name'], $destPath)) {
+            return $filename;
+        }
+
+        // Fallback for CLI testing where is_uploaded_file() returns false
+        if (php_sapi_name() === 'cli' && copy($file['tmp_name'], $destPath)) {
             return $filename;
         }
 

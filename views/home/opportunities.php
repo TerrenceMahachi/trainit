@@ -3,8 +3,8 @@
 <?php
 global $siteConfig;
 $loggedInUser = $data['user'] ?? null;
-$apprenticeUrl = $loggedInUser ? ($siteConfig->siteUrl . '/dashboard/apply/apprentice') : ($siteConfig->siteUrl . '/apply/apprentice');
-$associateUrl = $loggedInUser ? ($siteConfig->siteUrl . '/dashboard/apply/associate') : ($siteConfig->siteUrl . '/apply/associate');
+$apprenticeUrl = $siteConfig->siteUrl . '/opportunities/apply/apprentice';
+$associateUrl = $siteConfig->siteUrl . '/opportunities/apply/associate';
 ?>
 <main class="trainit-page opportunity-page">
     <!-- Hero Section -->

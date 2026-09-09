@@ -7,7 +7,97 @@ use App\Helpers\Auth;
 
 global $router;
 
-// 1. Wizard Application Form (Apprentice & Associate)
+// 1. Simplified Public Express Intake (Zero friction, initiated on Opportunities page)
+$router->addRoute('GET', '/opportunities/apply/apprentice', function () {
+    $appId = isset($_GET['id']) ? (int)$_GET['id'] : null;
+    echo (new RosterApplicationController())->showExpressForm('apprentice', $appId);
+    exit;
+});
+
+$router->addRoute('GET', '/opportunities/apply/associate', function () {
+    $appId = isset($_GET['id']) ? (int)$_GET['id'] : null;
+    echo (new RosterApplicationController())->showExpressForm('associate', $appId);
+    exit;
+});
+
+$router->addRoute('POST', '/opportunities/apply/express', function () {
+    $res = (new RosterApplicationController())->handleExpressSubmit();
+    if (is_array($res)) {
+        header('Content-Type: application/json');
+        echo json_encode($res);
+    }
+    exit;
+});
+
+// Stage 2: Credentials & Supporting Documents
+$router->addRoute('GET', '/roster/apply/credentials', function () {
+    $appId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    echo (new RosterApplicationController())->showCredentialsForm($appId);
+    exit;
+});
+
+$router->addRoute('POST', '/roster/apply/credentials', function () {
+    (new RosterApplicationController())->handleCredentialsSubmit();
+    exit;
+});
+
+// Stage 3: Skills & Competency Matrix
+$router->addRoute('GET', '/roster/apply/skills', function () {
+    $appId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    echo (new RosterApplicationController())->showSkillsForm($appId);
+    exit;
+});
+
+$router->addRoute('POST', '/roster/apply/skills', function () {
+    (new RosterApplicationController())->handleSkillsSubmit();
+    exit;
+});
+
+// Stage 4: Practical Experience & Referees
+$router->addRoute('GET', '/roster/apply/experience', function () {
+    $appId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    echo (new RosterApplicationController())->showExperienceForm($appId);
+    exit;
+});
+
+$router->addRoute('POST', '/roster/apply/experience', function () {
+    (new RosterApplicationController())->handleExperienceSubmit();
+    exit;
+});
+
+// Stage 5: Review & Digital Declaration
+$router->addRoute('GET', '/roster/apply/review', function () {
+    $appId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    echo (new RosterApplicationController())->showReviewForm($appId);
+    exit;
+});
+
+$router->addRoute('POST', '/roster/apply/submit', function () {
+    (new RosterApplicationController())->handleFinalSubmit();
+    exit;
+});
+
+// Stage 6: Candidate Onboarding Status Tracker
+$router->addRoute('GET', '/roster/application/status', function () {
+    $appId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    echo (new RosterApplicationController())->showStatusView($appId);
+    exit;
+});
+
+// Legacy / Direct Link Redirections to Express Intake
+$router->addRoute('GET', '/apply/apprentice', function () {
+    global $siteConfig;
+    header("Location: " . $siteConfig->siteUrl . "/opportunities/apply/apprentice");
+    exit;
+});
+
+$router->addRoute('GET', '/apply/associate', function () {
+    global $siteConfig;
+    header("Location: " . $siteConfig->siteUrl . "/opportunities/apply/associate");
+    exit;
+});
+
+// 2. Wizard Application Form (Apprentice & Associate)
 $router->addRoute('GET', '/dashboard/apply', function () {
     global $siteConfig;
     if (!Auth::check()) {
@@ -22,44 +112,15 @@ $router->addRoute('GET', '/dashboard/apply', function () {
 
 $router->addRoute('GET', '/dashboard/apply/apprentice', function () {
     global $siteConfig;
-    if (!Auth::check()) {
-        header("Location: " . $siteConfig->siteUrl . "/login");
-        exit;
-    }
     $appId = isset($_GET['id']) ? (int)$_GET['id'] : null;
-    echo (new RosterApplicationController())->showApplyForm('apprentice', $appId);
+    header("Location: " . $siteConfig->siteUrl . "/opportunities/apply/apprentice" . ($appId ? '?id=' . $appId : ''));
     exit;
 });
 
 $router->addRoute('GET', '/dashboard/apply/associate', function () {
     global $siteConfig;
-    if (!Auth::check()) {
-        header("Location: " . $siteConfig->siteUrl . "/login");
-        exit;
-    }
     $appId = isset($_GET['id']) ? (int)$_GET['id'] : null;
-    echo (new RosterApplicationController())->showApplyForm('associate', $appId);
-    exit;
-});
-
-// 2. Public Direct Entry Points (routes from external links / careers offices / LinkedIn)
-$router->addRoute('GET', '/apply/apprentice', function () {
-    global $siteConfig;
-    if (!Auth::check()) {
-        header("Location: " . $siteConfig->siteUrl . "/register?intended_track=apprentice");
-        exit;
-    }
-    header("Location: " . $siteConfig->siteUrl . "/dashboard/apply/apprentice");
-    exit;
-});
-
-$router->addRoute('GET', '/apply/associate', function () {
-    global $siteConfig;
-    if (!Auth::check()) {
-        header("Location: " . $siteConfig->siteUrl . "/register?intended_track=associate");
-        exit;
-    }
-    header("Location: " . $siteConfig->siteUrl . "/dashboard/apply/associate");
+    header("Location: " . $siteConfig->siteUrl . "/opportunities/apply/associate" . ($appId ? '?id=' . $appId : ''));
     exit;
 });
 

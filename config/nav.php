@@ -40,6 +40,8 @@ return [
             ['label' => 'Service Catalogue & SLA', 'url' => '/admin/service-catalogue'],
             ['label' => 'Talent Vetting Pipeline', 'url' => '/admin/roster'],
             ['label' => 'User Accounts', 'url' => '/users'],
+            ['label' => 'Rosterdocuments', 'url' => '/rosterdocuments'],
+            ['label' => 'Rosterstatusevents', 'url' => '/rosterstatusevents'],
             // BOILERPLATE_ADMIN_NAV_ITEMS
         ],
     ],
