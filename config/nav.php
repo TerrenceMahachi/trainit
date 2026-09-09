@@ -16,14 +16,14 @@
  */
 
 return [
-    ['label' => 'Home',      'url' => '/home',      'roles' => ['guest', 'user', 'admin']],
-    ['label' => 'About',     'url' => '/about',     'roles' => ['guest', 'user', 'admin']],
-    ['label' => 'Services',  'url' => '/services',  'roles' => ['guest', 'user', 'admin']],
+    ['label' => 'Home',          'url' => defined('_WEBSITE_URL') ? _WEBSITE_URL : '/home', 'roles' => ['guest']],
+    ['label' => 'About',         'url' => '/about',         'roles' => ['guest']],
+    ['label' => 'Services',      'url' => '/services',      'roles' => ['guest']],
     ['label' => 'Opportunities', 'url' => '/opportunities', 'roles' => ['guest', 'user', 'admin']],
-    ['label' => 'Cloud',     'url' => '/cloud',     'roles' => ['guest', 'user', 'admin']],
-    ['label' => 'Contact',   'url' => '/contact',   'roles' => ['guest', 'user', 'admin']],
-    ['label' => 'Dashboard', 'url' => '/dashboard', 'roles' => ['user', 'admin']],
-    ['label' => 'Staff Portal', 'url' => '/staff/portal', 'roles' => ['admin', 'user']],
+    ['label' => 'Cloud',         'url' => '/cloud',         'roles' => ['guest']],
+    ['label' => 'Contact',       'url' => '/contact',       'roles' => ['guest']],
+    ['label' => 'Dashboard',     'url' => '/dashboard',     'roles' => ['user', 'admin']],
+    ['label' => 'Staff Portal',  'url' => '/staff/portal',  'roles' => ['admin', 'user']],
     ['label' => 'Staff Directory', 'url' => '/admin/staff', 'roles' => ['admin']],
 
     [

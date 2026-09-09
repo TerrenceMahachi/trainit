@@ -27,13 +27,29 @@ $navVisible = function ($item) use ($navRole) {
 };
 /** Is this item the active page? */
 $navActive = function ($item) use ($currentUrl) {
+    if (isset($item['url']) && (strpos($item['url'], '://') !== false || strpos($item['url'], '//') === 0)) {
+        return '';
+    }
     $needle = $item['match'] ?? ($item['url'] ?? null);
     return $needle && strpos($currentUrl, $needle) !== false ? 'active' : '';
 };
+
+/** Format navigation URL (supports absolute external URLs like the main website) */
+$formatUrl = function ($url) use ($siteConfig) {
+    if (!$url || $url === '#') {
+        return '#';
+    }
+    if (strpos($url, '://') !== false || strpos($url, '//') === 0) {
+        return $url;
+    }
+    return $siteConfig->siteUrl . $url;
+};
+
+$brandHref = $navUser ? ($siteConfig->siteUrl . '/dashboard') : (defined('_WEBSITE_URL') ? _WEBSITE_URL : 'https://tsigiro.co.zw');
 ?>
 <nav class="navbar navbar-expand-lg trainit-navbar">
     <div class="container-xl">
-        <a class="navbar-brand trainit-brand" href="<?= $siteConfig->siteUrl ?>/home">
+        <a class="navbar-brand trainit-brand" href="<?= $brandHref ?>">
             <img src="<?= $siteConfig->assetsUrl ?>/img/logo-badge.svg?v=<?= _ASSET_VERSION ?>"
                  alt="<?= htmlspecialchars(_SITE) ?>"
                  class="trainit-brand-logo"
@@ -60,13 +76,13 @@ $navActive = function ($item) use ($currentUrl) {
                                 data-bs-toggle="dropdown" aria-expanded="false"><?= htmlspecialchars($item['label']) ?></a>
                             <ul class="dropdown-menu dropdown-menu-start">
                                 <?php foreach ($kids as $child): ?>
-                                    <li><a class="dropdown-item" href="<?= $siteConfig->siteUrl . ($child['url'] ?? '#') ?>"><?= htmlspecialchars($child['label']) ?></a></li>
+                                    <li><a class="dropdown-item" href="<?= $formatUrl($child['url'] ?? '#') ?>"><?= htmlspecialchars($child['label']) ?></a></li>
                                 <?php endforeach; ?>
                             </ul>
                         </li>
                     <?php else: ?>
                         <li class="nav-item">
-                            <a class="nav-link <?= $navActive($item) ?>" href="<?= $siteConfig->siteUrl . ($item['url'] ?? '#') ?>"><?= htmlspecialchars($item['label']) ?></a>
+                            <a class="nav-link <?= $navActive($item) ?>" href="<?= $formatUrl($item['url'] ?? '#') ?>"><?= htmlspecialchars($item['label']) ?></a>
                         </li>
                     <?php endif; ?>
                 <?php endforeach; ?>

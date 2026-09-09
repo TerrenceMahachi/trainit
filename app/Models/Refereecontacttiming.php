@@ -26,7 +26,7 @@ class Refereecontacttiming extends Model
 
     protected function getDefaultDataInsertionQuery()
     {
-        return [];
+        return \App\Helpers\ReferenceDataSeeder::getInsertQueriesForTable($this->table);
     }
     
     public function status()

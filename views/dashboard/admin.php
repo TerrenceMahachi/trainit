@@ -42,6 +42,18 @@ $recentApplications = App\Models\Rosterapplication::findByQuery(
 
     <section class="portal-dashboard-body py-4">
         <div class="container">
+            <?php if (!empty($_SESSION['flash_success'])): ?>
+                <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert" style="border-radius: 10px;">
+                    <i class="fa fa-check-circle me-2"></i> <?= htmlspecialchars($_SESSION['flash_success']); unset($_SESSION['flash_success']); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+            <?php if (!empty($_SESSION['flash_error'])): ?>
+                <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert" style="border-radius: 10px;">
+                    <i class="fa fa-exclamation-circle me-2"></i> <?= htmlspecialchars($_SESSION['flash_error']); unset($_SESSION['flash_error']); ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
             
             <!-- Staff & Operations Management Hub Banner -->
             <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; background: linear-gradient(135deg, #F8F5FC 0%, #FFFFFF 100%); border-left: 6px solid #2A114B !important;">
@@ -255,12 +267,41 @@ $recentApplications = App\Models\Rosterapplication::findByQuery(
             </div>
 
             <!-- System Governance & Reference Dictionaries Hub -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                 <div>
                     <h5 class="fw-bold mb-0 text-dark"><i class="fa fa-sliders-h text-secondary me-2"></i> System Administration & Normalized Dictionaries</h5>
                     <p class="text-muted small mb-0">Manage underlying category models, standard scales, qualification types, and platform user accounts.</p>
                 </div>
+                <div>
+                    <form action="<?= $siteConfig->siteUrl; ?>/admin/seed-dictionaries" method="POST" class="d-inline">
+                        <?= \App\Helpers\Csrf::field(); ?>
+                        <button type="submit" class="btn btn-outline-primary btn-sm fw-semibold shadow-sm" title="Seed standard dictionary categories if any are empty">
+                            <i class="fa fa-seedling me-1"></i> Seed Dictionaries
+                        </button>
+                    </form>
+                </div>
             </div>
+
+            <?php
+            $unseededTables = \App\Helpers\ReferenceDataSeeder::getUnseededTables();
+            if (!empty($unseededTables)):
+            ?>
+            <div class="alert alert-warning border-0 shadow-sm d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4" style="border-radius: 10px;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa fa-exclamation-triangle text-warning fa-lg"></i>
+                    <div>
+                        <strong class="text-dark">Action Required: Reference Dictionaries Unseeded</strong>
+                        <div class="small text-muted"><?= count($unseededTables); ?> lookup table(s) contain 0 records (e.g. <?= implode(', ', array_slice($unseededTables, 0, 4)); ?><?= count($unseededTables) > 4 ? '...' : ''; ?>). Seed them to populate candidate skill matrices, vetting options, and province dropdowns.</div>
+                    </div>
+                </div>
+                <form action="<?= $siteConfig->siteUrl; ?>/admin/seed-dictionaries" method="POST" class="d-inline m-0">
+                    <?= \App\Helpers\Csrf::field(); ?>
+                    <button type="submit" class="btn btn-warning text-dark fw-bold btn-sm shadow-sm px-3">
+                        <i class="fa fa-seedling me-1"></i> Seed <?= count($unseededTables); ?> Dictionaries Now
+                    </button>
+                </form>
+            </div>
+            <?php endif; ?>
 
             <div class="row g-3 mb-4">
                 
