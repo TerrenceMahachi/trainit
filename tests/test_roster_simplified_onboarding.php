@@ -386,4 +386,85 @@ if (!$assocProfile || (float)$assocProfile->day_rate_expectation !== 300.0) {
 }
 echo " - Verified Associate Profile: {$assocProfile->years_experience} at \${$assocProfile->day_rate_expectation}/day (Status: 2 Submitted)\n";
 
-echo "\n=== ALL 12 SIMPLIFIED ONBOARDING TESTS PASSED 100%! ===\n";
+// 13. Test Opportunities View: Guest vs Admin visibility
+echo "[Test 13] Verifying Opportunities page hides applicants for guest and shows applicants for Admin...";
+
+// Guest view
+$guestData = [
+    'title' => 'Apprentices and Associates',
+    'isAdmin' => false,
+    'user' => null,
+];
+$guestHtml = view('home.opportunities', ['data' => $guestData]);
+if (strpos($guestHtml, 'admin-applicants-section') !== false || strpos($guestHtml, 'Talent Intake Applicants') !== false) {
+    echo " FAILED: Guest visitor improperly saw admin applicants section!\n";
+    exit(1);
+}
+echo " PASSED (Guest view cleanly hides applicants pipeline)\n";
+
+// Admin view
+$adminUsers = User::findByQuery("SELECT * FROM user WHERE role = 1 AND status = 1 LIMIT 1");
+$adminUser = !empty($adminUsers) ? $adminUsers[0] : (new User())->find(1);
+Auth::login($adminUser->iD);
+
+$pdo = \App\Models\Database::sharedPdo();
+$adminData = [
+    'title' => 'Apprentices and Associates',
+    'user' => $adminUser,
+    'isAdmin' => true,
+    'statuses' => \App\Models\Applicationstatus::all(),
+    'tracks' => \App\Models\Applicationtrack::all(),
+    'totalApplicants' => (int)$pdo->query("SELECT COUNT(*) FROM rosterapplication")->fetchColumn(),
+    'apprenticeCount' => (int)$pdo->query("SELECT COUNT(*) FROM rosterapplication WHERE applicationtrack = 1")->fetchColumn(),
+    'associateCount' => (int)$pdo->query("SELECT COUNT(*) FROM rosterapplication WHERE applicationtrack = 2")->fetchColumn(),
+    'submittedCount' => (int)$pdo->query("SELECT COUNT(*) FROM rosterapplication WHERE applicationstatus = 2")->fetchColumn(),
+    'shortlistedCount' => (int)$pdo->query("SELECT COUNT(*) FROM rosterapplication WHERE applicationstatus = 3")->fetchColumn(),
+    'interviewCount' => (int)$pdo->query("SELECT COUNT(*) FROM rosterapplication WHERE applicationstatus = 4")->fetchColumn(),
+    'onRosterCount' => (int)$pdo->query("SELECT COUNT(*) FROM rosterapplication WHERE applicationstatus = 5")->fetchColumn(),
+    'initialApplications' => \App\Models\Rosterapplication::findByQuery("SELECT * FROM rosterapplication ORDER BY iD DESC LIMIT 20"),
+];
+
+$adminHtml = view('home.opportunities', ['data' => $adminData]);
+if (strpos($adminHtml, 'admin-applicants-section') === false || strpos($adminHtml, 'Talent Intake Applicants') === false) {
+    echo " FAILED: Admin visitor failed to see admin applicants section!\n";
+    exit(1);
+}
+if (strpos($adminHtml, 'Administrator Session Active') === false) {
+    echo " FAILED: Hero admin session active banner not rendered!\n";
+    exit(1);
+}
+echo " - Admin view verified: hero active ribbon, KPI cards, and applicants table successfully rendered.\n";
+
+// 14. Test Pipeline Records API includes CV metadata and inline shortlist support
+echo "[Test 14] Testing getAdminRosterRecords API & Shortlist Action as Admin...";
+$_POST = [
+    'search' => '',
+    'page' => 1,
+    'page_size' => 10,
+    'track' => 0,
+    'status' => 0,
+];
+$apiRes = $controller->getAdminRosterRecords();
+if ($apiRes['status'] !== 1 || !isset($apiRes['records']) || empty($apiRes['records'])) {
+    echo " FAILED: getAdminRosterRecords did not return records.\n";
+    exit(1);
+}
+$firstRecord = $apiRes['records'][0];
+if (!array_key_exists('has_cv', $firstRecord) || !array_key_exists('cv_path', $firstRecord)) {
+    echo " FAILED: getAdminRosterRecords record missing has_cv or cv_path field.\n";
+    exit(1);
+}
+echo " PASSED: API returned " . count($apiRes['records']) . " candidates with CV metadata (Candidate #{$firstRecord['iD']} '{$firstRecord['legal_name']}', has_cv: " . ($firstRecord['has_cv'] ? 'true' : 'false') . ").\n";
+
+// Test inline shortlisting via POST
+$_POST = [
+    'rosterapplication' => $assocApp->iD,
+];
+$shortlistRes = $controller->handleShortlistCandidate();
+if ($shortlistRes['status'] !== 1 || empty($shortlistRes['dossier_link'])) {
+    echo " FAILED: Shortlist candidate action failed: " . json_encode($shortlistRes) . "\n";
+    exit(1);
+}
+echo " - Inline shortlist action verified for Associate #{$assocApp->iD}: Link={$shortlistRes['dossier_link']}\n";
+
+echo "\n=== ALL 14 SIMPLIFIED ONBOARDING & ADMIN PIPELINE TESTS PASSED 100%! ===\n";

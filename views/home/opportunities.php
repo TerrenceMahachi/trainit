@@ -3,8 +3,20 @@
 <?php
 global $siteConfig;
 $loggedInUser = $data['user'] ?? null;
+$isAdmin = $data['isAdmin'] ?? false;
 $apprenticeUrl = $siteConfig->siteUrl . '/opportunities/apply/apprentice';
 $associateUrl = $siteConfig->siteUrl . '/opportunities/apply/associate';
+
+$statuses = $data['statuses'] ?? [];
+$tracks = $data['tracks'] ?? [];
+$totalApplicants = $data['totalApplicants'] ?? 0;
+$apprenticeCount = $data['apprenticeCount'] ?? 0;
+$associateCount = $data['associateCount'] ?? 0;
+$submittedCount = $data['submittedCount'] ?? 0;
+$shortlistedCount = $data['shortlistedCount'] ?? 0;
+$interviewCount = $data['interviewCount'] ?? 0;
+$onRosterCount = $data['onRosterCount'] ?? 0;
+$initialApplications = $data['initialApplications'] ?? [];
 ?>
 <main class="trainit-page opportunity-page">
     <!-- Hero Section -->
@@ -17,13 +29,41 @@ $associateUrl = $siteConfig->siteUrl . '/opportunities/apply/associate';
                 <h1>Launch Your Career. Contribute to Real Client Missions.</h1>
                 <p class="opportunity-intro">The Tsigiro Talent Network connects emerging practitioners and seasoned specialists to verified client briefs across Africa and beyond. Build tangible work experience or provide high-impact advisory oversight.</p>
                 
-                <?php if ($loggedInUser): ?>
+                <?php if ($isAdmin): ?>
+                    <div class="p-3 my-3 rounded-4" style="background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.25);">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                            <span class="badge bg-warning text-dark px-3 py-1 fw-bold fs-6">
+                                <i class="fa fa-shield-halved me-1"></i> Administrator Session Active
+                            </span>
+                            <span class="text-white small">
+                                Signed in as <strong><?= htmlspecialchars($loggedInUser->name ?? 'Administrator') ?></strong>
+                            </span>
+                        </div>
+                        <p class="text-white-50 small mb-3">
+                            Candidate applications are displayed below in real-time. You can filter, review, score, and shortlist candidates directly from this console.
+                        </p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a class="btn btn-sm btn-warning fw-bold rounded-pill px-3 shadow-sm" href="#admin-applicants-section">
+                                <i class="fa fa-users-viewfinder me-1"></i> View <?= $totalApplicants ?> Applicants
+                            </a>
+                            <a class="btn btn-sm btn-outline-light rounded-pill px-3" href="<?= $siteConfig->siteUrl ?>/admin/roster">
+                                <i class="fa fa-list-check me-1"></i> Dedicated Vetting Console
+                            </a>
+                            <a class="btn btn-sm btn-outline-light rounded-pill px-3" href="<?= $siteConfig->siteUrl ?>/dashboard">
+                                <i class="fa fa-gauge me-1"></i> Dashboard
+                            </a>
+                            <a class="btn btn-sm btn-outline-success rounded-pill px-3" href="<?= $apprenticeUrl ?>" target="_blank">
+                                <i class="fa fa-graduation-cap me-1"></i> Apprentice Form
+                            </a>
+                            <a class="btn btn-sm btn-outline-info rounded-pill px-3" href="<?= $associateUrl ?>" target="_blank">
+                                <i class="fa fa-user-tie me-1"></i> Associate Form
+                            </a>
+                        </div>
+                    </div>
+                <?php elseif ($loggedInUser): ?>
                     <div class="p-3 my-3 rounded-4" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);">
                         <p class="mb-2 text-white small">
                             <i class="fa fa-user-circle text-warning me-1"></i> Signed in as <strong><?= htmlspecialchars($loggedInUser->name) ?></strong>
-                            <?php if ((int)$loggedInUser->role === 1): ?>
-                                <span class="badge bg-warning text-dark ms-2">Administrator</span>
-                            <?php endif; ?>
                         </p>
                         <div class="d-flex flex-wrap gap-2">
                             <a class="btn btn-sm btn-success rounded-pill px-3" href="<?= $apprenticeUrl ?>">
@@ -35,11 +75,6 @@ $associateUrl = $siteConfig->siteUrl . '/opportunities/apply/associate';
                             <a class="btn btn-sm btn-outline-light rounded-pill px-3" href="<?= $siteConfig->siteUrl ?>/dashboard">
                                 <i class="fa fa-gauge me-1"></i> My Dashboard
                             </a>
-                            <?php if ((int)$loggedInUser->role === 1): ?>
-                                <a class="btn btn-sm btn-outline-warning rounded-pill px-3" href="<?= $siteConfig->siteUrl ?>/admin/roster">
-                                    <i class="fa fa-list-check me-1"></i> Vetting Pipeline
-                                </a>
-                            <?php endif; ?>
                         </div>
                     </div>
                 <?php else: ?>
@@ -67,6 +102,273 @@ $associateUrl = $siteConfig->siteUrl . '/opportunities/apply/associate';
             </figure>
         </div>
     </section>
+
+    <?php if ($isAdmin): ?>
+        <!-- ========================================================= -->
+        <!-- ADMIN APPLICANTS PIPELINE CONSOLE                         -->
+        <!-- ========================================================= -->
+        <section class="py-5 bg-white border-bottom shadow-sm" id="admin-applicants-section">
+            <div class="container">
+                <!-- Header Strip -->
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                    <div>
+                        <span class="badge bg-primary px-3 py-2 rounded-pill fw-bold">
+                            <i class="fa fa-users-viewfinder me-1"></i> Talent Pipeline Management
+                        </span>
+                        <h2 class="h3 fw-bold text-dark mt-2 mb-1">
+                            Talent Intake Applicants (<?= $totalApplicants; ?> Candidates)
+                        </h2>
+                        <p class="text-muted mb-0">
+                            Manage incoming submissions across Apprentice and Associate opportunity tracks. Shortlist candidates to dispatch their magic link.
+                        </p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="<?= $siteConfig->siteUrl; ?>/admin/roster" class="btn btn-outline-primary rounded-pill px-3 btn-sm fw-semibold">
+                            <i class="fa fa-expand me-1"></i> Dedicated Vetting Console
+                        </a>
+                        <button type="button" class="btn btn-primary rounded-pill px-3 btn-sm fw-semibold" onclick="loadData();">
+                            <i class="fa fa-arrows-rotate me-1"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Summary Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-light h-100 text-center">
+                            <span class="text-muted small d-block">Total Candidates</span>
+                            <h3 class="fw-bold text-dark mb-0 mt-1" id="kpi_total"><?= $totalApplicants; ?></h3>
+                            <span class="badge bg-secondary-subtle text-secondary rounded-pill mt-2">All Tracks</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-light h-100 text-center">
+                            <span class="text-muted small d-block">Apprentices</span>
+                            <h3 class="fw-bold text-success mb-0 mt-1" id="kpi_apprentice"><?= $apprenticeCount; ?></h3>
+                            <span class="badge bg-success-subtle text-success rounded-pill mt-2">Early Career</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-light h-100 text-center">
+                            <span class="text-muted small d-block">Associates</span>
+                            <h3 class="fw-bold text-primary mb-0 mt-1" id="kpi_associate"><?= $associateCount; ?></h3>
+                            <span class="badge bg-primary-subtle text-primary rounded-pill mt-2">Specialists</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-warning bg-opacity-10 border border-warning h-100 text-center">
+                            <span class="text-warning-emphasis small d-block fw-semibold">Needs Shortlist</span>
+                            <h3 class="fw-bold text-dark mb-0 mt-1" id="kpi_submitted"><?= $submittedCount; ?></h3>
+                            <span class="badge bg-warning text-dark rounded-pill mt-2">Status 2 (Intake)</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-info bg-opacity-10 border border-info h-100 text-center">
+                            <span class="text-info-emphasis small d-block fw-semibold">Shortlisted</span>
+                            <h3 class="fw-bold text-info-emphasis mb-0 mt-1" id="kpi_shortlisted"><?= $shortlistedCount; ?></h3>
+                            <span class="badge bg-info text-dark rounded-pill mt-2">Status 3 (Dossier)</span>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-4 col-lg-2">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-success bg-opacity-10 border border-success h-100 text-center">
+                            <span class="text-success small d-block fw-semibold">Active Roster</span>
+                            <h3 class="fw-bold text-success mb-0 mt-1" id="kpi_onroster"><?= $onRosterCount; ?></h3>
+                            <span class="badge bg-success text-white rounded-pill mt-2">Status 5 (Ready)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback Alert for Inline Actions -->
+                <div id="opportunities_admin_alert" style="display:none;" class="alert mb-4"></div>
+
+                <!-- Main Interactive Console Card -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-light">
+                    
+                    <!-- Quick Filter Ribbon -->
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3 pb-3 border-bottom">
+                        <span class="text-muted small fw-semibold me-1"><i class="fa fa-filter me-1"></i> Quick Filter:</span>
+                        <button type="button" class="btn btn-sm btn-dark rounded-pill px-3 py-1 btn-quick-filter" data-track="0" data-status="0">
+                            All Applicants (<?= $totalApplicants; ?>)
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning text-dark rounded-pill px-3 py-1 btn-quick-filter" data-track="0" data-status="2">
+                            <i class="fa fa-clock me-1 text-warning"></i> Needs Shortlisting (<?= $submittedCount; ?>)
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info text-dark rounded-pill px-3 py-1 btn-quick-filter" data-track="0" data-status="3">
+                            <i class="fa fa-star me-1 text-info"></i> Shortlisted (<?= $shortlistedCount; ?>)
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 btn-quick-filter" data-track="1" data-status="0">
+                            <i class="fa fa-graduation-cap me-1 text-success"></i> Apprentices (<?= $apprenticeCount; ?>)
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 btn-quick-filter" data-track="2" data-status="0">
+                            <i class="fa fa-user-tie me-1 text-primary"></i> Associates (<?= $associateCount; ?>)
+                        </button>
+                    </div>
+
+                    <!-- Search & Filters Toolbar -->
+                    <div class="row g-2 justify-content-between align-items-center mb-3">
+                        <div class="col-12 col-md-5">
+                            <form id="opportunitiesSearchForm" onsubmit="current_page = 1; loadData(); return false;">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0"><i class="fa fa-search text-muted"></i></span>
+                                    <input type="search" name="search" id="roster_search_input" class="form-control border-start-0" placeholder="Search applicant name, email, discipline, city...">
+                                    <button class="btn btn-primary" type="submit">Search</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="col-12 col-md-auto d-flex flex-wrap align-items-center gap-2">
+                            <!-- View Toggle -->
+                            <div class="view-toggle" id="viewToggle" role="group" aria-label="Switch view">
+                                <span class="tableView p-2" title="Table view"><i class="fas fa-table"></i></span>
+                                <span class="listView p-2" title="Card / Grid view"><i class="fas fa-list"></i></span>
+                            </div>
+
+                            <!-- Track Select -->
+                            <select class="form-select form-select-sm" id="track_filter" style="width: auto;">
+                                <option value="0">All Tracks</option>
+                                <?php foreach ($tracks as $tr): ?>
+                                    <option value="<?= $tr->iD; ?>"><?= htmlspecialchars($tr->name); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+
+                            <!-- Status Select -->
+                            <select class="form-select form-select-sm" id="status_filter" style="width: auto;">
+                                <option value="0">All Statuses</option>
+                                <?php foreach ($statuses as $st): ?>
+                                    <option value="<?= $st->iD; ?>"><?= htmlspecialchars($st->name); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+
+                            <!-- Sort Select -->
+                            <select class="form-select form-select-sm" id="order_filter" style="width: auto;">
+                                <option value="reg_date DESC" selected>Newest First</option>
+                                <option value="reg_date ASC">Oldest First</option>
+                                <option value="legal_name ASC">Name A - Z</option>
+                                <option value="legal_name DESC">Name Z - A</option>
+                                <option value="iD DESC">App ID (High - Low)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Results Container -->
+                    <div id="results" class="my-2">
+                        <!-- SSR Initial Table Fallback -->
+                        <div class="table-responsive bg-white rounded-3 shadow-sm border">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#ID</th>
+                                        <th>Applicant</th>
+                                        <th>Track</th>
+                                        <th>Practice Area</th>
+                                        <th>Location</th>
+                                        <th>Status</th>
+                                        <th>Score</th>
+                                        <th>Applied</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($initialApplications as $app): 
+                                        $tr = $app->applicationtrack();
+                                        $st = $app->applicationstatus();
+                                        $fn = $app->primaryfunction();
+                                        $zp = $app->zimprovince();
+                                        $assessment = $app->assessment();
+                                        $docs = $app->documents();
+                                        $hasCv = false;
+                                        $cvPath = '';
+                                        foreach ($docs as $d) {
+                                            $dt = $d->documenttype();
+                                            if ($dt && $dt->code === 'CV_RESUME') {
+                                                $hasCv = true;
+                                                $cvPath = $d->file_path;
+                                                break;
+                                            }
+                                        }
+                                        $stCode = $st ? $st->code : 'submitted';
+                                        $badgeClass = 'bg-secondary';
+                                        if ($stCode === 'submitted') $badgeClass = 'bg-primary';
+                                        elseif ($stCode === 'screened') $badgeClass = 'bg-info text-dark';
+                                        elseif ($stCode === 'interviewed') $badgeClass = 'bg-warning text-dark';
+                                        elseif ($stCode === 'on_roster') $badgeClass = 'bg-success';
+                                        elseif ($stCode === 'rejected') $badgeClass = 'bg-danger';
+
+                                        $trCode = $tr ? $tr->code : 'apprentice';
+                                        $trBadge = ($trCode === 'apprentice') ? 'bg-success' : 'bg-primary';
+                                    ?>
+                                        <tr>
+                                            <td class="fw-bold text-muted">#APP-<?= str_pad((string)$app->iD, 5, '0', STR_PAD_LEFT); ?></td>
+                                            <td>
+                                                <div class="fw-bold text-dark">
+                                                    <?= htmlspecialchars($app->legal_name); ?>
+                                                    <?php if ($hasCv): ?>
+                                                        <span class="badge bg-light text-danger border ms-1"><i class="fa fa-file-pdf me-1"></i>CV</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <small class="text-muted"><?= htmlspecialchars($app->email); ?> &bull; <?= htmlspecialchars($app->mobile_number); ?></small>
+                                            </td>
+                                            <td>
+                                                <span class="badge <?= $trBadge; ?> rounded-pill px-2 py-1">
+                                                    <?= htmlspecialchars($tr ? $tr->name : 'General'); ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="small fw-semibold"><?= htmlspecialchars($fn ? $fn->name : 'General'); ?></span>
+                                            </td>
+                                            <td>
+                                                <span class="small text-muted"><?= htmlspecialchars($app->city ?: 'Harare'); ?><?= $zp ? ', ' . htmlspecialchars($zp->name) : ''; ?></span>
+                                            </td>
+                                            <td>
+                                                <span class="badge <?= $badgeClass; ?> rounded-pill px-2 py-1" id="status_badge_<?= $app->iD; ?>">
+                                                    <?= htmlspecialchars($st ? $st->name : 'Submitted'); ?>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <?php if ($assessment && $assessment->total_score > 0): ?>
+                                                    <strong class="text-dark small"><?= number_format((float)$assessment->total_score, 1); ?>/100</strong>
+                                                <?php else: ?>
+                                                    <span class="text-muted small">Not Scored</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted"><?= date('d M Y', strtotime($app->reg_date)); ?></small>
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="d-flex justify-content-end gap-1 flex-wrap">
+                                                    <?php if ((int)$app->applicationstatus === 2): ?>
+                                                        <button type="button" class="btn btn-sm btn-outline-success rounded-pill btn-inline-shortlist" data-app-id="<?= $app->iD; ?>">
+                                                            <i class="fa fa-check-circle me-1"></i> Shortlist
+                                                        </button>
+                                                    <?php elseif ((int)$app->applicationstatus === 3): ?>
+                                                        <button type="button" class="btn btn-sm btn-outline-info rounded-pill btn-inline-shortlist" data-app-id="<?= $app->iD; ?>">
+                                                            <i class="fa fa-redo me-1"></i> Resend Link
+                                                        </button>
+                                                    <?php endif; ?>
+                                                    <a href="<?= $siteConfig->siteUrl; ?>/admin/roster/review?id=<?= $app->iD; ?>" class="btn btn-sm btn-primary rounded-pill">
+                                                        <i class="fa fa-gavel me-1"></i> Review
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Boilerplate Standard AJAX Pagination Include -->
+                    <div id="pagination-controls" class="d-flex justify-content-center mt-3"></div>
+                    <script>
+                        var table = "opportunities-admin";
+                        var site = "<?= $siteConfig->siteUrl; ?>";
+                    </script>
+                    <?php include($siteConfig->assetsLoc . '/nav/ajax-pagination.php'); ?>
+
+                </div>
+            </div>
+        </section>
+    <?php endif; ?>
 
     <!-- Path Chooser -->
     <section class="opportunity-section" id="choose-your-path">
@@ -350,3 +652,276 @@ $associateUrl = $siteConfig->siteUrl . '/opportunities/apply/associate';
     </section>
 </main>
 <script src="<?= $siteConfig->assetsUrl ?>/scripts/opportunities.js?v=<?= _ASSET_VERSION ?>"></script>
+<?php if ($isAdmin): ?>
+<script>
+$(document).ready(function () {
+    // Quick filter click handler
+    $('.btn-quick-filter').on('click', function () {
+        $('.btn-quick-filter').removeClass('btn-dark text-white').addClass('text-dark');
+        $(this).removeClass('text-dark').addClass('btn-dark text-white');
+
+        const trackVal = $(this).data('track');
+        const statusVal = $(this).data('status');
+
+        $('#track_filter').val(trackVal);
+        $('#status_filter').val(statusVal);
+
+        current_page = 1;
+        if (typeof pageState !== 'undefined') {
+            pageState.set('current_page', current_page);
+        }
+        loadData();
+    });
+
+    // Dropdown change handlers
+    $('#track_filter, #status_filter').on('change', function () {
+        current_page = 1;
+        if (typeof pageState !== 'undefined') {
+            pageState.set('current_page', current_page);
+        }
+        loadData();
+    });
+});
+
+function loadData() {
+    $('#results').html('<div class="text-center text-muted py-5"><span class="spinner-border text-primary me-2"></span>Loading candidates...</div>');
+
+    const search = $('#roster_search_input').val();
+    const ps = (typeof pageState !== 'undefined') ? pageState.get('page_size', '10') : 10;
+    const ob = $('#order_filter').val() || 'reg_date DESC';
+    const track = $('#track_filter').val() || 0;
+    const status = $('#status_filter').val() || 0;
+    const uri = site + "/get-admin-roster-records";
+
+    $.ajax({
+        url: uri,
+        type: "POST",
+        dataType: "json",
+        data: {
+            search: search,
+            page: current_page,
+            order_by: ob,
+            page_size: ps,
+            track: track,
+            status: status
+        },
+        success: function (response) {
+            const data = typeof response === 'string' ? JSON.parse(response) : response;
+            if (data.status === 1) {
+                displayResults(data.records, data.pagination);
+            } else {
+                $('#results').html('<div class="alert alert-warning text-center py-4">' + (data.msg || 'No candidates found.') + '</div>');
+            }
+        },
+        error: function () {
+            $('#results').html('<div class="alert alert-danger text-center py-4"><i class="fa fa-exclamation-triangle me-2"></i>Could not load candidate records. Please try again.</div>');
+        }
+    });
+}
+
+function displayResults(records, pagination) {
+    if (typeof generate_pagination_list === 'function' && pagination) {
+        generate_pagination_list(pagination.total_pages, pagination.total_records);
+    }
+
+    if (!records || records.length === 0) {
+        $('#results').html('<div class="text-center py-5 text-muted bg-white rounded-3 shadow-sm border p-4"><i class="fa fa-inbox fa-3x mb-3 d-block text-secondary"></i><h5>No candidates found</h5><p class="small text-muted mb-0">Try adjusting your filters or search terms.</p></div>');
+        return;
+    }
+
+    if (currentView === 'table') {
+        let rows = '';
+        records.forEach(function (app) {
+            let badgeClass = 'bg-secondary';
+            if (app.status_code === 'submitted') badgeClass = 'bg-primary';
+            else if (app.status_code === 'screened') badgeClass = 'bg-info text-dark';
+            else if (app.status_code === 'interviewed') badgeClass = 'bg-warning text-dark';
+            else if (app.status_code === 'on_roster') badgeClass = 'bg-success';
+            else if (app.status_code === 'rejected') badgeClass = 'bg-danger';
+
+            const scoreDisplay = (app.total_score !== null && app.total_score > 0)
+                ? '<strong class="text-dark small">' + parseFloat(app.total_score).toFixed(1) + '/100</strong>'
+                : '<span class="text-muted small">Not Scored</span>';
+
+            const trackBadgeClass = (app.track_code === 'apprentice') ? 'bg-success' : 'bg-primary';
+            const cvBadge = app.has_cv
+                ? '<span class="badge bg-light text-danger border ms-1"><i class="fa fa-file-pdf me-1"></i>CV</span>'
+                : '';
+
+            let shortlistAction = '';
+            if (app.status_id === 2) {
+                shortlistAction = '<button type="button" class="btn btn-sm btn-outline-success rounded-pill btn-inline-shortlist" data-app-id="' + app.iD + '"><i class="fa fa-check-circle me-1"></i> Shortlist</button>';
+            } else if (app.status_id === 3) {
+                shortlistAction = '<button type="button" class="btn btn-sm btn-outline-info rounded-pill btn-inline-shortlist" data-app-id="' + app.iD + '"><i class="fa fa-redo me-1"></i> Resend Link</button>';
+            }
+
+            rows += `<tr>
+                <td class="fw-bold text-muted">#APP-${String(app.iD).padStart(5, '0')}</td>
+                <td>
+                    <div class="fw-bold text-dark">${escapeHtml(app.legal_name)}${cvBadge}</div>
+                    <small class="text-muted">${escapeHtml(app.email)} &bull; ${escapeHtml(app.mobile_number || '')}</small>
+                </td>
+                <td><span class="badge ${trackBadgeClass} rounded-pill px-2 py-1">${escapeHtml(app.track_name)}</span></td>
+                <td><span class="small fw-semibold">${escapeHtml(app.primary_function)}</span></td>
+                <td><span class="small text-muted">${escapeHtml(app.city || 'Harare')}${app.province ? ', ' + escapeHtml(app.province) : ''}</span></td>
+                <td><span class="badge ${badgeClass} rounded-pill px-2 py-1" id="status_badge_${app.iD}">${escapeHtml(app.status_name)}</span></td>
+                <td>${scoreDisplay}</td>
+                <td><small class="text-muted">${app.reg_date}</small></td>
+                <td class="text-end">
+                    <div class="d-flex justify-content-end gap-1 flex-wrap">
+                        ${shortlistAction}
+                        <a href="${site}/admin/roster/review?id=${app.iD}" class="btn btn-sm btn-primary rounded-pill">
+                            <i class="fa fa-gavel me-1"></i> Review
+                        </a>
+                    </div>
+                </td>
+            </tr>`;
+        });
+
+        const tableHtml = `
+            <div class="table-responsive bg-white rounded-3 shadow-sm border">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#ID</th>
+                            <th>Applicant</th>
+                            <th>Track</th>
+                            <th>Practice Area</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                            <th>Score</th>
+                            <th>Applied</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+        $('#results').html(tableHtml);
+    } else {
+        let cards = '<div class="row g-3">';
+        records.forEach(function (app) {
+            let badgeClass = 'bg-secondary';
+            if (app.status_code === 'submitted') badgeClass = 'bg-primary';
+            else if (app.status_code === 'screened') badgeClass = 'bg-info text-dark';
+            else if (app.status_code === 'interviewed') badgeClass = 'bg-warning text-dark';
+            else if (app.status_code === 'on_roster') badgeClass = 'bg-success';
+            else if (app.status_code === 'rejected') badgeClass = 'bg-danger';
+
+            const trackBadgeClass = (app.track_code === 'apprentice') ? 'bg-success' : 'bg-primary';
+            const scoreDisplay = (app.total_score !== null && app.total_score > 0)
+                ? '<span class="badge bg-dark fs-6">' + parseFloat(app.total_score).toFixed(1) + ' / 100 PTS</span>'
+                : '<span class="badge bg-light text-muted border">Not Scored</span>';
+
+            let shortlistAction = '';
+            if (app.status_id === 2) {
+                shortlistAction = '<button type="button" class="btn btn-sm btn-outline-success rounded-pill btn-inline-shortlist" data-app-id="' + app.iD + '"><i class="fa fa-check-circle me-1"></i> Shortlist</button>';
+            } else if (app.status_id === 3) {
+                shortlistAction = '<button type="button" class="btn btn-sm btn-outline-info rounded-pill btn-inline-shortlist" data-app-id="' + app.iD + '"><i class="fa fa-redo me-1"></i> Resend Link</button>';
+            }
+
+            cards += `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 bg-white p-3 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge ${trackBadgeClass} rounded-pill px-2 py-1">${escapeHtml(app.track_name)}</span>
+                                <span class="badge ${badgeClass} rounded-pill px-2 py-1" id="status_badge_${app.iD}">${escapeHtml(app.status_name)}</span>
+                            </div>
+                            <h6 class="fw-bold mb-1 text-dark">
+                                #${String(app.iD).padStart(5, '0')} ${escapeHtml(app.legal_name)}
+                                ${app.has_cv ? '<span class="badge bg-light text-danger border ms-1"><i class="fa fa-file-pdf"></i></span>' : ''}
+                            </h6>
+                            <p class="text-muted small mb-1"><i class="fa fa-envelope me-1"></i> ${escapeHtml(app.email)}</p>
+                            <p class="text-muted small mb-1"><i class="fa fa-phone me-1"></i> ${escapeHtml(app.mobile_number || 'N/A')}</p>
+                            <p class="text-muted small mb-1"><i class="fa fa-briefcase me-1"></i> ${escapeHtml(app.primary_function)}</p>
+                            <p class="text-muted small mb-0"><i class="fa fa-map-marker-alt me-1"></i> ${escapeHtml(app.city || 'Harare')}${app.province ? ', ' + escapeHtml(app.province) : ''}</p>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-3">
+                            <div>${scoreDisplay}</div>
+                            <div class="d-flex gap-1">
+                                ${shortlistAction}
+                                <a href="${site}/admin/roster/review?id=${app.iD}" class="btn btn-sm btn-primary rounded-pill">
+                                    <i class="fa fa-gavel me-1"></i> Review
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        });
+        cards += '</div>';
+        $('#results').html(cards);
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return $('<div>').text(str).html();
+}
+
+$(document).on('click', '.btn-inline-shortlist', function () {
+    const $btn = $(this);
+    const appId = $btn.data('app-id');
+    if (!appId) return;
+
+    const originalHtml = $btn.html();
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Processing...');
+
+    $.ajax({
+        url: site + "/admin/roster/shortlist",
+        type: "POST",
+        dataType: "json",
+        data: { rosterapplication: appId, id: appId },
+        success: function (res) {
+            const data = typeof res === 'string' ? JSON.parse(res) : res;
+            if (data.status === 1) {
+                $('#opportunities_admin_alert')
+                    .removeClass('alert-danger')
+                    .addClass('alert-success')
+                    .html('<i class="fa fa-check-circle me-2"></i><strong>Candidate #' + appId + ' Shortlisted!</strong> Magic link dispatched via email. <a href="' + (data.dossier_link || '#') + '" target="_blank" class="alert-link ms-2"><i class="fa fa-external-link-alt me-1"></i>Open Dossier Form</a>')
+                    .fadeIn();
+
+                // Update status badge
+                $('#status_badge_' + appId)
+                    .removeClass('bg-secondary bg-primary bg-danger')
+                    .addClass('bg-info text-dark')
+                    .text('Screened / Shortlisted');
+
+                // Update button
+                $btn.removeClass('btn-outline-success')
+                    .addClass('btn-outline-info')
+                    .prop('disabled', false)
+                    .html('<i class="fa fa-redo me-1"></i> Resend Link');
+
+                // Update KPIs
+                const $subCount = $('#kpi_submitted');
+                const $shortCount = $('#kpi_shortlisted');
+                if ($subCount.length) {
+                    let subVal = Math.max(0, parseInt($subCount.text()) - 1);
+                    $subCount.text(subVal);
+                }
+                if ($shortCount.length) {
+                    let shortVal = parseInt($shortCount.text()) + 1;
+                    $shortCount.text(shortVal);
+                }
+            } else {
+                $('#opportunities_admin_alert')
+                    .removeClass('alert-success')
+                    .addClass('alert-danger')
+                    .html('<i class="fa fa-exclamation-circle me-2"></i>' + (data.msg || 'Could not shortlist candidate.'))
+                    .fadeIn();
+                $btn.prop('disabled', false).html(originalHtml);
+            }
+        },
+        error: function () {
+            $('#opportunities_admin_alert')
+                .removeClass('alert-success')
+                .addClass('alert-danger')
+                .html('<i class="fa fa-exclamation-circle me-2"></i>Network error occurred while shortlisting candidate.')
+                .fadeIn();
+            $btn.prop('disabled', false).html(originalHtml);
+        }
+    });
+});
+</script>
+<?php endif; ?>

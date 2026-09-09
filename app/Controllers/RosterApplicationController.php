@@ -200,11 +200,11 @@ class RosterApplicationController
     public function handleShortlistCandidate(): array
     {
         global $siteConfig;
-        if (!Auth::isAdmin() && !Auth::isVettingOfficer()) {
+        if (!Auth::isAdmin() && !Auth::isVettingOfficer() && !Auth::isServiceManager()) {
             return ['status' => 0, 'msg' => 'Unauthorized'];
         }
 
-        $appId = (int)($_POST['rosterapplication'] ?? 0);
+        $appId = (int)($_POST['rosterapplication'] ?? $_POST['id'] ?? 0);
         $app = (new Rosterapplication())->find($appId);
         if (!$app) {
             return ['status' => 0, 'msg' => 'Application not found'];
@@ -1567,6 +1567,17 @@ class RosterApplicationController
             $fn = $app->primaryfunction();
             $zp = $app->zimprovince();
             $assessment = $app->assessment();
+            $docs = $app->documents();
+            $hasCv = false;
+            $cvPath = '';
+            foreach ($docs as $doc) {
+                $dt = $doc->documenttype();
+                if ($dt && $dt->code === 'CV_RESUME') {
+                    $hasCv = true;
+                    $cvPath = $doc->file_path;
+                    break;
+                }
+            }
 
             $records[] = [
                 'iD' => $app->iD,
@@ -1583,6 +1594,9 @@ class RosterApplicationController
                 'status_code' => $st ? $st->code : 'draft',
                 'total_score' => $assessment ? (float)$assessment->total_score : null,
                 'gate_passed' => $assessment ? (bool)$assessment->eligibility_gate_passed : false,
+                'has_cv' => $hasCv,
+                'cv_path' => $cvPath,
+                'doc_count' => count($docs),
                 'reg_date' => date('d M Y', strtotime($app->reg_date)),
             ];
         }
