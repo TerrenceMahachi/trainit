@@ -67,7 +67,7 @@ $cId = is_object($client) ? $client->iD : $client['iD'];
                         </div>
                         <div class="list-group-item px-0 py-2 d-flex justify-content-between">
                             <span class="text-muted">Tax ID (TIN)</span>
-                            <span class="fw-bold"><?= htmlspecialchars(is_object($client) ? $client->tax_number : $client['tax_number'] ?: 'N/A') ?></span>
+                            <span class="fw-bold"><?= htmlspecialchars((is_object($client) ? $client->tax_number : $client['tax_number']) ?: 'N/A') ?></span>
                         </div>
                         <div class="list-group-item px-0 py-2 d-flex justify-content-between">
                             <span class="text-muted">Billing Email</span>
@@ -77,11 +77,11 @@ $cId = is_object($client) ? $client->iD : $client['iD'];
                         </div>
                         <div class="list-group-item px-0 py-2 d-flex justify-content-between">
                             <span class="text-muted">Primary Phone</span>
-                            <span class="fw-bold"><?= htmlspecialchars(is_object($client) ? $client->primary_phone : $client['primary_phone'] ?: 'N/A') ?></span>
+                            <span class="fw-bold"><?= htmlspecialchars((is_object($client) ? $client->primary_phone : $client['primary_phone']) ?: 'N/A') ?></span>
                         </div>
                         <div class="list-group-item px-0 py-2">
                             <span class="text-muted d-block mb-1">Physical Address</span>
-                            <span class="fw-bold"><?= htmlspecialchars(is_object($client) ? $client->address : $client['address'] ?: 'N/A') ?>, <?= htmlspecialchars(is_object($client) ? $client->city : $client['city']) ?>, <?= htmlspecialchars(is_object($client) ? $client->country : $client['country']) ?></span>
+                            <span class="fw-bold"><?= htmlspecialchars((is_object($client) ? $client->address : $client['address']) ?: 'N/A') ?>, <?= htmlspecialchars(is_object($client) ? $client->city : $client['city']) ?>, <?= htmlspecialchars(is_object($client) ? $client->country : $client['country']) ?></span>
                         </div>
                     </div>
                 </div>
