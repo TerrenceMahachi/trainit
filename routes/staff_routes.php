@@ -95,9 +95,21 @@ $router->addRoute('POST', '/admin/staff/time/signoff', function () {
     exit;
 });
 
-// 11. Staff Self-Service Hub
+// 11. Staff Self-Service Hub (Dedicated Section Routes)
 $router->addRoute('GET', '/staff/portal', function () {
-    (new StaffController())->selfService();
+    (new StaffController())->selfService('documents');
+    exit;
+});
+$router->addRoute('GET', '/staff/portal/documents', function () {
+    (new StaffController())->selfService('documents');
+    exit;
+});
+$router->addRoute('GET', '/staff/portal/leave', function () {
+    (new StaffController())->selfService('leave');
+    exit;
+});
+$router->addRoute('GET', '/staff/portal/timesheets', function () {
+    (new StaffController())->selfService('timesheets');
     exit;
 });
 

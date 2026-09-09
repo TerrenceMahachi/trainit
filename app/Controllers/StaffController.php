@@ -1030,7 +1030,7 @@ class StaffController
         $endDate = trim($_POST['end_date'] ?? '');
         $daysRequested = (float)($_POST['days_requested'] ?? 1.0);
         $reason = trim($_POST['reason'] ?? '');
-        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/staff/portal');
+        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/staff/portal/leave');
 
         $profile = Staffprofile::find($staffprofileId);
         if (!$profile) {
@@ -1156,7 +1156,7 @@ class StaffController
         $workDate = trim($_POST['work_date'] ?? date('Y-m-d'));
         $hours = (float)($_POST['hours'] ?? 0);
         $summary = trim($_POST['task_summary'] ?? '');
-        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/staff/portal');
+        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/staff/portal/timesheets');
 
         $profile = Staffprofile::find($staffprofileId);
         if (!$profile) {
@@ -1240,14 +1240,19 @@ class StaffController
     }
 
     /**
-     * Staff Self-Service Portal (GET /staff/portal).
+     * Staff Self-Service Portal (GET /staff/portal/:section).
      */
-    public function selfService()
+    public function selfService(string $section = 'documents')
     {
         global $siteConfig;
         if (!Auth::check()) {
             header("Location: " . $siteConfig->siteUrl . "/login");
             exit;
+        }
+
+        $validSections = ['documents', 'leave', 'timesheets'];
+        if (!in_array($section, $validSections, true)) {
+            $section = 'documents';
         }
 
         $user = Auth::user();
@@ -1332,11 +1337,24 @@ class StaffController
             'department' => $deptAssignments[0]->department()
         ] : null;
 
+        $sectionTitles = [
+            'documents'  => 'My Documents — Staff Hub',
+            'leave'      => 'My Leave Applications — Staff Hub',
+            'timesheets' => 'My Operational Time Logs — Staff Hub',
+        ];
+
+        $viewMap = [
+            'documents'  => 'staff.portal_documents',
+            'leave'      => 'staff.portal_leave',
+            'timesheets' => 'staff.portal_timesheets',
+        ];
+
         $data = [
-            'title'            => 'Staff Self-Service Hub',
+            'title'            => $sectionTitles[$section] ?? 'Staff Self-Service Hub',
             'user'             => $user,
             'profile'          => $profile,
             'role'             => $user->role(),
+            'activeTab'        => $section,
             'documents'        => $documents,
             'leaves'           => $leaves,
             'timeEntries'      => $timeEntries,
@@ -1347,7 +1365,8 @@ class StaffController
             'allDepartments'   => Department::all()
         ];
 
-        echo view('staff.portal', compact('data'));
+        $targetView = $viewMap[$section] ?? 'staff.portal_documents';
+        echo view($targetView, compact('data'));
         exit;
     }
 
