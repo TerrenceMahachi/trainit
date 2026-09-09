@@ -411,7 +411,7 @@ $initialApplications = $data['initialApplications'] ?? [];
                         </li>
                     </ul>
                     <div class="mt-4">
-                        <a class="btn btn-success rounded-pill px-4 py-2 fw-semibold" href="<?= $apprenticeUrl ?>">
+                        <a class="trainit-button trainit-button-primary rounded-pill px-4 py-2" href="<?= $apprenticeUrl ?>">
                             Start Apprentice Application <i class="fa fa-arrow-right ms-1"></i>
                         </a>
                     </div>
@@ -444,7 +444,7 @@ $initialApplications = $data['initialApplications'] ?? [];
                         </li>
                     </ul>
                     <div class="mt-4">
-                        <a class="btn btn-primary rounded-pill px-4 py-2 fw-semibold" href="<?= $associateUrl ?>">
+                        <a class="btn btn-dark rounded-pill px-4 py-2 fw-bold" href="<?= $associateUrl ?>">
                             Start Associate Application <i class="fa fa-arrow-right ms-1"></i>
                         </a>
                     </div>
@@ -464,65 +464,65 @@ $initialApplications = $data['initialApplications'] ?? [];
         <div class="container py-4">
             <div class="text-center max-w-700 mx-auto mb-5 opportunity-reveal">
                 <p class="opportunity-kicker opportunity-kicker-dark"><span></span> Active Roster Disciplines</p>
-                <h2 class="fw-bold">Key Practice Areas & Functional Functions</h2>
-                <p class="text-muted">We actively recruit and place talent across diverse core disciplines for corporate, NGO, and institutional clients.</p>
+                <h2 class="fw-bold" style="color: #090b0b;">Key Practice Areas & Functional Functions</h2>
+                <p class="fw-medium" style="color: #334155; font-size: 1.05rem;">We actively recruit and place talent across diverse core disciplines for corporate, NGO, and institutional clients.</p>
             </div>
 
             <div class="row g-4">
                 <div class="col-sm-6 col-md-4 col-lg-3 opportunity-reveal">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center">
-                        <div class="fs-1 text-primary mb-3"><i class="fa fa-code"></i></div>
-                        <h5 class="fw-bold mb-2">Software Development</h5>
-                        <p class="text-muted small mb-0">Web applications, APIs, mobile solutions, and database integrations.</p>
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center" style="background: #ffffff; border: 1px solid rgba(9, 11, 11, 0.08) !important;">
+                        <div class="fs-1 mb-3" style="color: #0d6b52;"><i class="fa fa-code"></i></div>
+                        <h5 class="fw-bold mb-2" style="color: #090b0b;">Software Development</h5>
+                        <p class="mb-0" style="color: #334155; font-size: 0.92rem; line-height: 1.55;">Web applications, APIs, mobile solutions, and database integrations.</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-md-4 col-lg-3 opportunity-reveal" data-delay="50">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center">
-                        <div class="fs-1 text-success mb-3"><i class="fa fa-server"></i></div>
-                        <h5 class="fw-bold mb-2">ICT & Systems Admin</h5>
-                        <p class="text-muted small mb-0">Cloud environments, network infrastructure, security, and tech support.</p>
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center" style="background: #ffffff; border: 1px solid rgba(9, 11, 11, 0.08) !important;">
+                        <div class="fs-1 mb-3" style="color: #15803d;"><i class="fa fa-server"></i></div>
+                        <h5 class="fw-bold mb-2" style="color: #090b0b;">ICT & Systems Admin</h5>
+                        <p class="mb-0" style="color: #334155; font-size: 0.92rem; line-height: 1.55;">Cloud environments, network infrastructure, security, and tech support.</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-md-4 col-lg-3 opportunity-reveal" data-delay="100">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center">
-                        <div class="fs-1 text-info mb-3"><i class="fa fa-calculator"></i></div>
-                        <h5 class="fw-bold mb-2">Finance & Accounting</h5>
-                        <p class="text-muted small mb-0">Management accounting, statutory returns (ZIMRA/NSSA), and audits.</p>
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center" style="background: #ffffff; border: 1px solid rgba(9, 11, 11, 0.08) !important;">
+                        <div class="fs-1 mb-3" style="color: #0369a1;"><i class="fa fa-calculator"></i></div>
+                        <h5 class="fw-bold mb-2" style="color: #090b0b;">Finance & Accounting</h5>
+                        <p class="mb-0" style="color: #334155; font-size: 0.92rem; line-height: 1.55;">Management accounting, statutory returns (ZIMRA/NSSA), and audits.</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-md-4 col-lg-3 opportunity-reveal" data-delay="150">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center">
-                        <div class="fs-1 text-warning mb-3"><i class="fa fa-users-gear"></i></div>
-                        <h5 class="fw-bold mb-2">Human Resources</h5>
-                        <p class="text-muted small mb-0">Payroll processing, talent acquisition, labor compliance, and policy.</p>
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center" style="background: #ffffff; border: 1px solid rgba(9, 11, 11, 0.08) !important;">
+                        <div class="fs-1 mb-3" style="color: #b45309;"><i class="fa fa-users-gear"></i></div>
+                        <h5 class="fw-bold mb-2" style="color: #090b0b;">Human Resources</h5>
+                        <p class="mb-0" style="color: #334155; font-size: 0.92rem; line-height: 1.55;">Payroll processing, talent acquisition, labor compliance, and policy.</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-md-4 col-lg-3 opportunity-reveal" data-delay="200">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center">
-                        <div class="fs-1 text-danger mb-3"><i class="fa fa-hand-holding-dollar"></i></div>
-                        <h5 class="fw-bold mb-2">Grants & Donor Compliance</h5>
-                        <p class="text-muted small mb-0">NGO financial reporting, grant acquittals, and donor compliance.</p>
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center" style="background: #ffffff; border: 1px solid rgba(9, 11, 11, 0.08) !important;">
+                        <div class="fs-1 mb-3" style="color: #b91c1c;"><i class="fa fa-hand-holding-dollar"></i></div>
+                        <h5 class="fw-bold mb-2" style="color: #090b0b;">Grants & Donor Compliance</h5>
+                        <p class="mb-0" style="color: #334155; font-size: 0.92rem; line-height: 1.55;">NGO financial reporting, grant acquittals, and donor compliance.</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-md-4 col-lg-3 opportunity-reveal" data-delay="250">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center">
-                        <div class="fs-1 text-primary mb-3"><i class="fa fa-chart-pie"></i></div>
-                        <h5 class="fw-bold mb-2">MEAL & Data Analytics</h5>
-                        <p class="text-muted small mb-0">Baseline surveys, impact evaluation, PowerBI dashboards, and reporting.</p>
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center" style="background: #ffffff; border: 1px solid rgba(9, 11, 11, 0.08) !important;">
+                        <div class="fs-1 mb-3" style="color: #6d28d9;"><i class="fa fa-chart-pie"></i></div>
+                        <h5 class="fw-bold mb-2" style="color: #090b0b;">MEAL & Data Analytics</h5>
+                        <p class="mb-0" style="color: #334155; font-size: 0.92rem; line-height: 1.55;">Baseline surveys, impact evaluation, PowerBI dashboards, and reporting.</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-md-4 col-lg-3 opportunity-reveal" data-delay="300">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center">
-                        <div class="fs-1 text-secondary mb-3"><i class="fa fa-boxes-packing"></i></div>
-                        <h5 class="fw-bold mb-2">Procurement & Logistics</h5>
-                        <p class="text-muted small mb-0">Vendor sourcing, fleet logistics, inventory control, and contracts.</p>
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center" style="background: #ffffff; border: 1px solid rgba(9, 11, 11, 0.08) !important;">
+                        <div class="fs-1 mb-3" style="color: #334155;"><i class="fa fa-boxes-packing"></i></div>
+                        <h5 class="fw-bold mb-2" style="color: #090b0b;">Procurement & Logistics</h5>
+                        <p class="mb-0" style="color: #334155; font-size: 0.92rem; line-height: 1.55;">Vendor sourcing, fleet logistics, inventory control, and contracts.</p>
                     </div>
                 </div>
                 <div class="col-sm-6 col-md-4 col-lg-3 opportunity-reveal" data-delay="350">
-                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center">
-                        <div class="fs-1 text-dark mb-3"><i class="fa fa-shield-halved"></i></div>
-                        <h5 class="fw-bold mb-2">Internal Audit & Risk</h5>
-                        <p class="text-muted small mb-0">Risk assessment, internal controls review, and governance audits.</p>
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center" style="background: #ffffff; border: 1px solid rgba(9, 11, 11, 0.08) !important;">
+                        <div class="fs-1 mb-3" style="color: #090b0b;"><i class="fa fa-shield-halved"></i></div>
+                        <h5 class="fw-bold mb-2" style="color: #090b0b;">Internal Audit & Risk</h5>
+                        <p class="mb-0" style="color: #334155; font-size: 0.92rem; line-height: 1.55;">Risk assessment, internal controls review, and governance audits.</p>
                     </div>
                 </div>
             </div>
@@ -535,7 +535,7 @@ $initialApplications = $data['initialApplications'] ?? [];
             <div class="opportunity-section-heading opportunity-reveal text-center">
                 <p class="opportunity-kicker"><span></span> The Vetting Workflow</p>
                 <h2>4 Steps from Application to Placement</h2>
-                <p class="text-white-50">Our objective, transparent vetting framework ensures high standards while giving applicants clear visibility at every stage.</p>
+                <p style="color: #e2e8f0; font-size: 1.05rem; max-width: 720px; margin: 16px auto 0;">Our objective, transparent vetting framework ensures high standards while giving applicants clear visibility at every stage.</p>
             </div>
             <div class="opportunity-steps">
                 <article class="opportunity-step opportunity-reveal">
@@ -564,7 +564,7 @@ $initialApplications = $data['initialApplications'] ?? [];
                 </article>
             </div>
             <p class="opportunity-disclaimer opportunity-reveal mt-4">
-                <i class="fa fa-shield-alt me-1"></i> Admission to the talent roster places candidates in our verified talent pool. Specific client engagements depend on project requirements, availability, and active client demand.
+                <i class="fa fa-shield-halved me-1" style="color: #32c99a;"></i> Admission to the talent roster places candidates in our verified talent pool. Specific client engagements depend on project requirements, availability, and active client demand.
             </p>
         </div>
     </section>
@@ -577,53 +577,53 @@ $initialApplications = $data['initialApplications'] ?? [];
                 <h2 class="fw-bold">Frequently Asked Questions</h2>
             </div>
             <div class="accordion opportunity-reveal" id="recruitmentFaq">
-                <div class="accordion-item border-0 mb-3 shadow-sm rounded-4 overflow-hidden">
+                <div class="accordion-item border-0 mb-3 shadow-sm rounded-4 overflow-hidden" style="border: 1px solid rgba(9, 11, 11, 0.12) !important;">
                     <h2 class="accordion-header" id="faqOneHeader">
-                        <button class="accordion-button fw-bold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqOne">
+                        <button class="accordion-button fw-bold collapsed text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faqOne">
                             Can tertiary students currently on Work-Related Learning (WRL) apply?
                         </button>
                     </h2>
                     <div id="faqOne" class="accordion-collapse collapse" data-bs-parent="#recruitmentFaq">
-                        <div class="accordion-body text-muted">
+                        <div class="accordion-body" style="color: #334155; font-size: 1rem; line-height: 1.7; background: #ffffff;">
                             Yes! The Apprentice Track is specifically tailored for university and polytechnic students on industrial attachment. We support official institutional logbooks and assign senior mentors to oversee practical outputs and sign evaluation reports.
                         </div>
                     </div>
                 </div>
 
-                <div class="accordion-item border-0 mb-3 shadow-sm rounded-4 overflow-hidden">
+                <div class="accordion-item border-0 mb-3 shadow-sm rounded-4 overflow-hidden" style="border: 1px solid rgba(9, 11, 11, 0.12) !important;">
                     <h2 class="accordion-header" id="faqTwoHeader">
-                        <button class="accordion-button fw-bold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqTwo">
+                        <button class="accordion-button fw-bold collapsed text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faqTwo">
                             How are Associates engaged and compensated?
                         </button>
                     </h2>
                     <div id="faqTwo" class="accordion-collapse collapse" data-bs-parent="#recruitmentFaq">
-                        <div class="accordion-body text-muted">
+                        <div class="accordion-body" style="color: #334155; font-size: 1rem; line-height: 1.7; background: #ffffff;">
                             Associates operate as independent contractors. When a matching client request arises, we confirm your availability and agree on scope and deliverables. Remuneration is established on agreed daily or milestone rates (USD) and disbursed upon client sign-off.
                         </div>
                     </div>
                 </div>
 
-                <div class="accordion-item border-0 mb-3 shadow-sm rounded-4 overflow-hidden">
+                <div class="accordion-item border-0 mb-3 shadow-sm rounded-4 overflow-hidden" style="border: 1px solid rgba(9, 11, 11, 0.12) !important;">
                     <h2 class="accordion-header" id="faqThreeHeader">
-                        <button class="accordion-button fw-bold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqThree">
+                        <button class="accordion-button fw-bold collapsed text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faqThree">
                             How long does the 100-point vetting process take?
                         </button>
                     </h2>
                     <div id="faqThree" class="accordion-collapse collapse" data-bs-parent="#recruitmentFaq">
-                        <div class="accordion-body text-muted">
+                        <div class="accordion-body" style="color: #334155; font-size: 1rem; line-height: 1.7; background: #ffffff;">
                             Initial review typically takes 3 to 5 business days after all supporting documents and referee contacts are submitted. You can track your real-time vetting progress in the candidate dashboard.
                         </div>
                     </div>
                 </div>
 
-                <div class="accordion-item border-0 mb-3 shadow-sm rounded-4 overflow-hidden">
+                <div class="accordion-item border-0 mb-3 shadow-sm rounded-4 overflow-hidden" style="border: 1px solid rgba(9, 11, 11, 0.12) !important;">
                     <h2 class="accordion-header" id="faqFourHeader">
-                        <button class="accordion-button fw-bold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqFour">
+                        <button class="accordion-button fw-bold collapsed text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faqFour">
                             Can I hold profiles across multiple disciplines?
                         </button>
                     </h2>
                     <div id="faqFour" class="accordion-collapse collapse" data-bs-parent="#recruitmentFaq">
-                        <div class="accordion-body text-muted">
+                        <div class="accordion-body" style="color: #334155; font-size: 1rem; line-height: 1.7; background: #ffffff;">
                             Yes. Multidisciplinary candidates can register primary and secondary service functions (e.g. ICT Administration and Software Engineering, or Accounting and Grants Compliance) to increase matching opportunities.
                         </div>
                     </div>
