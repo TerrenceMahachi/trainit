@@ -983,7 +983,7 @@ class StaffController
         $docId = (int)($_POST['staffdocument_id'] ?? 0);
         $verStatusId = (int)($_POST['verificationstatus_id'] ?? 0);
         $notes = trim($_POST['notes'] ?? 'Audit verification completed by compliance administrator.');
-        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/admin/staff-approvals');
+        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/admin/staff-approvals/documents');
 
         $doc = Staffdocument::find($docId);
         if (!$doc) {
@@ -1110,7 +1110,7 @@ class StaffController
         $leaveId = (int)($_POST['staffleave_id'] ?? 0);
         $leaveStatusId = (int)($_POST['leavestatus_id'] ?? 0);
         $notes = trim($_POST['decision_notes'] ?? 'Reviewed by line manager.');
-        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/admin/staff-approvals');
+        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/admin/staff-approvals/leave');
 
         $leave = Staffleave::find($leaveId);
         if (!$leave) {
@@ -1209,7 +1209,7 @@ class StaffController
         $timeEntryId = (int)($_POST['stafftimeentry_id'] ?? 0);
         $isApproved = (int)($_POST['is_approved'] ?? 1);
         $reviewNotes = trim($_POST['review_notes'] ?? 'Timesheet verified and signed off.');
-        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/admin/staff-approvals');
+        $redirectUrl = $_POST['redirect_url'] ?? ($siteConfig->siteUrl . '/admin/staff-approvals/timesheets');
 
         $entry = Stafftimeentry::find($timeEntryId);
         if (!$entry) {
@@ -1352,14 +1352,19 @@ class StaffController
     }
 
     /**
-     * Unified Approvals & Compliance Queue (GET /admin/staff-approvals).
+     * Unified Approvals & Compliance Queue (GET /admin/staff-approvals/:section).
      */
-    public function approvalsQueue()
+    public function approvalsQueue(string $section = 'documents')
     {
         global $siteConfig;
         if (!Auth::check() || !Auth::isAdmin()) {
             header("Location: " . $siteConfig->siteUrl . "/dashboard");
             exit;
+        }
+
+        $validSections = ['documents', 'expiring', 'leave', 'timesheets'];
+        if (!in_array($section, $validSections, true)) {
+            $section = 'documents';
         }
 
         // 1. Pending Documents Queue
@@ -1439,9 +1444,24 @@ class StaffController
             }
         }
 
+        $sectionTitles = [
+            'documents'  => 'Document Verification Queue',
+            'expiring'   => 'Expiring Credentials Radar',
+            'leave'      => 'Leave Applications Queue',
+            'timesheets' => 'Timesheet Sign-Offs Queue',
+        ];
+
+        $viewMap = [
+            'documents'  => 'staff.approvals_documents',
+            'expiring'   => 'staff.approvals_expiring',
+            'leave'      => 'staff.approvals_leave',
+            'timesheets' => 'staff.approvals_timesheets',
+        ];
+
         $data = [
-            'title'            => 'Compliance & Approvals Queue',
+            'title'            => $sectionTitles[$section] ?? 'Compliance & Approvals Queue',
             'user'             => Auth::user(),
+            'activeTab'        => $section,
             'pendingDocs'      => $pendingDocs,
             'expiringDocs'     => $expiringDocs,
             'pendingLeaves'    => $pendingLeaves,
@@ -1450,7 +1470,8 @@ class StaffController
             'allLeaveStatuses' => Leavestatus::all()
         ];
 
-        echo view('staff.approvals', compact('data'));
+        $targetView = $viewMap[$section] ?? 'staff.approvals_documents';
+        echo view($targetView, compact('data'));
         exit;
     }
 

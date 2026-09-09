@@ -103,7 +103,24 @@ $router->addRoute('GET', '/staff/portal', function () {
 
 // 12. Unified Approvals & Compliance Queue (Admin)
 $router->addRoute('GET', '/admin/staff-approvals', function () {
-    (new StaffController())->approvalsQueue();
+    (new StaffController())->approvalsQueue('documents');
     exit;
 });
+$router->addRoute('GET', '/admin/staff-approvals/documents', function () {
+    (new StaffController())->approvalsQueue('documents');
+    exit;
+});
+$router->addRoute('GET', '/admin/staff-approvals/expiring', function () {
+    (new StaffController())->approvalsQueue('expiring');
+    exit;
+});
+$router->addRoute('GET', '/admin/staff-approvals/leave', function () {
+    (new StaffController())->approvalsQueue('leave');
+    exit;
+});
+$router->addRoute('GET', '/admin/staff-approvals/timesheets', function () {
+    (new StaffController())->approvalsQueue('timesheets');
+    exit;
+});
+
 
