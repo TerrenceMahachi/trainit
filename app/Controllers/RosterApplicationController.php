@@ -98,6 +98,139 @@ class RosterApplicationController
     }
 
     /**
+     * Generate secure HMAC token for candidate shortlist magic link.
+     */
+    public function generateShortlistToken(Rosterapplication $app): string
+    {
+        return hash_hmac('sha256', $app->iD . '|' . $app->reg_date . '|' . $app->user, _APP_SECRET);
+    }
+
+    /**
+     * Verify HMAC token for candidate shortlist magic link.
+     */
+    public function verifyShortlistToken(Rosterapplication $app, string $token): bool
+    {
+        $expected = $this->generateShortlistToken($app);
+        return hash_equals($expected, $token);
+    }
+
+    /**
+     * Helper to retrieve application and verify candidate has been shortlisted (or is admin/vetting officer)
+     * before accessing the deep verification dossier (stages 2-5).
+     */
+    public function ensureShortlistedDossierAccess(int $appId): ?Rosterapplication
+    {
+        global $siteConfig;
+        $app = $this->getAuthorizedApplication($appId);
+        if (!$app) {
+            if (php_sapi_name() === 'cli') {
+                return null;
+            }
+            header("Location: " . $siteConfig->siteUrl . "/opportunities");
+            exit;
+        }
+
+        // If user is Admin or Vetting Officer, allow access unconditionally
+        if (Auth::isAdmin() || Auth::isVettingOfficer()) {
+            return $app;
+        }
+
+        // If candidate application status is not yet shortlisted (status < 3, e.g. status 1 Draft or 2 Submitted)
+        if ((int)$app->applicationstatus < 3) {
+            $_SESSION['flash_warning'] = 'Your application has been received and is currently under initial screening. Once shortlisted by our vetting committee, you will receive an invitation email with a link to complete your credentials and verification dossier.';
+            if (php_sapi_name() === 'cli') {
+                return null;
+            }
+            header("Location: " . $siteConfig->siteUrl . "/roster/application/status?id=" . $appId);
+            exit;
+        }
+
+        return $app;
+    }
+
+    /**
+     * Handle Shortlist Magic Link Token Login.
+     * Route: GET /roster/shortlist/complete?id=X&token=Y
+     */
+    public function handleShortlistTokenLogin()
+    {
+        global $siteConfig;
+        $appId = (int)($_GET['id'] ?? 0);
+        $token = trim($_GET['token'] ?? '');
+
+        if ($appId <= 0 || empty($token)) {
+            $_SESSION['flash_error'] = 'Invalid shortlist verification link.';
+            if (php_sapi_name() === 'cli') return ['status' => 0, 'msg' => 'Invalid parameters'];
+            header("Location: " . $siteConfig->siteUrl . "/opportunities");
+            exit;
+        }
+
+        $app = (new Rosterapplication())->find($appId);
+        if (!$app || !$this->verifyShortlistToken($app, $token)) {
+            $_SESSION['flash_error'] = 'Shortlist link is invalid or expired.';
+            if (php_sapi_name() === 'cli') return ['status' => 0, 'msg' => 'Invalid token'];
+            header("Location: " . $siteConfig->siteUrl . "/opportunities");
+            exit;
+        }
+
+        // Candidate must be at least shortlisted (status >= 3)
+        if ((int)$app->applicationstatus < 3) {
+            $_SESSION['flash_warning'] = 'Your application is not yet shortlisted.';
+            if (php_sapi_name() === 'cli') return ['status' => 0, 'msg' => 'Not shortlisted'];
+            header("Location: " . $siteConfig->siteUrl . "/roster/application/status?id=" . $appId);
+            exit;
+        }
+
+        // Log the candidate user in
+        Auth::login($app->user);
+
+        if (php_sapi_name() === 'cli') {
+            return ['status' => 1, 'msg' => 'Authenticated successfully', 'redirect' => $siteConfig->siteUrl . "/roster/apply/credentials?id=" . $appId];
+        }
+
+        // Redirect directly into Stage 2: Credentials
+        header("Location: " . $siteConfig->siteUrl . "/roster/apply/credentials?id=" . $appId);
+        exit;
+    }
+
+    /**
+     * Handle Admin Action: Shortlist Candidate & Email Dossier Link.
+     * Route: POST /admin/roster/shortlist
+     */
+    public function handleShortlistCandidate(): array
+    {
+        global $siteConfig;
+        if (!Auth::isAdmin() && !Auth::isVettingOfficer()) {
+            return ['status' => 0, 'msg' => 'Unauthorized'];
+        }
+
+        $appId = (int)($_POST['rosterapplication'] ?? 0);
+        $app = (new Rosterapplication())->find($appId);
+        if (!$app) {
+            return ['status' => 0, 'msg' => 'Application not found'];
+        }
+
+        $app->applicationstatus = 3; // Screened / Shortlisted
+        $app->update();
+
+        $token = $this->generateShortlistToken($app);
+        $dossierLink = $siteConfig->siteUrl . '/roster/shortlist/complete?id=' . $app->iD . '&token=' . $token;
+
+        $this->logStatusEvent($appId, 3, 'Candidate shortlisted by review committee. Verification dossier link dispatched via email.');
+
+        $candidate = (new User())->find($app->user);
+        if ($candidate) {
+            Mailer::sendShortlistInvitation($app, $candidate, $dossierLink);
+        }
+
+        return [
+            'status' => 1,
+            'msg' => 'Candidate shortlisted and dossier completion invitation emailed successfully!',
+            'dossier_link' => $dossierLink
+        ];
+    }
+
+    /**
      * Helper to save a document file into Rosterdocument model.
      */
     public function saveRosterDocument(int $appId, string $docTypeCode, array $file, string $prefix): ?Rosterdocument
@@ -231,8 +364,10 @@ class RosterApplicationController
                 $app = new Rosterapplication();
                 $app->user = $userId;
                 $app->applicationtrack = $trackObj->iD;
-                $app->applicationstatus = 1; // Draft
+                $app->applicationstatus = 2; // Submitted (Initial one-page intake)
                 $app->reg_by = $userId;
+            } else {
+                $app->applicationstatus = 2; // Submitted
             }
 
             $app->legal_name = $legalName;
@@ -291,13 +426,19 @@ class RosterApplicationController
             }
 
             // 5. Log Status Event
-            $this->logStatusEvent($appId, 1, 'Stage 1: Express intake completed via Opportunities page');
+            $this->logStatusEvent($appId, 2, 'Initial one-page application and CV submitted via Opportunities page. Awaiting review.');
 
-            $redirectUrl = $siteConfig->siteUrl . '/roster/apply/credentials?id=' . $appId;
+            // 6. Send Submission Receipt Email
+            $candidate = (new User())->find($userId);
+            if ($candidate) {
+                Mailer::sendApplicationSubmitted($app, $candidate);
+            }
+
+            $redirectUrl = $siteConfig->siteUrl . '/roster/application/status?id=' . $appId;
 
             // Handle AJAX vs standard POST
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                return ['status' => 1, 'redirect' => $redirectUrl, 'msg' => 'Express profile saved successfully!'];
+                return ['status' => 1, 'redirect' => $redirectUrl, 'msg' => 'Application submitted successfully!'];
             }
 
             header("Location: " . $redirectUrl);
@@ -318,8 +459,11 @@ class RosterApplicationController
     public function showCredentialsForm(int $appId)
     {
         global $siteConfig;
-        $app = $this->getAuthorizedApplication($appId);
+        $app = $this->ensureShortlistedDossierAccess($appId);
         if (!$app) {
+            if (php_sapi_name() === 'cli') {
+                return 'ACCESS_DENIED_NOT_SHORTLISTED';
+            }
             header("Location: " . $siteConfig->siteUrl . "/opportunities");
             exit;
         }
@@ -344,7 +488,7 @@ class RosterApplicationController
     {
         global $siteConfig;
         $appId = (int)($_POST['application_id'] ?? 0);
-        $app = $this->getAuthorizedApplication($appId);
+        $app = $this->ensureShortlistedDossierAccess($appId);
         if (!$app) {
             header("Location: " . $siteConfig->siteUrl . "/opportunities");
             exit;
@@ -432,7 +576,7 @@ class RosterApplicationController
     public function showSkillsForm(int $appId)
     {
         global $siteConfig;
-        $app = $this->getAuthorizedApplication($appId);
+        $app = $this->ensureShortlistedDossierAccess($appId);
         if (!$app) {
             header("Location: " . $siteConfig->siteUrl . "/opportunities");
             exit;
@@ -469,7 +613,7 @@ class RosterApplicationController
     {
         global $siteConfig;
         $appId = (int)($_POST['application_id'] ?? 0);
-        $app = $this->getAuthorizedApplication($appId);
+        $app = $this->ensureShortlistedDossierAccess($appId);
         if (!$app) {
             header("Location: " . $siteConfig->siteUrl . "/opportunities");
             exit;
@@ -518,7 +662,7 @@ class RosterApplicationController
     public function showExperienceForm(int $appId)
     {
         global $siteConfig;
-        $app = $this->getAuthorizedApplication($appId);
+        $app = $this->ensureShortlistedDossierAccess($appId);
         if (!$app) {
             header("Location: " . $siteConfig->siteUrl . "/opportunities");
             exit;
@@ -542,7 +686,7 @@ class RosterApplicationController
     {
         global $siteConfig;
         $appId = (int)($_POST['application_id'] ?? 0);
-        $app = $this->getAuthorizedApplication($appId);
+        $app = $this->ensureShortlistedDossierAccess($appId);
         if (!$app) {
             header("Location: " . $siteConfig->siteUrl . "/opportunities");
             exit;
@@ -605,7 +749,7 @@ class RosterApplicationController
     public function showReviewForm(int $appId)
     {
         global $siteConfig;
-        $app = $this->getAuthorizedApplication($appId);
+        $app = $this->ensureShortlistedDossierAccess($appId);
         if (!$app) {
             header("Location: " . $siteConfig->siteUrl . "/opportunities");
             exit;
@@ -626,7 +770,7 @@ class RosterApplicationController
     {
         global $siteConfig;
         $appId = (int)($_POST['application_id'] ?? 0);
-        $app = $this->getAuthorizedApplication($appId);
+        $app = $this->ensureShortlistedDossierAccess($appId);
         if (!$app) {
             header("Location: " . $siteConfig->siteUrl . "/opportunities");
             exit;
@@ -635,15 +779,21 @@ class RosterApplicationController
         $app->e_signature = trim($_POST['e_signature'] ?? $app->legal_name);
         $app->consent_timestamp = date('Y-m-d H:i:s');
         $app->consent_ip_address = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-        $app->applicationstatus = 2; // Submitted
+        $app->applicationstatus = 4; // Interview / Verification (Dossier Completed)
         $app->update();
 
-        $this->logStatusEvent($appId, 2, 'Stage 5: Final application submitted for vetting with digital signature');
+        $this->logStatusEvent($appId, 4, 'Stage 5: Verification dossier completed and signed with digital signature. Ready for final assessment & interview.');
 
         // Send confirmation email
         $candidate = (new User())->find($app->user);
         if ($candidate) {
-            Mailer::sendApplicationSubmitted($app, $candidate);
+            Mailer::sendDossierSubmitted($app, $candidate);
+        }
+
+        $_SESSION['flash_success'] = 'Your verification dossier has been submitted successfully! Our committee will review your credentials and schedule an interview.';
+
+        if (php_sapi_name() === 'cli') {
+            return ['status' => 1, 'msg' => 'Dossier completed and moved to status 4', 'app_status' => 4];
         }
 
         header("Location: " . $siteConfig->siteUrl . "/roster/application/status?id=" . $appId);
@@ -1514,31 +1664,48 @@ class RosterApplicationController
             $assessment->save();
         }
 
+        global $siteConfig;
+
         // Update application status
-        if (!empty($_POST['new_applicationstatus'])) {
-            $app->applicationstatus = (int)$_POST['new_applicationstatus'];
+        $statusChanged = false;
+        $oldStatusId = (int)$app->applicationstatus;
+        $newStatusId = !empty($_POST['new_applicationstatus']) ? (int)$_POST['new_applicationstatus'] : $oldStatusId;
+
+        if ($newStatusId && $newStatusId !== $oldStatusId) {
+            $app->applicationstatus = $newStatusId;
             $app->update();
+            $statusChanged = true;
+
+            $statusObj = $app->applicationstatus();
+            $statusName = $statusObj ? $statusObj->name : "Status #$newStatusId";
+            $this->logStatusEvent($appId, $newStatusId, "Status updated to {$statusName} by reviewer");
         }
 
-        // Send Review Decision notification to Candidate
+        // Send Review Decision or Shortlist notification to Candidate
         $candidate = $app->creator() ?: (new User())->find($app->user);
         if ($candidate) {
-            $recTitle = "Under Assessment";
-            if ($assessment->vettingrecommendation) {
-                $recObj = $assessment->vettingRecommendation();
-                $recTitle = $recObj ? $recObj->title : "Recommendation #" . $assessment->vettingrecommendation;
-            } elseif (!empty($_POST['new_applicationstatus'])) {
-                $statusObj = $app->applicationstatus();
-                $recTitle = $statusObj ? $statusObj->name : "Status Updated";
-            }
+            if ($newStatusId === 3 && $statusChanged) {
+                $token = $this->generateShortlistToken($app);
+                $dossierLink = $siteConfig->siteUrl . '/roster/shortlist/complete?id=' . $app->iD . '&token=' . $token;
+                Mailer::sendShortlistInvitation($app, $candidate, $dossierLink);
+            } else {
+                $recTitle = "Under Assessment";
+                if ($assessment->vettingrecommendation) {
+                    $recObj = $assessment->vettingRecommendation();
+                    $recTitle = $recObj ? $recObj->title : "Recommendation #" . $assessment->vettingrecommendation;
+                } elseif (!empty($_POST['new_applicationstatus'])) {
+                    $statusObj = $app->applicationstatus();
+                    $recTitle = $statusObj ? $statusObj->name : "Status Updated";
+                }
 
-            Mailer::sendApplicationReviewDecision(
-                $app,
-                $candidate,
-                $recTitle,
-                $assessment->interview_notes,
-                $assessment->total_score
-            );
+                Mailer::sendApplicationReviewDecision(
+                    $app,
+                    $candidate,
+                    $recTitle,
+                    $assessment->interview_notes,
+                    $assessment->total_score
+                );
+            }
         }
 
         return [

@@ -252,6 +252,93 @@ class Mailer
     }
 
     /**
+     * Send Candidate Shortlist Invitation Email with Secure Dossier Link.
+     */
+    public static function sendShortlistInvitation(
+        Rosterapplication $app,
+        User $candidate,
+        string $dossierLink
+    ): bool {
+        global $siteConfig;
+        $siteUrl = $siteConfig->siteUrl ?? 'https://trainit.co.zw';
+        $siteName = $siteConfig->siteName ?? 'Trainit';
+
+        $trackCode = strtolower(trim($app->applicationtrack()->code ?? 'apprentice'));
+        $trackTitle = $app->applicationtrack()->name ?? ($trackCode === 'associate' ? 'Associate Specialist' : 'Apprentice');
+        $primaryFunc = $app->primaryfunction()->name ?? 'Specialist Domain';
+
+        $fromMailbox = ($trackCode === 'associate') ? self::ASSOCIATES : self::APPRENTICE;
+        $departmentName = ($trackCode === 'associate') ? "Associate Talent Division" : "Apprenticeship Program";
+
+        $subject = "Congratulations! You are Shortlisted – Complete Your {$trackTitle} Dossier (#APP-" . str_pad((string)$app->iD, 5, '0', STR_PAD_LEFT) . ")";
+        $html = "
+            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 22px;'>Congratulations, " . htmlspecialchars($candidate->name) . "!</h2>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                We are pleased to inform you that following review of your CV and initial profile, you have been <strong>shortlisted</strong> for the <strong>{$trackTitle}</strong> talent network in <strong>" . htmlspecialchars($primaryFunc) . "</strong>.
+            </p>
+            <div style='background-color: #ECFDF5; border-left: 4px solid #10B981; padding: 16px; border-radius: 6px; margin: 22px 0;'>
+                <p style='margin: 0 0 8px; font-weight: bold; color: #065F46;'>Next Step: Complete Your Verification Dossier</p>
+                <p style='margin: 0; color: #047857; font-size: 14px;'>
+                    To finalize your admission and prepare you for active client briefs, please complete your credentials (certificates/transcripts), skills matrix rating, and referee contacts.
+                </p>
+            </div>
+            <p style='margin: 0 0 20px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Click the button below to resume and complete your profile. This secure link will automatically open your candidate dossier.
+            </p>
+        ";
+
+        return self::send(
+            to: $candidate->email,
+            toName: $candidate->name,
+            subject: $subject,
+            bodyHtml: $html,
+            fromEmail: $fromMailbox,
+            fromName: "{$siteName} {$departmentName}",
+            buttonText: "Complete Your Dossier Now",
+            buttonUrl: $dossierLink
+        );
+    }
+
+    /**
+     * Send Candidate Confirmation upon Completing Full Verification Dossier (Stages 2-5).
+     */
+    public static function sendDossierSubmitted(
+        Rosterapplication $app,
+        User $candidate
+    ): bool {
+        global $siteConfig;
+        $siteUrl = $siteConfig->siteUrl ?? 'https://trainit.co.zw';
+        $siteName = $siteConfig->siteName ?? 'Trainit';
+
+        $trackCode = strtolower(trim($app->applicationtrack()->code ?? 'apprentice'));
+        $trackTitle = $app->applicationtrack()->name ?? ($trackCode === 'associate' ? 'Associate Specialist' : 'Apprentice');
+        $fromMailbox = ($trackCode === 'associate') ? self::ASSOCIATES : self::APPRENTICE;
+        $departmentName = ($trackCode === 'associate') ? "Associate Talent Division" : "Apprenticeship Program";
+
+        $subject = "Verification Dossier Received – {$trackTitle} (#APP-" . str_pad((string)$app->iD, 5, '0', STR_PAD_LEFT) . ")";
+        $html = "
+            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 22px;'>Verification Dossier Submitted, " . htmlspecialchars($candidate->name) . "!</h2>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Thank you for completing your verification dossier, including your qualifications, skills competency ratings, and professional references.
+            </p>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Our vetting committee is conducting background verification and 100-point scoring. We will contact you regarding the next steps and your onboarding interview.
+            </p>
+        ";
+
+        return self::send(
+            to: $candidate->email,
+            toName: $candidate->name,
+            subject: $subject,
+            bodyHtml: $html,
+            fromEmail: $fromMailbox,
+            fromName: "{$siteName} {$departmentName}",
+            buttonText: "View Application Status",
+            buttonUrl: "{$siteUrl}/roster/application/status?id={$app->iD}"
+        );
+    }
+
+    /**
      * Send Candidate Notification upon Assessment / Vetting Decision Update.
      */
     public static function sendApplicationReviewDecision(

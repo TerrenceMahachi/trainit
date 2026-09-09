@@ -15,8 +15,8 @@ $statusEvents = $application->statusEvents();
 
 // Calculate milestone progression
 $step1Done = true;
-$step2Done = in_array($statusCode, ['screened', 'interviewed', 'on_roster', 'deployed']);
-$step3Done = in_array($statusCode, ['interviewed', 'on_roster', 'deployed']);
+$step2Done = in_array($statusCode, ['interviewed', 'on_roster', 'deployed']);
+$step3Done = in_array($statusCode, ['on_roster', 'deployed']);
 $step4Done = in_array($statusCode, ['on_roster', 'deployed']);
 ?>
 
@@ -34,7 +34,12 @@ $step4Done = in_array($statusCode, ['on_roster', 'deployed']);
             </div>
             <div class="portal-account-summary py-2 px-3 text-end">
                 <span class="text-white-50 small d-block">Current Status</span>
-                <span class="badge bg-warning text-dark fs-6 px-3 py-2 rounded-pill">
+                <?php
+                $badgeClass = 'bg-warning text-dark';
+                if ($statusCode === 'screened') $badgeClass = 'bg-info text-dark';
+                elseif (in_array($statusCode, ['interviewed', 'on_roster', 'deployed'])) $badgeClass = 'bg-success text-white';
+                ?>
+                <span class="badge <?= $badgeClass; ?> fs-6 px-3 py-2 rounded-pill">
                     <i class="fa fa-clock me-1"></i> <?= htmlspecialchars($statusObj ? $statusObj->name : 'Submitted'); ?>
                 </span>
             </div>
@@ -44,10 +49,83 @@ $step4Done = in_array($statusCode, ['on_roster', 'deployed']);
     <div class="container py-4">
         <div class="row justify-content-center">
             <div class="col-lg-10">
+
+                <!-- Flash Notifications -->
+                <?php if (!empty($_SESSION['flash_success'])): ?>
+                    <div class="alert alert-success alert-dismissible fade show rounded-4 mb-4 shadow-sm" role="alert">
+                        <i class="fa fa-check-circle me-2"></i> <?= htmlspecialchars($_SESSION['flash_success']); unset($_SESSION['flash_success']); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php endif; ?>
+                <?php if (!empty($_SESSION['flash_warning'])): ?>
+                    <div class="alert alert-warning alert-dismissible fade show rounded-4 mb-4 shadow-sm" role="alert">
+                        <i class="fa fa-info-circle me-2"></i> <?= htmlspecialchars($_SESSION['flash_warning']); unset($_SESSION['flash_warning']); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php endif; ?>
+                <?php if (!empty($_SESSION['flash_error'])): ?>
+                    <div class="alert alert-danger alert-dismissible fade show rounded-4 mb-4 shadow-sm" role="alert">
+                        <i class="fa fa-exclamation-triangle me-2"></i> <?= htmlspecialchars($_SESSION['flash_error']); unset($_SESSION['flash_error']); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Contextual Status Banners -->
+                <?php if ($statusCode === 'screened'): ?>
+                    <!-- Shortlisted: Call to Action to Complete Dossier -->
+                    <div class="card border-0 bg-success bg-opacity-10 border-start border-success border-4 shadow-sm rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                                <div>
+                                    <h4 class="fw-bold text-success mb-1"><i class="fa fa-trophy text-warning me-2"></i> Congratulations! You Have Been Shortlisted</h4>
+                                    <p class="text-muted mb-0">
+                                        Your CV and profile have been reviewed and selected by our talent committee. Please complete your verification dossier (academic credentials, skills matrix, and referees) to proceed to final onboarding.
+                                    </p>
+                                </div>
+                                <div>
+                                    <a href="<?= $siteConfig->siteUrl; ?>/roster/apply/credentials?id=<?= $appId; ?>" class="btn btn-success btn-lg rounded-pill px-4 fw-bold shadow text-nowrap">
+                                        Complete Dossier <i class="fa fa-arrow-right ms-2"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php elseif ($statusCode === 'submitted'): ?>
+                    <!-- Initial Submission Received - Under Screening -->
+                    <div class="card border-0 bg-light border-start border-primary border-4 shadow-sm rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold text-primary mb-1"><i class="fa fa-check-circle text-primary me-2"></i> Application &amp; CV Received</h5>
+                            <p class="text-muted mb-0">
+                                Your application has been logged and is under screening by our vetting panel. To keep our intake lean, detailed verification (certificates, skills ratings, and referee checks) is only required from shortlisted candidates. If selected, you will receive an invitation email containing a secure link to complete the candidate dossier.
+                            </p>
+                        </div>
+                    </div>
+                <?php elseif ($statusCode === 'interviewed'): ?>
+                    <!-- Verification Dossier Filed -->
+                    <div class="card border-0 bg-primary bg-opacity-10 border-start border-primary border-4 shadow-sm rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold text-primary mb-1"><i class="fa fa-clipboard-check text-primary me-2"></i> Verification Dossier Received</h5>
+                            <p class="text-muted mb-0">
+                                Your qualifications, competency matrix, and referee contacts have been received. Our review committee is finalizing background verification and will contact you regarding your induction interview.
+                            </p>
+                        </div>
+                    </div>
+                <?php elseif (in_array($statusCode, ['on_roster', 'deployed'])): ?>
+                    <!-- Active on Roster -->
+                    <div class="card border-0 bg-success bg-opacity-10 border-start border-success border-4 shadow-sm rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold text-success mb-1"><i class="fa fa-star text-warning me-2"></i> Active Talent Network Member</h5>
+                            <p class="text-muted mb-0">
+                                You are verified and active on the Tsigiro Roster. You will be notified when matched to client briefs and project opportunities.
+                            </p>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Milestone Roadmap Card -->
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
                     <div class="card-header bg-white py-3 border-bottom">
-                        <h5 class="fw-bold mb-0"><i class="fa fa-route text-primary me-2"></i> 4-Stage Vetting & Onboarding Roadmap</h5>
+                        <h5 class="fw-bold mb-0"><i class="fa fa-route text-primary me-2"></i> 4-Stage Vetting &amp; Onboarding Roadmap</h5>
                     </div>
                     <div class="card-body p-4">
                         <div class="row g-3 text-center">
@@ -58,27 +136,64 @@ $step4Done = in_array($statusCode, ['on_roster', 'deployed']);
                                         <i class="fa fa-check text-white"></i>
                                     </div>
                                     <h6 class="fw-bold text-success mb-1">1. Express Intake</h6>
-                                    <p class="text-muted small mb-0">Profile & credentials logged successfully.</p>
+                                    <p class="text-muted small mb-0">Profile &amp; CV submitted.</p>
                                 </div>
                             </div>
                             <!-- Milestone 2 -->
                             <div class="col-sm-6 col-md-3">
-                                <div class="p-3 rounded-4 border <?= $step2Done ? 'bg-success bg-opacity-10 border-success' : 'bg-primary bg-opacity-10 border-primary'; ?>">
-                                    <div class="badge <?= $step2Done ? 'bg-success' : 'bg-primary'; ?> rounded-circle p-2 mb-2" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
-                                        <i class="fa <?= $step2Done ? 'fa-check' : 'fa-spinner fa-spin'; ?> text-white"></i>
+                                <?php
+                                $m2Class = 'bg-light text-muted';
+                                $m2Badge = 'bg-secondary';
+                                $m2Icon = 'fa-certificate';
+                                $m2TextClass = 'text-secondary';
+                                $m2Desc = 'Unlocked upon shortlisting.';
+                                if ($step2Done) {
+                                    $m2Class = 'bg-success bg-opacity-10 border-success';
+                                    $m2Badge = 'bg-success';
+                                    $m2Icon = 'fa-check';
+                                    $m2TextClass = 'text-success';
+                                    $m2Desc = 'Dossier completed &amp; signed.';
+                                } elseif ($statusCode === 'screened') {
+                                    $m2Class = 'bg-warning bg-opacity-10 border-warning';
+                                    $m2Badge = 'bg-warning text-dark';
+                                    $m2Icon = 'fa-exclamation';
+                                    $m2TextClass = 'text-dark fw-bold';
+                                    $m2Desc = 'Action Needed: Fill dossier.';
+                                }
+                                ?>
+                                <div class="p-3 rounded-4 border <?= $m2Class; ?>">
+                                    <div class="badge <?= $m2Badge; ?> rounded-circle p-2 mb-2" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
+                                        <i class="fa <?= $m2Icon; ?> text-white"></i>
                                     </div>
-                                    <h6 class="fw-bold <?= $step2Done ? 'text-success' : 'text-primary'; ?> mb-1">2. Verification</h6>
-                                    <p class="text-muted small mb-0">Academic & referee check in progress.</p>
+                                    <h6 class="fw-bold <?= $m2TextClass; ?> mb-1">2. Verification Dossier</h6>
+                                    <p class="text-muted small mb-0"><?= $m2Desc; ?></p>
                                 </div>
                             </div>
                             <!-- Milestone 3 -->
                             <div class="col-sm-6 col-md-3">
-                                <div class="p-3 rounded-4 border <?= $step3Done ? 'bg-success bg-opacity-10 border-success' : 'bg-light text-muted'; ?>">
-                                    <div class="badge <?= $step3Done ? 'bg-success' : 'bg-secondary'; ?> rounded-circle p-2 mb-2" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
-                                        <i class="fa <?= $step3Done ? 'fa-check' : 'fa-award'; ?> text-white"></i>
+                                <?php
+                                $m3Class = 'bg-light text-muted';
+                                $m3Badge = 'bg-secondary';
+                                $m3Icon = 'fa-award';
+                                $m3TextClass = 'text-secondary';
+                                if ($step3Done) {
+                                    $m3Class = 'bg-success bg-opacity-10 border-success';
+                                    $m3Badge = 'bg-success';
+                                    $m3Icon = 'fa-check';
+                                    $m3TextClass = 'text-success';
+                                } elseif ($statusCode === 'interviewed') {
+                                    $m3Class = 'bg-primary bg-opacity-10 border-primary';
+                                    $m3Badge = 'bg-primary';
+                                    $m3Icon = 'fa-spinner fa-spin';
+                                    $m3TextClass = 'text-primary';
+                                }
+                                ?>
+                                <div class="p-3 rounded-4 border <?= $m3Class; ?>">
+                                    <div class="badge <?= $m3Badge; ?> rounded-circle p-2 mb-2" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
+                                        <i class="fa <?= $m3Icon; ?> text-white"></i>
                                     </div>
-                                    <h6 class="fw-bold <?= $step3Done ? 'text-success' : 'text-secondary'; ?> mb-1">3. 100-Pt Vetting</h6>
-                                    <p class="text-muted small mb-0">Structured competency scoring.</p>
+                                    <h6 class="fw-bold <?= $m3TextClass; ?> mb-1">3. 100-Pt Vetting</h6>
+                                    <p class="text-muted small mb-0">Structured scoring &amp; interview.</p>
                                 </div>
                             </div>
                             <!-- Milestone 4 -->
@@ -88,7 +203,7 @@ $step4Done = in_array($statusCode, ['on_roster', 'deployed']);
                                         <i class="fa <?= $step4Done ? 'fa-check' : 'fa-handshake'; ?> text-white"></i>
                                     </div>
                                     <h6 class="fw-bold <?= $step4Done ? 'text-success' : 'text-secondary'; ?> mb-1">4. Active Roster</h6>
-                                    <p class="text-muted small mb-0">Induction & client deployment calls.</p>
+                                    <p class="text-muted small mb-0">Induction &amp; client deployment calls.</p>
                                 </div>
                             </div>
                         </div>
