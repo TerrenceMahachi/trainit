@@ -327,7 +327,7 @@ function record_page_view($p_name)
 function sendmail($email, $subject, $msg)
 {
     global $siteConfig;
-    $siteName = $siteConfig->siteName ?? 'Trainit';
+    $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
     return \App\Helpers\Mailer::send(
         to: $email,
         subject: $subject,

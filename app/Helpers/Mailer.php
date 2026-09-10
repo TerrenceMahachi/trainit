@@ -6,31 +6,31 @@ use App\Models\User;
 use App\Models\Rosterapplication;
 
 /**
- * Central Mailer Service for Trainit.
+ * Central Mailer Service for Tsigiro.
  *
  * Routes notifications to/from designated domain mailboxes:
- * - noreply@trainit.co.zw        : Automated account security & password recovery
- * - hello@trainit.co.zw          : Welcome greetings & general inquiries
- * - apprenticeship@trainit.co.zw : Apprentice applications & status updates
- * - associates@trainit.co.zw     : Associate applications & status updates
- * - jobs@trainit.co.zw           : Talent pipeline & assessment review notifications
- * - admin@trainit.co.zw          : Executive admin alerts & statutory onboarding
- * - billing@trainit.co.zw        : Onboarding banking/tax alerts & finance
- * - sales@trainit.co.zw          : Commercial service inquiries
- * - dev.trainit@trainit.co.zw    : System exception / developer alerts
+ * - noreply@tsigiro.co.zw        : Automated account security & password recovery
+ * - hello@tsigiro.co.zw          : Welcome greetings & general inquiries
+ * - recruitment@tsigiro.co.zw : Apprentice applications & status updates
+ * - recruitment@tsigiro.co.zw     : Associate applications & status updates
+ * - recruitment@tsigiro.co.zw           : Talent pipeline & assessment review notifications
+ * - admin@tsigiro.co.zw          : Executive admin alerts & statutory onboarding
+ * - billing@tsigiro.co.zw        : Onboarding banking/tax alerts & finance
+ * - hello@tsigiro.co.zw          : Commercial service inquiries
+ * - dev@tsigiro.co.zw    : System exception / developer alerts
  */
 class Mailer
 {
-    public const ADMIN          = 'admin@trainit.co.zw';
-    public const APPRENTICE     = 'apprenticeship@trainit.co.zw';
-    public const ASSOCIATES     = 'associates@trainit.co.zw';
-    public const BILLING        = 'billing@trainit.co.zw';
-    public const DEV            = 'dev.trainit@trainit.co.zw';
-    public const HELLO          = 'hello@trainit.co.zw';
-    public const JOBS           = 'jobs@trainit.co.zw';
-    public const NOREPLY        = 'noreply@trainit.co.zw';
-    public const PROJECTS       = 'projects@trainit.co.zw';
-    public const SALES          = 'sales@trainit.co.zw';
+    public const ADMIN          = 'admin@tsigiro.co.zw';
+    public const APPRENTICE     = 'recruitment@tsigiro.co.zw';
+    public const ASSOCIATES     = 'recruitment@tsigiro.co.zw';
+    public const BILLING        = 'billing@tsigiro.co.zw';
+    public const DEV            = 'dev@tsigiro.co.zw';
+    public const HELLO          = 'hello@tsigiro.co.zw';
+    public const JOBS           = 'recruitment@tsigiro.co.zw';
+    public const NOREPLY        = 'noreply@tsigiro.co.zw';
+    public const PROJECTS       = 'support@tsigiro.co.zw';
+    public const SALES          = 'hello@tsigiro.co.zw';
 
     /**
      * Send a Welcome Email upon Account Registration.
@@ -38,8 +38,8 @@ class Mailer
     public static function sendWelcome(User $user): bool
     {
         global $siteConfig;
-        $siteUrl = $siteConfig->siteUrl ?? 'https://trainit.co.zw';
-        $siteName = $siteConfig->siteName ?? 'Trainit';
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
 
         $subject = "Welcome to {$siteName} – Your Account is Active";
 
@@ -76,7 +76,7 @@ class Mailer
     public static function sendPasswordReset(User $user, string $resetLink): bool
     {
         global $siteConfig;
-        $siteName = $siteConfig->siteName ?? 'Trainit';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
 
         $subject = "Password Reset Request – {$siteName}";
 
@@ -116,8 +116,8 @@ class Mailer
     public static function sendPasswordResetSuccess(User $user): bool
     {
         global $siteConfig;
-        $siteUrl = $siteConfig->siteUrl ?? 'https://trainit.co.zw';
-        $siteName = $siteConfig->siteName ?? 'Trainit';
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
 
         $subject = "Your {$siteName} Password Has Been Updated";
 
@@ -152,8 +152,8 @@ class Mailer
     public static function sendApplicationSubmitted(Rosterapplication $app, User $candidate): bool
     {
         global $siteConfig;
-        $siteUrl = $siteConfig->siteUrl ?? 'https://trainit.co.zw';
-        $siteName = $siteConfig->siteName ?? 'Trainit';
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
 
         $trackCode = strtolower(trim($app->applicationtrack()->code ?? 'apprentice'));
         $trackTitle = $app->applicationtrack()->title ?? ($trackCode === 'associate' ? 'Associate Specialist' : 'Apprentice Graduate');
@@ -260,8 +260,8 @@ class Mailer
         string $dossierLink
     ): bool {
         global $siteConfig;
-        $siteUrl = $siteConfig->siteUrl ?? 'https://trainit.co.zw';
-        $siteName = $siteConfig->siteName ?? 'Trainit';
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
 
         $trackCode = strtolower(trim($app->applicationtrack()->code ?? 'apprentice'));
         $trackTitle = $app->applicationtrack()->name ?? ($trackCode === 'associate' ? 'Associate Specialist' : 'Apprentice');
@@ -307,8 +307,8 @@ class Mailer
         User $candidate
     ): bool {
         global $siteConfig;
-        $siteUrl = $siteConfig->siteUrl ?? 'https://trainit.co.zw';
-        $siteName = $siteConfig->siteName ?? 'Trainit';
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
 
         $trackCode = strtolower(trim($app->applicationtrack()->code ?? 'apprentice'));
         $trackTitle = $app->applicationtrack()->name ?? ($trackCode === 'associate' ? 'Associate Specialist' : 'Apprentice');
@@ -349,8 +349,8 @@ class Mailer
         ?float $totalScore = null
     ): bool {
         global $siteConfig;
-        $siteUrl = $siteConfig->siteUrl ?? 'https://trainit.co.zw';
-        $siteName = $siteConfig->siteName ?? 'Trainit';
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
 
         $trackCode = strtolower(trim($app->applicationtrack()->code ?? 'apprentice'));
         $trackTitle = $app->applicationtrack()->title ?? 'Talent Roster';
@@ -412,7 +412,7 @@ class Mailer
         if ($statusCode === 5) {
             $html .= "
                 <p style='margin: 0 0 16px; color: #198754; font-weight: bold; line-height: 1.6; font-size: 15px;'>
-                    Congratulations! You are now admitted onto the Trainit Professional Roster. Please proceed to complete your Stage 3 Statutory Onboarding (National ID, Tax Number, and Banking details) to enable engagement matching and payroll.
+                    Congratulations! You are now admitted onto the Tsigiro Professional Roster. Please proceed to complete your Stage 3 Statutory Onboarding (National ID, Tax Number, and Banking details) to enable engagement matching and payroll.
                 </p>
             ";
         }
@@ -435,8 +435,8 @@ class Mailer
     public static function sendOnboardingSubmitted(Rosterapplication $app, User $candidate, array $onboardingData): bool
     {
         global $siteConfig;
-        $siteUrl = $siteConfig->siteUrl ?? 'https://trainit.co.zw';
-        $siteName = $siteConfig->siteName ?? 'Trainit';
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
 
         // 1. Candidate Confirmation
         $subject = "Stage 3 Statutory Onboarding Verified – #APP-" . str_pad((string)$app->iD, 5, '0', STR_PAD_LEFT);
@@ -516,8 +516,8 @@ class Mailer
     public static function sendContactInquiry(string $name, string $email, string $subjectLine, string $messageBody, ?string $phone = null): bool
     {
         global $siteConfig;
-        $siteUrl = $siteConfig->siteUrl ?? 'https://trainit.co.zw';
-        $siteName = $siteConfig->siteName ?? 'Trainit';
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
 
         // 1. Inquirer Acknowledgment
         $ackSubject = "We Received Your Message – {$siteName}";
@@ -576,12 +576,12 @@ class Mailer
     public static function sendStaffInvitation(string $email, string $name, string $roleName, string $jobTitle, string $department, string $inviteUrl): bool
     {
         global $siteConfig;
-        $siteName = $siteConfig->siteName ?? 'Trainit';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
 
         $subject = "Welcome to the Team – Staff Onboarding & Account Setup for {$siteName}";
 
         $html = "
-            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 22px;'>Welcome to the Trainit Team, " . htmlspecialchars($name) . "!</h2>
+            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 22px;'>Welcome to the Tsigiro Team, " . htmlspecialchars($name) . "!</h2>
             <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
                 You have been registered as an internal staff member of <strong>{$siteName} Technologies (t/a Tsigiro)</strong>.
             </p>
@@ -618,8 +618,8 @@ class Mailer
     public static function sendStaffWelcome(User $user, string $jobTitle, string $roleName, ?string $temporaryPassword = null): bool
     {
         global $siteConfig;
-        $siteUrl = $siteConfig->siteUrl ?? 'https://trainit.co.zw';
-        $siteName = $siteConfig->siteName ?? 'Trainit';
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
 
         $subject = "Welcome to the Team – Your {$siteName} Staff Account";
 
@@ -653,6 +653,53 @@ class Mailer
     }
 
     /**
+     * Send an Application Receipt Confirmation for a Published Vacancy.
+     */
+    public static function sendVacancyApplicationConfirmation(
+        string $email,
+        string $candidateName,
+        string $applicationNumber,
+        string $jobTitle,
+        string $referenceNumber
+    ): bool {
+        global $siteConfig;
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
+
+        $subject = "Application Received – {$jobTitle} [{$referenceNumber}]";
+
+        $html = "
+            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 22px;'>Application Received, " . htmlspecialchars($candidateName) . "!</h2>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Thank you for applying for the position of <strong>" . htmlspecialchars($jobTitle) . "</strong> with <strong>{$siteName} Technologies</strong>.
+            </p>
+            <div style='background-color: #F8F5FC; border-left: 4px solid #FFCC00; padding: 16px; border-radius: 6px; margin: 20px 0;'>
+                <p style='margin: 0 0 8px; font-weight: bold; color: #2A114B;'>Application Reference Details:</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Application Number:</strong> " . htmlspecialchars($applicationNumber) . "</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Position:</strong> " . htmlspecialchars($jobTitle) . "</p>
+                <p style='margin: 0; color: #4B3E5C;'><strong>Vacancy Ref:</strong> " . htmlspecialchars($referenceNumber) . "</p>
+            </div>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Our Talent Operations team is reviewing your curriculum vitae and qualifications against the role requirements. If shortlisted, you will be contacted directly for structured assessment and interview stages.
+            </p>
+            <p style='margin: 0 0 8px; color: #7C708A; font-size: 13px;'>
+                <em>You can track your application status or explore more opportunities at our recruitment portal.</em>
+            </p>
+        ";
+
+        return self::send(
+            to: $email,
+            toName: $candidateName,
+            subject: $subject,
+            bodyHtml: $html,
+            fromEmail: self::JOBS,
+            fromName: "{$siteName} Talent Operations",
+            buttonText: "Visit Tsigiro Portal",
+            buttonUrl: "{$siteUrl}/opportunities"
+        );
+    }
+
+    /**
      * Core Email Dispatcher with Master Tsigiro HTML Brand Template.
      */
     public static function send(
@@ -660,15 +707,15 @@ class Mailer
         string $subject,
         string $bodyHtml,
         string $fromEmail = self::NOREPLY,
-        string $fromName = 'Trainit',
+        string $fromName = 'Tsigiro',
         ?string $toName = null,
         ?string $replyTo = null,
         ?string $buttonText = null,
         ?string $buttonUrl = null
     ): bool {
         global $siteConfig;
-        $siteUrl = $siteConfig->siteUrl ?? 'https://trainit.co.zw';
-        $siteName = $siteConfig->siteName ?? 'Trainit';
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
         $assetsUrl = $siteConfig->assetsUrl ?? ($siteUrl . '/assets');
 
         $toAddresses = is_array($to) ? $to : array_map('trim', explode(',', $to));
@@ -776,7 +823,7 @@ class Mailer
         } else {
             $headers[] = "Reply-To: " . $fromEmail;
         }
-        $headers[] = "X-Mailer: Trainit Mail Engine/1.0";
+        $headers[] = "X-Mailer: Tsigiro Mail Engine/1.0";
 
         $headerStr = implode("\r\n", $headers);
         $toStr = implode(', ', $toAddresses);

@@ -21,7 +21,7 @@ $pageTitle = isset($data['title']) ? $data['title'] : _SITE;
 <link rel="stylesheet" href="<?= $siteConfig->assetsUrl ?>/css/trainit.css?v=<?= _ASSET_VERSION ?>">
 
 <link rel="icon" href="<?= $siteConfig->assetsUrl ?>/img/logo-badge.svg?v=<?= _ASSET_VERSION ?>" type="image/svg+xml">
-<link rel="alternate icon" href="<?= $siteConfig->siteUrl ?>/favicon.ico" type="image/x-icon">
+<link rel="alternate icon" href="<?= $siteConfig->assetsUrl ?>/img/favicon.png?v=<?= _ASSET_VERSION ?>" type="image/png">
 <link rel="apple-touch-icon" href="<?= $siteConfig->assetsUrl ?>/img/apple-touch-icon.png?v=<?= _ASSET_VERSION ?>">
 
 <script src="<?= $siteConfig->assetsUrl ?>/js/jquery.min.js"></script>

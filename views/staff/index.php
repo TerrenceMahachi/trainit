@@ -287,7 +287,7 @@ foreach ($staffRecords as $r) {
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold small text-dark">Official Work Email <span class="text-danger">*</span></label>
-                        <input type="email" name="email" class="form-control" placeholder="e.g. sndlovu@trainit.co.zw" required>
+                        <input type="email" name="email" class="form-control" placeholder="e.g. sndlovu@tsigiro.co.zw" required>
                     </div>
 
                     <div class="mb-3">

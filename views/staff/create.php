@@ -37,7 +37,7 @@ $roles = $data['roles'] ?? [];
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold text-dark">Official Work Email <span class="text-danger">*</span></label>
-                                <input type="email" name="email" class="form-control form-control-lg" placeholder="e.g. jmoyo@trainit.co.zw" required>
+                                <input type="email" name="email" class="form-control form-control-lg" placeholder="e.g. jmoyo@tsigiro.co.zw" required>
                                 <small class="text-muted">Used for authentication and system alerts.</small>
                             </div>
 

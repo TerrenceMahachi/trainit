@@ -16,10 +16,10 @@ $surname = $nameParts[1] ?? '';
             <!-- Card Container -->
             <div class="card border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
                 <!-- Header Banner -->
-                <div class="p-4 p-md-5 text-white" style="background: linear-gradient(135deg, #1C0D30 0%, #2A114B 50%, #3B1B66 100%);">
+                <div class="p-4 p-md-5 text-white" style="background: linear-gradient(135deg, #090b0b 0%, #15221d 50%, #1d332b 100%);">
                     <div class="d-flex align-items-center justify-content-between mb-3">
-                        <img src="<?= $siteConfig->assetsUrl; ?>/img/logo-badge.svg?v=<?= _ASSET_VERSION ?>" alt="Trainit Logo" style="height: 44px; filter: brightness(0) invert(1);">
-                        <span class="badge px-3 py-2 fw-bold" style="background: #FFCC00; color: #1C0D30; font-size: 0.85rem;">Staff Onboarding</span>
+                        <img src="<?= $siteConfig->assetsUrl; ?>/img/logo-badge.svg?v=<?= _ASSET_VERSION ?>" alt="Tsigiro Logo" style="height: 44px; border-radius: 8px;">
+                        <span class="badge px-3 py-2 fw-bold" style="background: #32c99a; color: #090b0b; font-size: 0.85rem;">Staff Onboarding</span>
                     </div>
                     <h2 class="h3 fw-bold mb-1">Welcome to the Team, <?= htmlspecialchars($invite->name); ?>!</h2>
                     <p class="text-white-50 mb-0">Complete your statutory employee onboarding (NSSA Form P4) and configure your secure account credentials.</p>

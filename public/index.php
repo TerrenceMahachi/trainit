@@ -33,7 +33,7 @@ $siteConfig = new SiteConfig(
     assetsLoc: _ASSETS_PATH,                           // Assets location on disk
     navLoc: _ASSETS_PATH . '/nav/ajax-pagination.php', // Pagination include
     siteName: _SITEDISPLAYNAME,
-    defaultEmail: 'hello@trainit.co.zw'
+    defaultEmail: (defined('_DEFAULT_EMAIL') ? _DEFAULT_EMAIL : 'support@tsigiro.co.zw')
 );
 
 // Shared SQLite connection for legacy helpers that use `global $conn`.
