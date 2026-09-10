@@ -204,6 +204,11 @@ $router->addRoute('GET', '/opportunities', function () use ($router) {
         );
     }
 
+    // Load published vacancies for public display
+    $data['publishedVacancies'] = \App\Models\Vacancy::findByQuery(
+        "SELECT * FROM vacancy WHERE vacancystatus = 2 AND status = 1 ORDER BY is_featured DESC, publish_date DESC"
+    );
+
     echo view('home.opportunities', compact('data'));
     exit;
 });

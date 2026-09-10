@@ -17,6 +17,9 @@ $shortlistedCount = $data['shortlistedCount'] ?? 0;
 $interviewCount = $data['interviewCount'] ?? 0;
 $onRosterCount = $data['onRosterCount'] ?? 0;
 $initialApplications = $data['initialApplications'] ?? [];
+$publishedVacancies = $data['publishedVacancies'] ?? \App\Models\Vacancy::findByQuery(
+    "SELECT * FROM vacancy WHERE vacancystatus = 2 AND status = 1 ORDER BY is_featured DESC, publish_date DESC"
+);
 ?>
 <main class="trainit-page opportunity-page">
     <!-- Hero Section -->
@@ -52,6 +55,9 @@ $initialApplications = $data['initialApplications'] ?? [];
                             <a class="btn btn-sm btn-outline-light rounded-pill px-3" href="<?= $siteConfig->siteUrl ?>/dashboard">
                                 <i class="fa fa-gauge me-1"></i> Dashboard
                             </a>
+                            <a class="btn btn-sm btn-outline-warning rounded-pill px-3" href="<?= $siteConfig->siteUrl ?>/admin/vacancies">
+                                <i class="fa fa-bullhorn me-1"></i> Vacancies Console
+                            </a>
                             <a class="btn btn-sm btn-outline-success rounded-pill px-3" href="<?= $apprenticeUrl ?>" target="_blank">
                                 <i class="fa fa-graduation-cap me-1"></i> Apprentice Form
                             </a>
@@ -66,6 +72,9 @@ $initialApplications = $data['initialApplications'] ?? [];
                             <i class="fa fa-user-circle text-warning me-1"></i> Signed in as <strong><?= htmlspecialchars($loggedInUser->name) ?></strong>
                         </p>
                         <div class="d-flex flex-wrap gap-2">
+                            <a class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3" href="#open-vacancies">
+                                <i class="fa fa-bullhorn me-1"></i> Open Vacancies (<?= count($publishedVacancies) ?>)
+                            </a>
                             <a class="btn btn-sm btn-success rounded-pill px-3" href="<?= $apprenticeUrl ?>">
                                 <i class="fa fa-graduation-cap me-1"></i> Apply as Apprentice
                             </a>
@@ -79,11 +88,14 @@ $initialApplications = $data['initialApplications'] ?? [];
                     </div>
                 <?php else: ?>
                     <div class="trainit-actions">
-                        <a class="trainit-button opportunity-button" href="<?= $apprenticeUrl ?>">
-                            Apply as Apprentice <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                        <a class="trainit-button opportunity-button" href="#open-vacancies">
+                            <i class="fa fa-bullhorn me-1"></i> Open Vacancies (<?= count($publishedVacancies) ?>)
+                        </a>
+                        <a class="trainit-button opportunity-button-ghost" href="<?= $apprenticeUrl ?>">
+                            Apprentice Track <i class="fa fa-graduation-cap" aria-hidden="true"></i>
                         </a>
                         <a class="trainit-button opportunity-button-ghost" href="<?= $associateUrl ?>">
-                            Apply as Associate <i class="fa fa-user-tie" aria-hidden="true"></i>
+                            Associate Track <i class="fa fa-user-tie" aria-hidden="true"></i>
                         </a>
                     </div>
                     <p class="opportunity-note mt-2">
@@ -369,6 +381,103 @@ $initialApplications = $data['initialApplications'] ?? [];
             </div>
         </section>
     <?php endif; ?>
+
+    <!-- ========================================================= -->
+    <!-- PUBLISHED VACANCIES & OPEN POSITIONS                      -->
+    <!-- ========================================================= -->
+    <section class="py-5" id="open-vacancies" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #e2e8f0;">
+        <div class="trainit-wrap">
+            <div class="opportunity-section-heading opportunity-reveal text-center mb-5">
+                <p class="opportunity-kicker opportunity-kicker-dark"><span></span> Tsigiro Careers</p>
+                <h2 class="fw-bold" style="color: #1C0D30;">Published Vacancies &amp; Open Positions</h2>
+                <p style="color: #334155; font-size: 1.05rem; max-width: 720px; margin: 12px auto 0;">
+                    We are actively advertising vacancies for specialized operational roles. Apply directly with your CV resume or explore general roster tracks below.
+                </p>
+            </div>
+
+            <?php if (empty($publishedVacancies)): ?>
+                <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white max-w-700 mx-auto">
+                    <i class="fa fa-briefcase fa-3x text-secondary opacity-50 mb-3"></i>
+                    <h4 class="fw-bold" style="color: #1C0D30;">No Active Vacancies Advertised Today</h4>
+                    <p class="text-muted mb-3">All previous openings have been filled. You can still apply to join our verified talent roster as an Apprentice or Associate below.</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="<?= $apprenticeUrl ?>" class="btn btn-outline-success rounded-pill px-4">Apprentice Track</a>
+                        <a href="<?= $associateUrl ?>" class="btn btn-outline-primary rounded-pill px-4">Associate Track</a>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="row g-4 justify-content-center">
+                    <?php foreach ($publishedVacancies as $vac): 
+                        $vacDept = $vac->department();
+                        $vacEngagement = $vac->engagementbasis();
+                        $vacLocation = $vac->worklocationpreference();
+                        $vacSkills = $vac->skills();
+                        $vacDays = $vac->daysRemaining();
+                    ?>
+                        <div class="col-md-6 col-lg-4 opportunity-reveal">
+                            <div class="card h-100 border-0 shadow-sm rounded-4 p-4 bg-white d-flex flex-column justify-content-between" style="border-top: 4px solid <?= $vac->is_featured ? '#FFCC00' : '#2A114B'; ?> !important; border: 1px solid rgba(9, 11, 11, 0.08);">
+                                <div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <code class="fw-bold text-muted small"><?= htmlspecialchars($vac->reference_number); ?></code>
+                                        <?php if ($vac->is_featured): ?>
+                                            <span class="badge bg-warning text-dark rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+                                                <i class="fa fa-star me-1"></i> Featured
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <h4 class="fw-bold mb-2 fs-5">
+                                        <a href="<?= $siteConfig->siteUrl; ?>/opportunities/vacancy/<?= urlencode($vac->slug); ?>" class="text-dark text-decoration-none hover-primary">
+                                            <?= htmlspecialchars($vac->title); ?>
+                                        </a>
+                                    </h4>
+                                    <div class="small fw-semibold mb-2" style="color: #64748b;">
+                                        <i class="fa fa-building me-1 text-secondary"></i> <?= htmlspecialchars($vacDept ? $vacDept->name : 'Operations'); ?>
+                                    </div>
+                                    <p class="small text-muted mb-3" style="line-height: 1.6;">
+                                        <?= htmlspecialchars(mb_strimwidth($vac->summary, 0, 130, '...')); ?>
+                                    </p>
+
+                                    <?php if (!empty($vacSkills)): ?>
+                                        <div class="d-flex flex-wrap gap-1 mb-3">
+                                            <?php foreach (array_slice($vacSkills, 0, 3) as $sk): ?>
+                                                <span class="badge bg-light text-dark border small"><?= htmlspecialchars($sk['name']); ?></span>
+                                            <?php endforeach; ?>
+                                            <?php if (count($vacSkills) > 3): ?>
+                                                <span class="badge bg-light text-muted border small">+<?= count($vacSkills) - 3; ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <div class="pt-3 border-top mt-2">
+                                    <div class="d-flex justify-content-between align-items-center small text-muted mb-3">
+                                        <span><i class="fa fa-location-dot text-danger me-1"></i> <?= htmlspecialchars($vacLocation ? $vacLocation->name : 'Harare'); ?></span>
+                                        <span class="text-success fw-semibold"><i class="fa fa-clock me-1"></i> <?= $vacDays; ?> days left</span>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <a href="<?= $siteConfig->siteUrl; ?>/opportunities/vacancy/<?= urlencode($vac->slug); ?>" class="btn btn-warning text-dark fw-bold w-100 rounded-pill shadow-sm">
+                                            View &amp; Apply <i class="fa fa-arrow-right ms-1"></i>
+                                        </a>
+                                        <?php if ($isAdmin): ?>
+                                            <a href="<?= $siteConfig->siteUrl; ?>/admin/vacancies/applications/<?= $vac->iD; ?>" class="btn btn-outline-dark rounded-pill px-3" title="Review Applications">
+                                                <i class="fa fa-users"></i>
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="<?= $siteConfig->siteUrl; ?>/opportunities/vacancies" class="btn btn-outline-dark rounded-pill px-4 fw-semibold">
+                        <i class="fa fa-list me-1"></i> View All Published Positions (<?= count($publishedVacancies); ?>)
+                    </a>
+                </div>
+            <?php endif; ?>
+        </div>
+    </section>
 
     <!-- Path Chooser -->
     <section class="opportunity-section" id="choose-your-path">

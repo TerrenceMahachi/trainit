@@ -39,6 +39,7 @@ return [
             ['label' => 'Service Requests & Dispatch', 'url' => '/admin/requests'],
             ['label' => 'Service Catalogue & SLA', 'url' => '/admin/service-catalogue'],
             ['label' => 'Talent Vetting Pipeline', 'url' => '/admin/roster'],
+            ['label' => 'Recruitment & Vacancies', 'url' => '/admin/vacancies'],
             ['label' => 'User Accounts', 'url' => '/users'],
             ['label' => 'Rosterdocuments', 'url' => '/rosterdocuments'],
             ['label' => 'Rosterstatusevents', 'url' => '/rosterstatusevents'],

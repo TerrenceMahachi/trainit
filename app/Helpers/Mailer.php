@@ -653,6 +653,53 @@ class Mailer
     }
 
     /**
+     * Send an Application Receipt Confirmation for a Published Vacancy.
+     */
+    public static function sendVacancyApplicationConfirmation(
+        string $email,
+        string $candidateName,
+        string $applicationNumber,
+        string $jobTitle,
+        string $referenceNumber
+    ): bool {
+        global $siteConfig;
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
+
+        $subject = "Application Received – {$jobTitle} [{$referenceNumber}]";
+
+        $html = "
+            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 22px;'>Application Received, " . htmlspecialchars($candidateName) . "!</h2>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Thank you for applying for the position of <strong>" . htmlspecialchars($jobTitle) . "</strong> with <strong>{$siteName} Technologies</strong>.
+            </p>
+            <div style='background-color: #F8F5FC; border-left: 4px solid #FFCC00; padding: 16px; border-radius: 6px; margin: 20px 0;'>
+                <p style='margin: 0 0 8px; font-weight: bold; color: #2A114B;'>Application Reference Details:</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Application Number:</strong> " . htmlspecialchars($applicationNumber) . "</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Position:</strong> " . htmlspecialchars($jobTitle) . "</p>
+                <p style='margin: 0; color: #4B3E5C;'><strong>Vacancy Ref:</strong> " . htmlspecialchars($referenceNumber) . "</p>
+            </div>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Our Talent Operations team is reviewing your curriculum vitae and qualifications against the role requirements. If shortlisted, you will be contacted directly for structured assessment and interview stages.
+            </p>
+            <p style='margin: 0 0 8px; color: #7C708A; font-size: 13px;'>
+                <em>You can track your application status or explore more opportunities at our recruitment portal.</em>
+            </p>
+        ";
+
+        return self::send(
+            to: $email,
+            toName: $candidateName,
+            subject: $subject,
+            bodyHtml: $html,
+            fromEmail: self::JOBS,
+            fromName: "{$siteName} Talent Operations",
+            buttonText: "Visit Tsigiro Portal",
+            buttonUrl: "{$siteUrl}/opportunities"
+        );
+    }
+
+    /**
      * Core Email Dispatcher with Master Tsigiro HTML Brand Template.
      */
     public static function send(
