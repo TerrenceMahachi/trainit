@@ -99,6 +99,33 @@ switch ($currentStatusCode) {
                 </div>
             <?php endif; ?>
 
+            <!-- Shortlist & Magic Link Dispatch Card -->
+            <?php if ($currentStatusId < 3): ?>
+                <div class="card border-0 shadow-sm mb-4 bg-primary bg-opacity-10 border-start border-primary border-4" style="border-radius: 12px;">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <h5 class="fw-bold text-primary mb-1"><i class="fa fa-envelope-open-text me-2"></i> Initial Express Application (Pending Shortlisting)</h5>
+                            <p class="text-muted small mb-0">Candidate has submitted their initial details and CV. Shortlisting triggers an automated email with their secure magic link to complete the Stage 2–5 verification dossier.</p>
+                        </div>
+                        <button type="button" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" id="btn_shortlist_action">
+                            <i class="fa fa-check-circle me-1"></i> Shortlist &amp; Send Dossier Invitation Link
+                        </button>
+                    </div>
+                </div>
+            <?php elseif ($currentStatusId === 3): ?>
+                <div class="card border-0 shadow-sm mb-4 bg-success bg-opacity-10 border-start border-success border-4" style="border-radius: 12px;">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <h5 class="fw-bold text-success mb-1"><i class="fa fa-clipboard-check me-2"></i> Candidate Shortlisted &ndash; Dossier Completion Pending</h5>
+                            <p class="text-muted small mb-0">Shortlist invitation link was emailed to <strong><?= htmlspecialchars($app->email); ?></strong>. Candidate can now fill qualifications, skills matrix, and referee details.</p>
+                        </div>
+                        <button type="button" class="btn btn-outline-success fw-bold rounded-pill px-3 btn-sm" id="btn_shortlist_action">
+                            <i class="fa fa-redo me-1"></i> Resend Dossier Invitation Link
+                        </button>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <div class="row g-4">
                 <!-- Left Column: Applicant Profile & Evidence -->
                 <div class="col-lg-7">
@@ -480,6 +507,48 @@ $(document).ready(function () {
                         <div><strong>Error:</strong> Server communication failed. Please try again.</div>
                     </div>
                 `);
+            }
+        });
+    });
+
+    // Shortlist Candidate & Email Magic Link Handler
+    $('#btn_shortlist_action').on('click', function (e) {
+        e.preventDefault();
+        const $btn = $(this);
+        const origHtml = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Processing...');
+
+        $.ajax({
+            url: '<?= $siteConfig->siteUrl; ?>/admin/roster/shortlist',
+            type: 'POST',
+            data: { rosterapplication: <?= $app->iD; ?> },
+            dataType: 'json',
+            success: function(res) {
+                if (res.status === 1) {
+                    $btn.attr('class', 'btn btn-success fw-bold rounded-pill px-4 shadow-sm')
+                        .html('<i class="fa fa-check me-1"></i> Shortlisted &amp; Link Sent!');
+
+                    const copyBox = res.dossier_link ? `
+                        <div class="mt-2 input-group input-group-sm">
+                            <input type="text" class="form-control" value="${res.dossier_link}" id="shortlist_link_input" readonly>
+                            <button class="btn btn-outline-dark" type="button" onclick="navigator.clipboard.writeText('${res.dossier_link}'); alert('Link copied to clipboard!');">Copy Link</button>
+                        </div>
+                    ` : '';
+
+                    $('#review_alert').show().attr('class', 'alert alert-success d-flex align-items-start p-3 shadow-sm mb-4')
+                        .html(`<i class="fa fa-check-circle fa-2x me-3 text-success"></i> <div><h6 class="mb-1 fw-bold">Candidate Shortlisted!</h6><div>${res.msg}</div>${copyBox}</div>`);
+
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    $btn.prop('disabled', false).html(origHtml);
+                    alert(res.msg || 'Failed to shortlist candidate.');
+                }
+            },
+            error: function() {
+                $btn.prop('disabled', false).html(origHtml);
+                alert('Server error while shortlisting candidate.');
             }
         });
     });

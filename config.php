@@ -8,56 +8,52 @@
  */
 
 // --- Identity -------------------------------------------------------------
-define('_SITENAME', 'trainit');                 // URL slug / folder name
-define('_SITE', 'Trainit');                     // Short name
-define('_SITEDESCRIPTION', 'Practical technology, managed services, and client support for growing organisations.');
-define('_SITEDISPLAYNAME', 'Trainit');           // Human-friendly display name
+define('_SITENAME', 'tsigiro-portal');
+define('_SITE', 'Tsigiro Portal');
+define('_SITEDESCRIPTION', 'The secure shared portal for Tsigiro clients, staff and approved professionals.');
+define('_SITEDISPLAYNAME', 'Tsigiro Portal');
 
 // --- URLs / paths ---------------------------------------------------------
 // The app is served from the project root (public/ is the web root, mapped in
 // via the root .htaccess), so URLs do NOT contain "/public".
-define('_PROD_HOST', 'trainit.co.zw');
-$__host = $_SERVER['HTTP_HOST'] ?? (getenv('APP_HOST') ?: '');
-$__host = strtolower(preg_replace('/:\d+$/', '', $__host));
-$__isProd = in_array($__host, [_PROD_HOST, 'www.' . _PROD_HOST], true);
-
-if ($__isProd) {
-    define('_BASEURL', 'https://' . $__host);
-    define('_ASSETSURL', 'https://' . $__host . '/assets');
-} else {
-    define('_BASEURL', 'http://localhost/' . _SITENAME);
-    define('_ASSETSURL', 'http://localhost/' . _SITENAME . '/assets');
-}
+$requestHost = strtolower(preg_replace('/:\d+$/', '', $_SERVER['HTTP_HOST'] ?? ''));
+$isProduction = in_array($requestHost, ['portal.tsigiro.co.zw', 'www.portal.tsigiro.co.zw'], true);
+define('_BASEURL', $isProduction ? 'https://portal.tsigiro.co.zw' : 'http://localhost/tsigiro/portal');
+define('_ASSETSURL', _BASEURL . '/assets');
+define('_WEBSITE_URL', $isProduction ? 'https://tsigiro.co.zw' : 'http://localhost/tsigiro');
 
 // --- Environment ----------------------------------------------------------
 // 'development' shows errors on-screen; 'production' hides them and logs only.
-define('_ENV', $__isProd ? 'production' : 'development');
+define('_ENV', $isProduction ? 'production' : 'development');
 
 // Bump this when you change CSS/JS so browsers fetch the new version
 // (used as ?v= on asset URLs instead of a random value that defeats caching).
-define('_ASSET_VERSION', '20260820.2');
+define('_ASSET_VERSION', '20260909.2');
+
+// Accounts are issued after Tsigiro approves a recruitment or client
+// onboarding submission. The portal itself is not a public registration form.
+define('_ALLOW_PUBLIC_REGISTRATION', false);
+define('_DEFAULT_EMAIL', 'support@tsigiro.co.zw');
+define('_ENABLE_DEMO_MODULES', false);
+define('_ENABLE_MOBILE_DOWNLOADS', false);
+
+// --- Developer tools ------------------------------------------------------
+define('_DEV_TOOLS', false);
 
 // --- Security -------------------------------------------------------------
 // Secret used to sign the authentication cookie so it cannot be forged.
-// REGENERATE THIS FOR EVERY NEW PROJECT, e.g.:
-//   php -r "echo bin2hex(random_bytes(32));"
-// Keep it private; anyone who has it can mint valid login cookies.
-$appSecret = getenv('TRAINIT_APP_SECRET');
-if (($appSecret === false || $appSecret === '') && $__isProd) {
-    $secretFile = __DIR__ . '/storage/app_secret.key';
-    if (!is_file($secretFile)) {
-        file_put_contents($secretFile, bin2hex(random_bytes(32)), LOCK_EX);
-        @chmod($secretFile, 0600);
+$secretPath = __DIR__ . '/storage/app_secret.key';
+$appSecret = is_readable($secretPath) ? trim((string) file_get_contents($secretPath)) : '';
+if (!preg_match('/^[a-f0-9]{64}$/', $appSecret)) {
+    if (!$isProduction) {
+        $appSecret = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+    } else {
+        throw new RuntimeException('The portal signing secret is missing or invalid.');
     }
-    $appSecret = trim((string) file_get_contents($secretFile));
 }
-define('_APP_SECRET', $appSecret !== false && $appSecret !== ''
-    ? $appSecret
-    : 'local-development-only-change-before-production');
+define('_APP_SECRET', $appSecret);
 
-// How long an authenticated session cookie stays valid (seconds). The sign-in
-// itself is long-lived, but the session goes into a soft "resume" lock after
-// _IDLE_TIMEOUT of no activity: the user re-enters the last three characters of
-// their password instead of signing in again from scratch.
+// How long an authenticated session cookie stays valid (seconds).
 define('_AUTH_TTL', 60 * 60 * 24 * 30); // 30 days
-define('_IDLE_TIMEOUT', 180);           // 3 minutes of inactivity → /resume
+// Idle window before the session soft-locks to the /resume challenge.
+define('_IDLE_TIMEOUT', 60 * 30);       // 30 minutes of inactivity → /resume

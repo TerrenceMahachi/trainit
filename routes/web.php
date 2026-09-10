@@ -165,9 +165,45 @@ $router->addRoute('GET', '/cloud', function () use ($router) {
 
 $router->addRoute('GET', '/opportunities', function () use ($router) {
     $data = ['title' => 'Apprentices and Associates'];
-    if (isset($_COOKIE['user'])) {
-        $data['user'] = (new AccountController())->getUser($_COOKIE['user']);
+    $loggedInUser = null;
+    if (App\Helpers\Auth::check()) {
+        $userId = App\Helpers\Auth::id();
+        if ($userId) {
+            $loggedInUser = (new AccountController())->getUser($userId);
+            $data['user'] = $loggedInUser;
+        }
+    } elseif (isset($_COOKIE['user'])) {
+        $loggedInUser = (new AccountController())->getUser($_COOKIE['user']);
+        $data['user'] = $loggedInUser;
     }
+
+    $isAdmin = App\Helpers\Auth::check() && (
+        App\Helpers\Auth::isAdmin() || 
+        App\Helpers\Auth::isVettingOfficer() || 
+        App\Helpers\Auth::isServiceManager() || 
+        ($loggedInUser && in_array((int)$loggedInUser->role, [1, 6, 8]))
+    );
+    $data['isAdmin'] = $isAdmin;
+
+    if ($isAdmin) {
+        $data['statuses'] = \App\Models\Applicationstatus::all();
+        $data['tracks'] = \App\Models\Applicationtrack::all();
+
+        $pdo = \App\Models\Database::sharedPdo();
+        $data['totalApplicants'] = (int)$pdo->query("SELECT COUNT(*) FROM rosterapplication")->fetchColumn();
+        $data['apprenticeCount'] = (int)$pdo->query("SELECT COUNT(*) FROM rosterapplication WHERE applicationtrack = 1")->fetchColumn();
+        $data['associateCount'] = (int)$pdo->query("SELECT COUNT(*) FROM rosterapplication WHERE applicationtrack = 2")->fetchColumn();
+        $data['submittedCount'] = (int)$pdo->query("SELECT COUNT(*) FROM rosterapplication WHERE applicationstatus = 2")->fetchColumn();
+        $data['shortlistedCount'] = (int)$pdo->query("SELECT COUNT(*) FROM rosterapplication WHERE applicationstatus = 3")->fetchColumn();
+        $data['interviewCount'] = (int)$pdo->query("SELECT COUNT(*) FROM rosterapplication WHERE applicationstatus = 4")->fetchColumn();
+        $data['onRosterCount'] = (int)$pdo->query("SELECT COUNT(*) FROM rosterapplication WHERE applicationstatus = 5")->fetchColumn();
+
+        // Preload initial applications for instant SSR
+        $data['initialApplications'] = \App\Models\Rosterapplication::findByQuery(
+            "SELECT * FROM rosterapplication ORDER BY iD DESC LIMIT 20"
+        );
+    }
+
     echo view('home.opportunities', compact('data'));
     exit;
 });

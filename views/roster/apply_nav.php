@@ -1,22 +1,22 @@
 <?php
 /**
- * Shared Multi-Stage Application Navigation Bar.
+ * Shared Multi-Stage Shortlist Dossier Navigation Bar.
  * Renders real HTML <a> links with step states (completed, active, pending).
  * Strictly avoids client-side JavaScript tab toggling.
  */
 global $siteConfig;
 
-$step = $currentStep ?? 1;
+$step = $currentStep ?? 2;
 $appId = isset($application) && $application ? (int)$application->iD : (isset($appId) ? (int)$appId : 0);
 $trackCode = isset($track) && $track ? (is_object($track) ? $track->code : $track) : ($trackCode ?? 'apprentice');
 $trackName = $trackCode === 'associate' ? 'Associate Specialist' : 'Apprentice';
 
 $steps = [
     1 => [
-        'title' => 'Express Intake',
-        'subtitle' => 'Basic Profile',
-        'icon' => 'fa-user',
-        'url' => $appId > 0 ? ($siteConfig->siteUrl . "/opportunities/apply/{$trackCode}?id={$appId}") : ($siteConfig->siteUrl . "/opportunities/apply/{$trackCode}"),
+        'title' => 'Initial Application',
+        'subtitle' => 'Submitted & Screened',
+        'icon' => 'fa-user-check',
+        'url' => $appId > 0 ? ($siteConfig->siteUrl . "/roster/application/status?id={$appId}") : '#',
     ],
     2 => [
         'title' => 'Credentials',
@@ -37,7 +37,7 @@ $steps = [
         'url' => $appId > 0 ? ($siteConfig->siteUrl . "/roster/apply/experience?id={$appId}") : '#',
     ],
     5 => [
-        'title' => 'Review & Submit',
+        'title' => 'Review & Sign',
         'subtitle' => 'Declarations',
         'icon' => 'fa-check-double',
         'url' => $appId > 0 ? ($siteConfig->siteUrl . "/roster/apply/review?id={$appId}") : '#',
@@ -50,12 +50,15 @@ $steps = [
         <!-- Header Strip -->
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
             <div class="d-flex align-items-center gap-2">
-                <a href="<?= $siteConfig->siteUrl; ?>/opportunities" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                    <i class="fa fa-arrow-left me-1"></i> Opportunities
+                <a href="<?= $siteConfig->siteUrl; ?>/roster/application/status?id=<?= $appId; ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                    <i class="fa fa-arrow-left me-1"></i> Application Status
                 </a>
+                <span class="badge bg-info text-dark px-3 py-2 rounded-pill fw-bold">
+                    <i class="fa fa-star me-1 text-warning"></i> Shortlist Verification Dossier
+                </span>
                 <span class="badge <?= $trackCode === 'associate' ? 'bg-primary' : 'bg-success'; ?> px-3 py-2 rounded-pill">
                     <i class="fa <?= $trackCode === 'associate' ? 'fa-user-tie' : 'fa-graduation-cap'; ?> me-1"></i>
-                    <?= htmlspecialchars($trackName); ?> Track
+                    <?= htmlspecialchars($trackName); ?>
                 </span>
                 <?php if ($appId > 0): ?>
                     <span class="badge bg-light text-dark border px-2 py-1 small">
@@ -65,17 +68,17 @@ $steps = [
             </div>
             <div>
                 <span class="text-muted small">
-                    Step <strong class="text-dark"><?= is_numeric($step) ? $step : 'Final'; ?></strong> of 5
+                    Dossier Step <strong class="text-dark"><?= is_numeric($step) ? $step : 'Final'; ?></strong> of 5
                 </span>
             </div>
         </div>
 
         <!-- Real <a> Navigation Links (No JS Tabs) -->
-        <nav aria-label="Onboarding Progress" class="overflow-auto py-1">
+        <nav aria-label="Shortlist Onboarding Progress" class="overflow-auto py-1">
             <ol class="list-unstyled d-flex flex-nowrap align-items-center gap-1 mb-0" style="min-width: 640px;">
                 <?php foreach ($steps as $idx => $s): 
                     $isActive = ($step === $idx);
-                    $isCompleted = ($step > $idx) || ($step === 'status');
+                    $isCompleted = ($step > $idx) || ($step === 'status') || ($idx === 1);
                     $isClickable = ($appId > 0 && ($isCompleted || $idx <= $step + 1));
                 ?>
                     <li class="flex-fill">

@@ -84,6 +84,12 @@ $router->addRoute('GET', '/roster/application/status', function () {
     exit;
 });
 
+// Candidate Shortlist Magic Link Access (Direct authentication into Stage 2 Dossier)
+$router->addRoute('GET', '/roster/shortlist/complete', function () {
+    (new RosterApplicationController())->handleShortlistTokenLogin();
+    exit;
+});
+
 // Legacy / Direct Link Redirections to Express Intake
 $router->addRoute('GET', '/apply/apprentice', function () {
     global $siteConfig;
@@ -175,7 +181,7 @@ $router->addRoute('GET', '/admin/roster', function () {
 });
 
 $router->addRoute('POST', '/get-admin-roster-records', function () {
-    if (!Auth::check() || (!Auth::isAdmin() && !Auth::isVettingOfficer())) {
+    if (!Auth::check() || (!Auth::isAdmin() && !Auth::isVettingOfficer() && !Auth::isServiceManager())) {
         header('Content-Type: application/json');
         echo json_encode(['status' => 0, 'msg' => 'Unauthorized']);
         exit;
@@ -188,7 +194,7 @@ $router->addRoute('POST', '/get-admin-roster-records', function () {
 
 $router->addRoute('GET', '/admin/roster/review', function () {
     global $siteConfig;
-    if (!Auth::check() || (!Auth::isAdmin() && !Auth::isVettingOfficer())) {
+    if (!Auth::check() || (!Auth::isAdmin() && !Auth::isVettingOfficer() && !Auth::isServiceManager())) {
         header("Location: " . $siteConfig->siteUrl . "/dashboard");
         exit;
     }
@@ -198,12 +204,24 @@ $router->addRoute('GET', '/admin/roster/review', function () {
 });
 
 $router->addRoute('POST', '/admin/roster/assessment', function () {
-    if (!Auth::check() || (!Auth::isAdmin() && !Auth::isVettingOfficer())) {
+    if (!Auth::check() || (!Auth::isAdmin() && !Auth::isVettingOfficer() && !Auth::isServiceManager())) {
         header('Content-Type: application/json');
         echo json_encode(['status' => 0, 'msg' => 'Unauthorized']);
         exit;
     }
     $result = (new RosterApplicationController())->handleAssessmentSubmit();
+    header('Content-Type: application/json');
+    echo json_encode($result);
+    exit;
+});
+
+$router->addRoute('POST', '/admin/roster/shortlist', function () {
+    if (!Auth::check() || (!Auth::isAdmin() && !Auth::isVettingOfficer() && !Auth::isServiceManager())) {
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 0, 'msg' => 'Unauthorized']);
+        exit;
+    }
+    $result = (new RosterApplicationController())->handleShortlistCandidate();
     header('Content-Type: application/json');
     echo json_encode($result);
     exit;
