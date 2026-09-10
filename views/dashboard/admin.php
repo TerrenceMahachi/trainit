@@ -25,7 +25,7 @@ $recentApplications = App\Models\Rosterapplication::findByQuery(
     <section class="portal-dashboard-header">
         <div class="container portal-dashboard-header-inner">
             <div>
-                <p class="portal-kicker"><i class="fa fa-shield-alt me-1"></i> Trainit Command Center</p>
+                <p class="portal-kicker"><i class="fa fa-shield-alt me-1"></i> Tsigiro Command Center</p>
                 <h1>Administrator Dashboard</h1>
                 <p class="portal-dashboard-intro">Overview of talent pipeline intake, vetting scoring, candidate onboarding, and system dictionary governance.</p>
             </div>

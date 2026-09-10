@@ -9,7 +9,7 @@ global $siteConfig;
             <div>
                 <p class="portal-kicker"><a href="<?= $siteConfig->siteUrl; ?>/dashboard" style="color:rgba(255,255,255,0.7); text-decoration:none;"><i class="fa fa-arrow-left me-1"></i> Back to Dashboard</a></p>
                 <h1>Choose Your Application Track</h1>
-                <p class="portal-dashboard-intro">Trainit operates two distinct paths for contributing to real client delivery. Select the route that matches your current stage and goals.</p>
+                <p class="portal-dashboard-intro">Tsigiro operates two distinct paths for contributing to real client delivery. Select the route that matches your current stage and goals.</p>
             </div>
         </div>
     </section>

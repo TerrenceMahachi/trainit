@@ -16,9 +16,9 @@ $associateApps = $profileData['associate'];
     <section class="portal-dashboard-header">
         <div class="container portal-dashboard-header-inner">
             <div>
-                <p class="portal-kicker">Trainit Portal</p>
+                <p class="portal-kicker">Tsigiro Portal</p>
                 <h1>Welcome, <?= $userName; ?></h1>
-                <p class="portal-dashboard-intro">Manage your active talent profiles, check application vetting stages, or request new professional profiles across the Trainit network.</p>
+                <p class="portal-dashboard-intro">Manage your active talent profiles, check application vetting stages, or request new professional profiles across the Tsigiro network.</p>
             </div>
             <div class="portal-account-summary" aria-label="Account summary">
                 <span>Account Status</span>
@@ -120,7 +120,7 @@ $associateApps = $profileData['associate'];
                 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                     <div>
                         <h2 class="h4 mb-0 fw-bold">Your Talent Profiles & Applications</h2>
-                        <p class="text-muted small mb-0">You hold <?= count($apprenticeApps) + count($associateApps); ?> profile(s) across the Trainit talent network.</p>
+                        <p class="text-muted small mb-0">You hold <?= count($apprenticeApps) + count($associateApps); ?> profile(s) across the Tsigiro talent network.</p>
                     </div>
                     <div>
                         <a href="<?= $siteConfig->siteUrl; ?>/dashboard/apply" class="btn btn-success fw-bold shadow-sm">

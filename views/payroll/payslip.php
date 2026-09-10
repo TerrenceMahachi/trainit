@@ -38,20 +38,20 @@ $navUser = \App\Helpers\Auth::user();
         <div class="d-flex justify-content-between align-items-start border-bottom pb-4 mb-4">
             <div>
                 <div class="d-flex align-items-center gap-2 mb-2">
-                    <div class="rounded-3 p-2 text-white fw-bold d-flex align-items-center justify-content-center" style="background-color: #2A114B; width: 44px; height: 44px;">
+                    <div class="rounded-3 p-2 text-white fw-bold d-flex align-items-center justify-content-center" style="background-color: #090b0b; width: 44px; height: 44px;">
                         TT
                     </div>
                     <div>
-                        <h4 class="fw-bold mb-0" style="color: #1C0D30;">TRAINIT TECHNOLOGIES (PVT) LTD</h4>
+                        <h4 class="fw-bold mb-0" style="color: #090b0b;">TRAINIT TECHNOLOGIES (PVT) LTD</h4>
                         <div class="text-muted small">Trading as <strong>Tsigiro</strong> &bull; Company Reg: 1423/98</div>
                     </div>
                 </div>
                 <div class="text-muted small">
-                    14 Samora Machel Avenue, Harare, Zimbabwe &bull; Email: payroll@trainit.co.zw
+                    14 Samora Machel Avenue, Harare, Zimbabwe &bull; Email: support@tsigiro.co.zw
                 </div>
             </div>
             <div class="text-end">
-                <span class="badge px-3 py-2 text-uppercase fw-bold rounded-pill text-white" style="background-color: #2A114B; font-size: 0.85rem;">
+                <span class="badge px-3 py-2 text-uppercase fw-bold rounded-pill text-white" style="background-color: #090b0b; font-size: 0.85rem;">
                     CONFIDENTIAL PAYSLIP
                 </span>
                 <div class="h5 fw-bold text-dark mt-2 mb-0 font-monospace"><?= htmlspecialchars(is_object($period) ? $period->period_code : $period['period_code']) ?></div>
