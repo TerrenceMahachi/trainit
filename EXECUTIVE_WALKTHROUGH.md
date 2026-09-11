@@ -1,5 +1,11 @@
 # Tsigiro Portal — Executive Walkthrough & Testing Guide
 
+> [!TIP]
+> **Executive PDF Edition Available:**
+> A formatted 4-page executive PDF edition of this guide has been generated:
+> * **Local PDF:** [`TSIGIROS_EXECUTIVE_WALKTHROUGH_GUIDE.pdf`](./TSIGIROS_EXECUTIVE_WALKTHROUGH_GUIDE.pdf)
+> * **Live Production URL:** [https://portal.tsigiro.co.zw/TSIGIROS_EXECUTIVE_WALKTHROUGH_GUIDE.pdf](https://portal.tsigiro.co.zw/TSIGIROS_EXECUTIVE_WALKTHROUGH_GUIDE.pdf)
+
 **Audience:** Executive Leadership, Project Evaluators, Stakeholders, and Systems Auditors  
 **Standard Password for All Demo Accounts:** `Password123!`  
 
