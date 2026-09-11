@@ -31,6 +31,52 @@ $router->addRoute('GET', '/login', function () {
     exit;
 });
 
+// One-click quick login route for demo & testing accounts
+$router->addRoute('GET', '/quick-login', function () {
+    global $siteConfig;
+
+    $roleMap = [
+        'admin'      => 'admin@tsigiro.co.zw',
+        'vetting'    => 'vetting@tsigiro.co.zw',
+        'manager'    => 'manager@tsigiro.co.zw',
+        'finance'    => 'finance@tsigiro.co.zw',
+        'apprentice' => 'apprentice@tsigiro.co.zw',
+        'associate'  => 'associate@tsigiro.co.zw',
+        'candidate'  => 'candidate@tsigiro.co.zw',
+        'client'     => 'client@tsigiro.co.zw',
+    ];
+
+    $as = strtolower(trim($_GET['as'] ?? ''));
+    $email = $roleMap[$as] ?? (isset($_GET['email']) ? strtolower(trim($_GET['email'])) : '');
+
+    if (empty($email)) {
+        header("Location: " . $siteConfig->siteUrl . "/login");
+        exit;
+    }
+
+    $users = \App\Models\User::findByQuery("SELECT * FROM user WHERE email = ?", [$email]);
+    if (empty($users)) {
+        header("Location: " . $siteConfig->siteUrl . "/login");
+        exit;
+    }
+
+    $user = $users[0];
+
+    // Clear any previous session and establish clean authenticated demo session
+    \App\Helpers\Auth::logout();
+    \App\Helpers\Auth::login($user->iD);
+    \App\Helpers\PasswordResume::clearPause();
+    \App\Helpers\PasswordResume::enroll((int)$user->iD, 'Password123!');
+
+    // Route based on destination/role
+    if ((int)$user->role === 3) {
+        header("Location: " . $siteConfig->siteUrl . "/client/portal");
+    } else {
+        header("Location: " . $siteConfig->siteUrl . "/dashboard");
+    }
+    exit;
+});
+
 // Soft-lock resume challenge: the user still holds a valid long-lived cookie but
 // the session was paused after inactivity. They re-enter the last three
 // characters of their password (enrolled at login) to continue — no full logout.

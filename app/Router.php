@@ -189,12 +189,16 @@ class Router
         $url = strtok($_SERVER['REQUEST_URI'], '?'); // remove query string
         $url = rtrim($url, '/'); // remove trailing slash
 
-        // Strip known environment folder prefixes (e.g. /trainit.co.zw on production cPanel, /trainit on local)
-        $prefixes = [
+        // Strip known environment folder prefixes (e.g. /trainit.co.zw on production cPanel, /trainit or /tsigiro/portal on local)
+        $baseUriPath = defined('_BASEURL') ? rtrim(parse_url(_BASEURL, PHP_URL_PATH) ?? '', '/') : '';
+        $prefixes = array_unique(array_filter([
             '/' . (defined('_PROD_HOST') ? _PROD_HOST : ''),
             '/www.' . (defined('_PROD_HOST') ? _PROD_HOST : ''),
+            $baseUriPath,
+            '/tsigiro/portal',
+            '/trainit',
             $this->basePath,
-        ];
+        ]));
         foreach ($prefixes as $prefix) {
             if ($prefix !== '/' && $prefix !== '' && strpos($url, $prefix) === 0) {
                 $url = substr($url, strlen($prefix));
