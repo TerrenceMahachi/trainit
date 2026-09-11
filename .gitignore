@@ -22,6 +22,10 @@ storage/sessions/
 # User uploads & ephemeral storage
 storage/roster_uploads/*
 !storage/roster_uploads/.gitkeep
+storage/uploads/*
+!storage/uploads/.gitkeep
+public/uploads/*
+!public/uploads/.gitkeep
 
 # Composer dependencies
 /vendor/

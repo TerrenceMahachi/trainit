@@ -330,6 +330,7 @@ class RosterApplicationController
 
             // 1. Authenticate or Provision User
             $userId = Auth::id();
+            $tempPass = null;
             if (!$userId) {
                 $existingUsers = User::findByQuery("SELECT * FROM user WHERE email = ? LIMIT 1", [$email]);
                 if (!empty($existingUsers)) {
@@ -431,7 +432,7 @@ class RosterApplicationController
             // 6. Send Submission Receipt Email
             $candidate = (new User())->find($userId);
             if ($candidate) {
-                Mailer::sendApplicationSubmitted($app, $candidate);
+                Mailer::sendApplicationSubmitted($app, $candidate, $tempPass);
             }
 
             $redirectUrl = $siteConfig->siteUrl . '/roster/application/status?id=' . $appId;

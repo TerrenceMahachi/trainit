@@ -4,6 +4,8 @@ namespace App\Helpers;
 
 use App\Models\User;
 use App\Models\Rosterapplication;
+use App\Models\Servicerequest;
+use App\Models\Clientorganization;
 
 /**
  * Central Mailer Service for Tsigiro.
@@ -149,7 +151,7 @@ class Mailer
     /**
      * Send Candidate Application Submission Confirmation + Internal Team Alert.
      */
-    public static function sendApplicationSubmitted(Rosterapplication $app, User $candidate): bool
+    public static function sendApplicationSubmitted(Rosterapplication $app, User $candidate, ?string $tempPassword = null): bool
     {
         global $siteConfig;
         $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
@@ -195,7 +197,32 @@ class Mailer
                         <td style='padding: 6px 0;'><span style='background: #FFF3CD; color: #856404; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;'>Pending Vetting Review</span></td>
                     </tr>
                 </table>
-            </div>
+            </div>";
+
+        if ($tempPassword !== null && $tempPassword !== '') {
+            $candidateHtml .= "
+            <div style='background-color: #2A114B; color: #ffffff; border-radius: 8px; padding: 20px; margin: 22px 0;'>
+                <h3 style='margin: 0 0 10px; color: #FFCC00; font-size: 16px;'>Your Candidate Portal Account Credentials</h3>
+                <p style='margin: 0 0 12px; color: #E9D5FF; font-size: 14px; line-height: 1.5;'>
+                    An applicant account has been generated for you so you can log in, track your vetting progression in real time, and manage your talent profiles:
+                </p>
+                <table style='width: 100%; border-collapse: collapse; font-size: 14px; color: #ffffff;'>
+                    <tr>
+                        <td style='padding: 6px 0; color: #E9D5FF; width: 40%;'><strong>Portal Username / Email:</strong></td>
+                        <td style='padding: 6px 0; font-family: monospace; font-weight: bold; color: #ffffff;'>" . htmlspecialchars($candidate->email) . "</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 6px 0; color: #E9D5FF;'><strong>Temporary Password:</strong></td>
+                        <td style='padding: 6px 0; font-family: monospace; font-weight: bold; color: #FFCC00; font-size: 16px;'>" . htmlspecialchars($tempPassword) . "</td>
+                    </tr>
+                </table>
+                <p style='margin: 12px 0 0; color: #C4B5FD; font-size: 12px;'>
+                    <em>You can change your password in your account profile once logged in.</em>
+                </p>
+            </div>";
+        }
+
+        $candidateHtml .= "
             <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
                 <strong>What happens next?</strong><br>
                 Our recruitment panel will evaluate your credentials against our 100-point assessment rubric. You can monitor your application status and review feedback in real-time from your portal dashboard.
@@ -210,7 +237,7 @@ class Mailer
             fromEmail: $fromMailbox,
             fromName: "{$siteName} {$departmentName}",
             buttonText: "Track Application Status",
-            buttonUrl: "{$siteUrl}/dashboard/application?id={$app->iD}"
+            buttonUrl: "{$siteUrl}/dashboard"
         );
 
         // 2. Internal Team Alert Email
@@ -660,7 +687,8 @@ class Mailer
         string $candidateName,
         string $applicationNumber,
         string $jobTitle,
-        string $referenceNumber
+        string $referenceNumber,
+        ?string $tempPassword = null
     ): bool {
         global $siteConfig;
         $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
@@ -678,7 +706,32 @@ class Mailer
                 <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Application Number:</strong> " . htmlspecialchars($applicationNumber) . "</p>
                 <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Position:</strong> " . htmlspecialchars($jobTitle) . "</p>
                 <p style='margin: 0; color: #4B3E5C;'><strong>Vacancy Ref:</strong> " . htmlspecialchars($referenceNumber) . "</p>
-            </div>
+            </div>";
+
+        if ($tempPassword !== null && $tempPassword !== '') {
+            $html .= "
+            <div style='background-color: #2A114B; color: #ffffff; border-radius: 8px; padding: 20px; margin: 22px 0;'>
+                <h3 style='margin: 0 0 10px; color: #FFCC00; font-size: 16px;'>Your Candidate Portal Account Credentials</h3>
+                <p style='margin: 0 0 12px; color: #E9D5FF; font-size: 14px; line-height: 1.5;'>
+                    An applicant account has been created for you so you can monitor the screening, interview scheduling, and status updates for your application:
+                </p>
+                <table style='width: 100%; border-collapse: collapse; font-size: 14px; color: #ffffff;'>
+                    <tr>
+                        <td style='padding: 6px 0; color: #E9D5FF; width: 40%;'><strong>Portal Username / Email:</strong></td>
+                        <td style='padding: 6px 0; font-family: monospace; font-weight: bold; color: #ffffff;'>" . htmlspecialchars($email) . "</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 6px 0; color: #E9D5FF;'><strong>Temporary Password:</strong></td>
+                        <td style='padding: 6px 0; font-family: monospace; font-weight: bold; color: #FFCC00; font-size: 16px;'>" . htmlspecialchars($tempPassword) . "</td>
+                    </tr>
+                </table>
+                <p style='margin: 12px 0 0; color: #C4B5FD; font-size: 12px;'>
+                    <em>We recommend updating your password in your portal account settings once logged in.</em>
+                </p>
+            </div>";
+        }
+
+        $html .= "
             <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
                 Our Talent Operations team is reviewing your curriculum vitae and qualifications against the role requirements. If shortlisted, you will be contacted directly for structured assessment and interview stages.
             </p>
@@ -694,8 +747,133 @@ class Mailer
             bodyHtml: $html,
             fromEmail: self::JOBS,
             fromName: "{$siteName} Talent Operations",
-            buttonText: "Visit Tsigiro Portal",
-            buttonUrl: "{$siteUrl}/opportunities"
+            buttonText: "Track Your Application",
+            buttonUrl: "{$siteUrl}/dashboard"
+        );
+    }
+
+    /**
+     * Send Confirmation to Client & Alert to Service Desk when a Work Request is Submitted.
+     */
+    public static function sendServiceRequestSubmitted(Servicerequest $req, Clientorganization $client, User $user): bool
+    {
+        global $siteConfig;
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
+
+        $reqNumber = htmlspecialchars(is_object($req) ? $req->request_number : $req['request_number']);
+        $reqTitle = htmlspecialchars(is_object($req) ? $req->title : $req['title']);
+        $clientName = htmlspecialchars(is_object($client) ? $client->trading_name : $client['trading_name']);
+        $userName = htmlspecialchars(is_object($user) ? $user->name : $user['name']);
+        $userEmail = is_object($user) ? $user->email : $user['email'];
+        $reqId = is_object($req) ? $req->iD : $req['iD'];
+
+        // 1. Client Confirmation
+        $subject = "Work Request Received – {$reqNumber} ({$reqTitle})";
+        $html = "
+            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 22px;'>Work Request Received</h2>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Hello <strong>{$userName}</strong>,
+            </p>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Thank you for submitting your service request for <strong>{$clientName}</strong>. Our delivery and triage desk has logged your ticket and is reviewing scope requirements.
+            </p>
+            <div style='background-color: #F8F5FC; border-left: 4px solid #FFCC00; padding: 16px; border-radius: 6px; margin: 20px 0;'>
+                <p style='margin: 0 0 6px; color: #2A114B; font-weight: bold;'>Ticket Reference:</p>
+                <h3 style='margin: 0 0 8px; color: #2A114B; font-size: 18px;'>{$reqNumber}</h3>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Title:</strong> {$reqTitle}</p>
+                <p style='margin: 0; color: #4B3E5C;'><strong>Organization:</strong> {$clientName}</p>
+            </div>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Your dedicated Service Manager will triage the ticket, commit an SLA target completion date, and assign qualified practitioner talent. You can track progress and collaborate in real-time in your client workspace.
+            </p>
+        ";
+
+        self::send(
+            to: $userEmail,
+            toName: $userName,
+            subject: $subject,
+            bodyHtml: $html,
+            fromEmail: self::PROJECTS,
+            fromName: "{$siteName} Service Desk",
+            buttonText: "Open Request Workspace",
+            buttonUrl: "{$siteUrl}/client/requests/view/{$reqId}"
+        );
+
+        // 2. Internal Service Desk Alert
+        $teamSubject = "[New Work Request] {$reqNumber} – {$clientName}: {$reqTitle}";
+        $teamHtml = "
+            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 20px;'>New Client Work Request Submitted</h2>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6;'>
+                Client <strong>{$clientName}</strong> has submitted a new engagement ticket requiring triage and staffing assignment.
+            </p>
+            <div style='background-color: #F8F5FC; border: 1px solid #E5DCF0; border-radius: 8px; padding: 18px; margin: 20px 0;'>
+                <p style='margin: 0 0 6px;'><strong>Ticket:</strong> {$reqNumber}</p>
+                <p style='margin: 0 0 6px;'><strong>Client:</strong> {$clientName}</p>
+                <p style='margin: 0 0 6px;'><strong>Submitted By:</strong> {$userName} ({$userEmail})</p>
+                <p style='margin: 0 0 10px;'><strong>Title:</strong> {$reqTitle}</p>
+                <p style='margin: 0; color: #4B3E5C;'><strong>Description:</strong> " . nl2br(htmlspecialchars(is_object($req) ? $req->description : $req['description'])) . "</p>
+            </div>
+        ";
+
+        return self::send(
+            to: [self::PROJECTS, self::ADMIN],
+            toName: "{$siteName} Delivery Desk",
+            subject: $teamSubject,
+            bodyHtml: $teamHtml,
+            fromEmail: self::NOREPLY,
+            fromName: "{$siteName} Dispatch Bot",
+            buttonText: "Triage & Assign Talent",
+            buttonUrl: "{$siteUrl}/admin/requests/view/{$reqId}"
+        );
+    }
+
+    /**
+     * Send Notification when an Engagement is Completed and Signed Off by the Client.
+     */
+    public static function sendServiceRequestClosed(Servicerequest $req, Clientorganization $client, User $user, int $rating, ?string $notes = null): bool
+    {
+        global $siteConfig;
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
+
+        $reqNumber = htmlspecialchars(is_object($req) ? $req->request_number : $req['request_number']);
+        $reqTitle = htmlspecialchars(is_object($req) ? $req->title : $req['title']);
+        $clientName = htmlspecialchars(is_object($client) ? $client->trading_name : $client['trading_name']);
+        $userName = htmlspecialchars(is_object($user) ? $user->name : $user['name']);
+        $userEmail = is_object($user) ? $user->email : $user['email'];
+        $reqId = is_object($req) ? $req->iD : $req['iD'];
+
+        $stars = str_repeat('★', max(1, min(5, $rating)));
+
+        $subject = "Engagement Completed & Closed – {$reqNumber}";
+        $html = "
+            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 22px;'>Deliverables Accepted & Engagement Closed</h2>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Dear <strong>{$userName}</strong>,
+            </p>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Thank you for confirming the delivery and approving sign-off for engagement <strong>{$reqNumber} ({$reqTitle})</strong> for <strong>{$clientName}</strong>.
+            </p>
+            <div style='background-color: #D1E7DD; border: 1px solid #0F5132; border-radius: 8px; padding: 18px; margin: 20px 0;'>
+                <p style='margin: 0 0 4px; color: #0F5132; font-weight: bold;'>Status: Completed &amp; Satisfied</p>
+                <p style='margin: 0 0 6px; color: #0F5132;'><strong>Client Rating:</strong> <span style='font-size: 18px; color: #FFCC00;'>{$stars}</span> ({$rating}/5)</p>
+                " . ($notes ? "<p style='margin: 0; color: #0F5132;'><strong>Feedback:</strong> &ldquo;" . htmlspecialchars($notes) . "&rdquo;</p>" : "") . "
+            </div>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                All project outputs, deliverables, and correspondence remain accessible in your workspace archive. If you require follow-up support or additional deliverables, you can submit a new request anytime.
+            </p>
+        ";
+
+        return self::send(
+            to: $userEmail,
+            toName: $userName,
+            subject: $subject,
+            bodyHtml: $html,
+            fromEmail: self::PROJECTS,
+            fromName: "{$siteName} Service Desk",
+            buttonText: "View Engagement Archive",
+            buttonUrl: "{$siteUrl}/client/requests/view/{$reqId}"
         );
     }
 

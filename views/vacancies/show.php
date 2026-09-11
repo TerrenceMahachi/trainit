@@ -9,8 +9,24 @@ $location   = $data['location'] ?? null;
 $targetRole = $data['targetRole'] ?? null;
 $skills     = $data['skills'] ?? [];
 $isStaff    = $data['isStaff'] ?? false;
+$currentUser = $data['currentUser'] ?? null;
+$existingApplication = $data['existingApplication'] ?? null;
 $daysRemaining = $vacancy ? $vacancy->daysRemaining() : 0;
 $isClosed = $vacancy ? $vacancy->isClosed() : true;
+
+// Pre-fill fields if candidate is logged in
+$prefillFirstName = '';
+$prefillLastName = '';
+$prefillEmail = '';
+$prefillPhone = '';
+
+if ($currentUser) {
+    $parts = explode(' ', trim($currentUser->name ?? ''), 2);
+    $prefillFirstName = $parts[0] ?? '';
+    $prefillLastName = $parts[1] ?? '';
+    $prefillEmail = $currentUser->email ?? '';
+    $prefillPhone = $currentUser->phone ?? '';
+}
 ?>
 
 <main class="trainit-page vacancy-detail-page">
@@ -186,29 +202,90 @@ $isClosed = $vacancy ? $vacancy->isClosed() : true;
                             <div class="alert alert-warning rounded-3 mb-0">
                                 <i class="fa fa-lock me-1"></i> The application window for this position closed on <?= htmlspecialchars($vacancy->closing_date); ?>. Please check our other openings.
                             </div>
+                        <?php elseif ($existingApplication): ?>
+                            <!-- Existing Application Card -->
+                            <div class="p-3 bg-light rounded-4 border mb-3">
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    <div class="rounded-circle bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; flex-shrink: 0;">
+                                        <i class="fa fa-check-circle fa-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="fw-bold mb-0 text-success">Application Already Received</h5>
+                                        <p class="text-muted small mb-0">You have already submitted an application for this position.</p>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white p-3 rounded-3 border mb-3 small">
+                                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                                        <span class="text-muted">Application Number:</span>
+                                        <code class="fw-bold text-dark fs-6"><?= htmlspecialchars($existingApplication->application_number); ?></code>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                                        <span class="text-muted">Vetting Stage:</span>
+                                        <?php
+                                        $stRec = $existingApplication->statusRecord();
+                                        $badgeCls = $stRec ? $stRec->badge_class : 'bg-info text-dark';
+                                        $stName = $stRec ? $stRec->name : 'Application Received';
+                                        ?>
+                                        <span class="badge <?= $badgeCls; ?> px-2 py-1"><?= htmlspecialchars($stName); ?></span>
+                                    </div>
+                                    <?php if (!empty($existingApplication->interview_at)): ?>
+                                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                                            <span class="text-muted">Interview Date:</span>
+                                            <strong class="text-warning"><?= date('D, d M Y @ H:i', strtotime($existingApplication->interview_at)); ?></strong>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">Submitted Date:</span>
+                                        <span class="fw-semibold text-dark"><?= date('d M Y, H:i', strtotime($existingApplication->reg_date)); ?></span>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <a href="<?= $siteConfig->siteUrl; ?>/dashboard" class="btn btn-warning text-dark fw-bold py-2 rounded-pill shadow-sm">
+                                        <i class="fa fa-tachometer-alt me-1"></i> Track Application on Dashboard
+                                    </a>
+                                </div>
+                            </div>
                         <?php else: ?>
+                            <?php if ($currentUser): ?>
+                                <div class="alert alert-info py-2 px-3 small rounded-3 mb-3 d-flex align-items-center gap-2">
+                                    <i class="fa fa-user-check text-primary"></i>
+                                    <div>
+                                        Applying as signed-in candidate: <strong><?= htmlspecialchars($currentUser->name); ?></strong> (<?= htmlspecialchars($currentUser->email); ?>).
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <div class="alert alert-light border py-2 px-3 small rounded-3 mb-3 d-flex align-items-center gap-2">
+                                    <i class="fa fa-id-badge text-warning"></i>
+                                    <div class="text-muted">
+                                        Applying as a guest? A candidate account will be automatically generated and logged in so you can track your application.
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
                             <div id="applyAlert" class="alert d-none mb-3" role="alert"></div>
 
                             <form id="vacancyApplyForm" method="POST" action="<?= $siteConfig->siteUrl; ?>/opportunities/vacancy/<?= urlencode($vacancy->slug); ?>/apply" enctype="multipart/form-data">
                                 <div class="row g-2 mb-3">
                                     <div class="col-6">
                                         <label for="first_name" class="form-label small fw-bold">First Name <span class="text-danger">*</span></label>
-                                        <input type="text" name="first_name" id="first_name" class="form-control form-control-sm rounded-3" required>
+                                        <input type="text" name="first_name" id="first_name" class="form-control form-control-sm rounded-3" value="<?= htmlspecialchars($prefillFirstName); ?>" required>
                                     </div>
                                     <div class="col-6">
                                         <label for="last_name" class="form-label small fw-bold">Last Name <span class="text-danger">*</span></label>
-                                        <input type="text" name="last_name" id="last_name" class="form-control form-control-sm rounded-3" required>
+                                        <input type="text" name="last_name" id="last_name" class="form-control form-control-sm rounded-3" value="<?= htmlspecialchars($prefillLastName); ?>" required>
                                     </div>
                                 </div>
 
                                 <div class="mb-3">
                                     <label for="email" class="form-label small fw-bold">Email Address <span class="text-danger">*</span></label>
-                                    <input type="email" name="email" id="email" class="form-control form-control-sm rounded-3" placeholder="you@example.com" required>
+                                    <input type="email" name="email" id="email" class="form-control form-control-sm rounded-3" placeholder="you@example.com" value="<?= htmlspecialchars($prefillEmail); ?>" <?= $prefillEmail ? 'readonly' : ''; ?> required>
                                 </div>
 
                                 <div class="mb-3">
                                     <label for="phone" class="form-label small fw-bold">Phone / WhatsApp <span class="text-danger">*</span></label>
-                                    <input type="tel" name="phone" id="phone" class="form-control form-control-sm rounded-3" placeholder="+263 7..." required>
+                                    <input type="tel" name="phone" id="phone" class="form-control form-control-sm rounded-3" placeholder="+263 7..." value="<?= htmlspecialchars($prefillPhone); ?>" required>
                                 </div>
 
                                 <div class="row g-2 mb-3">
@@ -301,14 +378,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 alertBox.innerHTML = `
                     <h5 class="fw-bold mb-1"><i class="fa fa-circle-check text-success me-1"></i> Application Submitted!</h5>
                     <p class="mb-2 small">${data.msg}</p>
-                    <div class="p-2 bg-white rounded border small">
+                    <div class="p-2 bg-white rounded border small mb-2">
                         <strong>Application Reference:</strong> <code>${data.application_number}</code>
                     </div>
+                    ${data.redirect ? `
+                    <div class="d-flex align-items-center gap-2 text-dark small fw-bold mt-2 pt-2 border-top">
+                        <div class="spinner-border spinner-border-sm text-success" role="status"></div>
+                        <span>Redirecting to your dashboard to track your application...</span>
+                    </div>
+                    ` : ''}
                 `;
                 alertBox.classList.remove('d-none');
                 form.reset();
                 btn.style.display = 'none';
                 window.scrollTo({ top: alertBox.offsetTop - 80, behavior: 'smooth' });
+
+                if (data.redirect) {
+                    setTimeout(function() {
+                        window.location.href = data.redirect;
+                    }, 1800);
+                }
             } else {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa fa-paper-plane me-1"></i> Submit Application';

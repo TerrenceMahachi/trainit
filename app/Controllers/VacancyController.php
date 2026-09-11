@@ -14,6 +14,7 @@ use App\Models\Role;
 use App\Models\Skillitem;
 use App\Models\StaffInvite;
 use App\Models\User;
+use App\Models\Login;
 use App\Helpers\Auth;
 use App\Helpers\Mailer;
 use DateTime;
@@ -97,15 +98,34 @@ class VacancyController
         $targetRole = $vacancy->targetRole();
         $skills = $vacancy->skills();
 
+        $currentUser = null;
+        $existingApplication = null;
+        if (Auth::check()) {
+            $currentUserId = Auth::id();
+            $currentUser = User::find($currentUserId);
+            if ($currentUser) {
+                $userEmail = $currentUser->email ?? '';
+                $existingApps = VacancyApplication::findByQuery(
+                    "SELECT * FROM vacancy_application WHERE vacancy = ? AND (user = ? OR email = ?) AND status = 1 LIMIT 1",
+                    [$vacancy->iD, $currentUserId, $userEmail]
+                );
+                if (!empty($existingApps)) {
+                    $existingApplication = $existingApps[0];
+                }
+            }
+        }
+
         $data = [
-            'title'       => $vacancy->title . ' | Tsigiro Careers',
-            'vacancy'     => $vacancy,
-            'dept'        => $dept,
-            'engagement'  => $engagement,
-            'location'    => $location,
-            'targetRole'  => $targetRole,
-            'skills'      => $skills,
-            'isStaff'     => Auth::isStaff(),
+            'title'               => $vacancy->title . ' | Tsigiro Careers',
+            'vacancy'             => $vacancy,
+            'dept'                => $dept,
+            'engagement'          => $engagement,
+            'location'            => $location,
+            'targetRole'          => $targetRole,
+            'skills'              => $skills,
+            'isStaff'             => Auth::isStaff(),
+            'currentUser'         => $currentUser,
+            'existingApplication' => $existingApplication,
         ];
 
         echo view('vacancies.show', compact('data'));
@@ -218,7 +238,12 @@ class VacancyController
         $safeName = 'CV_' . preg_replace('/[^A-Za-z0-9]/', '', $vacancy->reference_number) . '_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
         $destPath = $uploadDir . $safeName;
 
-        if (!move_uploaded_file($file['tmp_name'], $destPath)) {
+        $uploaded = move_uploaded_file($file['tmp_name'], $destPath);
+        if (!$uploaded && php_sapi_name() === 'cli') {
+            $uploaded = @copy($file['tmp_name'], $destPath);
+        }
+
+        if (!$uploaded) {
             echo json_encode(['status' => 0, 'msg' => 'Failed to store your CV file. Please try again.']);
             return;
         }
@@ -232,8 +257,33 @@ class VacancyController
         $randomSuffix = strtoupper(bin2hex(random_bytes(2)));
         $applicationNumber = 'APP-' . $vacancy->reference_number . '-' . $randomSuffix;
 
-        // Associate user if logged in
+        // 1. Authenticate or Provision User Account so candidate can track application
         $userId = Auth::id();
+        $tempPass = null;
+        if (!$userId) {
+            $existingUsers = User::findByQuery("SELECT * FROM user WHERE email = ? LIMIT 1", [$email]);
+            if (!empty($existingUsers)) {
+                $user = $existingUsers[0];
+                $userId = (int)$user->iD;
+            } else {
+                $user = new User();
+                $user->name = $firstName . ' ' . $lastName;
+                $user->email = $email;
+                $user->role = 2; // candidate
+                $user->status = 1;
+                $user->save();
+                $userId = (int)$user->iD;
+
+                $tempPass = bin2hex(random_bytes(6));
+                $login = new Login();
+                $login->user = $userId;
+                $login->password = password_hash($tempPass, PASSWORD_BCRYPT);
+                $login->status = 1;
+                $login->reg_by = 1;
+                $login->save();
+            }
+            Auth::login($userId);
+        }
 
         // Create application record
         $app = new VacancyApplication();
@@ -266,13 +316,22 @@ class VacancyController
             $candidateFullName,
             $applicationNumber,
             $vacancy->title,
-            $vacancy->reference_number
+            $vacancy->reference_number,
+            $tempPass
         );
+
+        $msg = 'Your application for ' . htmlspecialchars($vacancy->title) . ' has been received successfully. ';
+        if ($tempPass) {
+            $msg .= 'A candidate account has been created for you and you are now signed in. Redirecting to your dashboard to track your application...';
+        } else {
+            $msg .= 'Redirecting to your dashboard to track your application...';
+        }
 
         echo json_encode([
             'status'             => 1,
-            'msg'                => 'Your application for ' . htmlspecialchars($vacancy->title) . ' has been received successfully. A confirmation email has been dispatched to ' . htmlspecialchars($email) . '.',
+            'msg'                => $msg,
             'application_number' => $applicationNumber,
+            'redirect'           => $siteConfig->siteUrl . '/dashboard',
         ]);
         return;
     }
