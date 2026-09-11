@@ -205,3 +205,44 @@ To demonstrate real-world operational scale, the database has been seeded with a
 * **Itemized Service Lines:** Retainer baseline fees, Associate specialist consulting hours, Apprentice support hours, and approved SLA excess hours (`clientinvoiceitem`).
 * **44 Bank Settlement Records:** Months 1 through 11 feature settled electronic transfers via Stanbic Bank, CABS, CBZ Bank, and EcoBank (`clientinvoicepayment`). Month 12 (August 2026) remains active with status *Payment Due* to test live payment flows.
 
+---
+
+## 8. Dynamic Tax Invoicing, POP Submission & Reconciliation Desk (NEW)
+
+The invoicing pipeline now features full-lifecycle dynamic document generation, client settlement submissions, and finance officer reconciliation:
+
+### 1. Dynamic 1-Click Tax Invoice PDF / Print Generation
+* **Direct Access Endpoints:**
+  - Client Portal: [`/client/invoices/pdf/:id`](https://portal.tsigiro.co.zw/client/invoices/pdf/45)
+  - Staff / Admin Console: [`/admin/invoices/pdf/:id`](https://portal.tsigiro.co.zw/admin/invoices/pdf/45)
+* **Official ZIMRA Layout Features:**
+  - Tsigiro brand identity with vector emblem, registration details, and ZIMRA Tax BP `BP20088921` / VAT `10049281`.
+  - Client organization details with legal name, company registration number, and tax clearance ID.
+  - Itemized service breakdown with billable hours, hourly rates, and deliverables.
+  - Value Added Tax computation (standard 15% Zimbabwe VAT) and Nostro USD grand total.
+  - Official Stanbic Bank Nostro USD settlement account details (Account: `9140003882910`, Swift: `SBICZWHX`).
+  - Native browser auto-print preview with a responsive floating action bar (`Print / Save as PDF` / `Close`).
+
+### 2. Client Proof of Payment (POP) Submission
+* **Endpoint:** `POST /client/invoices/submit-payment`
+* **Workflow:**
+  1. Corporate client navigates to an unpaid invoice (e.g., [Invoice #45](https://portal.tsigiro.co.zw/client/invoices/view/45)).
+  2. The dedicated **"Settle Invoice / Submit Proof of Payment (POP)"** card allows the client to provide their payment method (Stanbic Bank, EcoCash Nostro, CABS, etc.), bank transaction reference, amount, payment date, optional internal notes, and receipt document (`.pdf`, `.jpg`, `.png`).
+  3. Uploaded receipts are securely stored in `uploads/receipts/` and linked directly to the audit log.
+  4. The invoice instantly transitions to **PAID & SETTLED** (`payment_status = 2`), recording a permanent electronic confirmation badge visible on both the web view and downloaded PDF statement.
+
+### 3. Billing Desk Reconciliation Controls (Internal Staff)
+* **Endpoint:** `POST /admin/invoices/reconcile-payment`
+* **Access Control:** Restricted strictly to internal staff and finance controllers (`Auth::isStaff()`).
+* **Capabilities:**
+  - **Certify & Settle:** Verify incoming Nostro bank statements against pending invoices and certify them as settled.
+  - **Reopen Invoice:** If a client submits invalid or disputed payment details, finance officers can reopen the invoice back to **Payment Due** (`payment_status = 1`) with one click, resetting the paid date and allowing re-submission.
+
+### 4. Verified Testing Scenarios
+| Role | Account | Testing Link | Expected Result |
+| :--- | :--- | :--- | :--- |
+| **Client Lead** | `client@tsigiro.co.zw` | [Invoice #45 View](https://portal.tsigiro.co.zw/client/invoices/view/45) | Inspect settled invoice with POP confirmation badge and receipt details. |
+| **Client Lead** | `client@tsigiro.co.zw` | [Invoice #45 Official PDF](https://portal.tsigiro.co.zw/client/invoices/pdf/45) | View print-ready A4 Tax Invoice with ZIMRA BP and Stanbic Nostro settlement box. |
+| **Finance Officer** | `finance@tsigiro.co.zw` | [Invoice #46 Reconcile](https://portal.tsigiro.co.zw/client/invoices/view/46) | Test the Billing Desk reconciliation card to certify or reopen unpaid invoices. |
+| **Admin** | `admin@tsigiro.co.zw` | [Admin Invoices Ledger](https://portal.tsigiro.co.zw/admin/invoices) | Oversee portfolio-wide billing, download PDF statements, and inspect audit logs. |
+
