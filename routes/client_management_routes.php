@@ -94,4 +94,27 @@ $router->addRoute('GET', '/admin/invoices', function () {
     exit;
 });
 
+// 16. Dynamic Invoice PDF Generation & Streaming
+$router->addRoute('GET', '/client/invoices/pdf/:id', function ($id) {
+    (new ClientController())->downloadInvoicePdf((int)$id);
+    exit;
+});
+
+$router->addRoute('GET', '/admin/invoices/pdf/:id', function ($id) {
+    (new ClientController())->downloadInvoicePdf((int)$id);
+    exit;
+});
+
+// 17. Client Submit Proof of Payment (POP)
+$router->addRoute('POST', '/client/invoices/submit-payment', function () {
+    (new ClientController())->submitPaymentAction();
+    exit;
+});
+
+// 18. Billing Desk Reconcile / Approve Payment
+$router->addRoute('POST', '/admin/invoices/reconcile-payment', function () {
+    (new ClientController())->reconcilePaymentAction();
+    exit;
+});
+
 

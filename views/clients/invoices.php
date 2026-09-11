@@ -141,10 +141,20 @@ $activeTab = $data['activeTab'] ?? 'invoices';
                                         <?= $statusText ?>
                                     </span>
                                 </td>
-                                <td class="text-end pe-4">
-                                    <a href="<?= $siteConfig->siteUrl ?>/client/invoices/view/<?= $inv['iD'] ?>" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
-                                        <i class="fa fa-eye me-1"></i> View Statement
-                                    </a>
+                                <td class="text-end pe-4 text-nowrap">
+                                    <div class="d-inline-flex align-items-center gap-1">
+                                        <a href="<?= $siteConfig->siteUrl ?>/client/invoices/view/<?= $inv['iD'] ?>" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
+                                            <i class="fa fa-eye me-1"></i> View
+                                        </a>
+                                        <a href="<?= $siteConfig->siteUrl ?>/client/invoices/pdf/<?= $inv['iD'] ?>" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill px-2 py-1 fw-semibold" title="Download Official Tax Invoice PDF">
+                                            <i class="fa fa-file-pdf text-danger me-1"></i> PDF
+                                        </a>
+                                        <?php if ((int)$inv['payment_status'] !== 2): ?>
+                                            <a href="<?= $siteConfig->siteUrl ?>/client/invoices/view/<?= $inv['iD'] ?>" class="btn btn-sm btn-warning rounded-pill px-2 py-1 fw-bold text-dark">
+                                                <i class="fa fa-credit-card me-1"></i> Settle
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
