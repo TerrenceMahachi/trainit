@@ -95,6 +95,9 @@ $router->addRoute('GET', '/dashboard', function () use ($router) {
         $roleName = $roleObj ? $roleObj->name : 'Staff';
         $data = ['title' => $roleName . ' Dashboard', 'user' => $us];
         echo view('dashboard.admin', compact('data'));
+    } elseif ((int)$us->role === 3) {
+        header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/client/portal');
+        exit;
     } else {
         $data = ['title' => 'Dashboard', 'user' => $us];
         echo view('dashboard.client', compact('data'));

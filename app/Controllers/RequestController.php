@@ -2,6 +2,7 @@
 namespace App\Controllers;
 
 use App\Helpers\Auth;
+use App\Helpers\Mailer;
 use App\Models\Servicerequest;
 use App\Models\Servicerequeststatus;
 use App\Models\Servicerequesttriage;
@@ -290,11 +291,96 @@ class RequestController extends Controller
             }
         }
 
+        // Send email alert to client and internal desk
+        $clientObj = Clientorganization::find($clientId);
+        if ($clientObj && is_object($user)) {
+            Mailer::sendServiceRequestSubmitted($newReq, $clientObj, $user);
+        }
+
+        if (php_sapi_name() === 'cli') {
+            return [
+                'status' => 1,
+                'msg' => 'Service request submitted successfully',
+                'request_id' => $reqId,
+                'request_number' => $refNumber,
+            ];
+        }
+
         if (Auth::isStaff()) {
             header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/admin/requests/view/' . $reqId . '?msg=request_submitted');
         } else {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/client/portal?msg=request_submitted');
+            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/client/requests/view/' . $reqId . '?msg=request_submitted');
         }
+        exit;
+    }
+
+    /**
+     * Client: Approve Deliverables & Close Engagement with Star Rating
+     */
+    public function signoffRequestAction()
+    {
+        $user = Auth::user();
+        if (!$user) {
+            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
+            exit;
+        }
+
+        $userId = is_object($user) ? $user->iD : $user['iD'];
+        $reqId = (int)($_POST['request_id'] ?? 0);
+        $rating = max(1, min(5, (int)($_POST['satisfaction_rating'] ?? 5)));
+        $notes = trim($_POST['closure_notes'] ?? 'Delivered deliverables accepted and approved by client.');
+
+        if (!$reqId) {
+            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/client/requests?error=missing_id');
+            exit;
+        }
+
+        $request = Servicerequest::find($reqId);
+        if (!$request) {
+            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/client/requests?error=not_found');
+            exit;
+        }
+
+        $clientId = is_object($request) ? $request->clientorganization : $request['clientorganization'];
+        $client = Clientorganization::find($clientId);
+
+        // Record formal closure
+        $closure = Servicerequestclosure::create([
+            'servicerequest' => $reqId,
+            'closure_notes' => $notes,
+            'satisfaction_rating' => $rating,
+            'status' => 1,
+            'reg_date' => date('Y-m-d H:i:s'),
+            'reg_by' => $userId,
+        ]);
+
+        // Transition status to CLOSED (ID 6)
+        $statusClosed = Servicerequeststatus::where('code', 'CLOSED');
+        $sClosedId = !empty($statusClosed) ? (is_object($statusClosed[0]) ? $statusClosed[0]->iD : $statusClosed[0]['iD']) : 6;
+
+        Servicerequeststatusevent::create([
+            'servicerequest' => $reqId,
+            'servicerequeststatus' => $sClosedId,
+            'notes' => "Engagement accepted & closed by client with {$rating}-star rating: {$notes}",
+            'status' => 1,
+            'reg_date' => date('Y-m-d H:i:s'),
+            'reg_by' => $userId,
+        ]);
+
+        if ($client && is_object($user)) {
+            Mailer::sendServiceRequestClosed($request, $client, $user, $rating, $notes);
+        }
+
+        if (php_sapi_name() === 'cli') {
+            return [
+                'status' => 1,
+                'msg' => 'Engagement formally closed and signed off',
+                'request_id' => $reqId,
+                'rating' => $rating,
+            ];
+        }
+
+        header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/client/requests/view/' . $reqId . '?msg=closed');
         exit;
     }
 
@@ -459,7 +545,7 @@ class RequestController extends Controller
         }
 
         $reqId = (int)($_POST['request_id'] ?? 0);
-        $body = trim($_POST['body'] ?? '');
+        $body = trim($_POST['body'] ?? ($_POST['message'] ?? ''));
         $visibilityCode = $_POST['visibility'] ?? 'PUBLIC_CLIENT';
 
         // Non-staff can only post PUBLIC_CLIENT messages
@@ -468,7 +554,13 @@ class RequestController extends Controller
         }
 
         if (!$reqId || !$body) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/admin/requests/view/' . $reqId . '?error=empty_message');
+            $redirectUrl = Auth::isStaff() 
+                ? ($GLOBALS['siteConfig']->siteUrl ?? '') . '/admin/requests/view/' . $reqId . '?error=empty_message'
+                : ($GLOBALS['siteConfig']->siteUrl ?? '') . '/client/requests/view/' . $reqId . '?error=empty_message';
+            if (php_sapi_name() === 'cli') {
+                return ['status' => 0, 'msg' => 'Message body cannot be empty'];
+            }
+            header('Location: ' . $redirectUrl);
             exit;
         }
 
@@ -487,20 +579,21 @@ class RequestController extends Controller
         $msgId = is_object($msg) ? $msg->iD : $msg['iD'];
 
         // Process message attachment
-        if (!empty($_FILES['message_attachment']['name']) && $_FILES['message_attachment']['error'] === UPLOAD_ERR_OK) {
+        $fileKey = !empty($_FILES['message_attachment']['name']) ? 'message_attachment' : (!empty($_FILES['attachment']['name']) ? 'attachment' : null);
+        if ($fileKey && $_FILES[$fileKey]['error'] === UPLOAD_ERR_OK) {
             $destDir = _BASE_PATH . '/uploads/requests/' . $reqId . '/messages';
             if (!is_dir($destDir)) {
                 mkdir($destDir, 0755, true);
             }
-            $fileName = basename($_FILES['message_attachment']['name']);
+            $fileName = basename($_FILES[$fileKey]['name']);
             $targetPath = $destDir . '/' . time() . '_' . $fileName;
-            if (move_uploaded_file($_FILES['message_attachment']['tmp_name'], $targetPath)) {
+            if (move_uploaded_file($_FILES[$fileKey]['tmp_name'], $targetPath)) {
                 Requestmessageattachment::create([
                     'requestmessage' => $msgId,
                     'file_path' => str_replace(_BASE_PATH . '/', '', $targetPath),
                     'file_name' => $fileName,
-                    'file_size' => (int)$_FILES['message_attachment']['size'],
-                    'mime_type' => $_FILES['message_attachment']['type'] ?? 'application/octet-stream',
+                    'file_size' => (int)$_FILES[$fileKey]['size'],
+                    'mime_type' => $_FILES[$fileKey]['type'] ?? 'application/octet-stream',
                     'status' => 1,
                     'reg_date' => date('Y-m-d H:i:s'),
                     'reg_by' => is_object($user) ? $user->iD : $user['iD'],
@@ -508,8 +601,21 @@ class RequestController extends Controller
             }
         }
 
-        header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/admin/requests/view/' . $reqId . '#messages-area');
+        if (php_sapi_name() === 'cli') {
+            return [
+                'status' => 1,
+                'msg' => 'Message posted successfully',
+                'message_id' => $msgId,
+            ];
+        }
+
+        if (Auth::isStaff()) {
+            header('Location: ' . ($GLOBALS['siteConfig']->siteUrl ?? '') . '/admin/requests/view/' . $reqId . '#messages-area');
+        } else {
+            header('Location: ' . ($GLOBALS['siteConfig']->siteUrl ?? '') . '/client/requests/view/' . $reqId . '?msg=message_sent#messages-area');
+        }
         exit;
+
     }
 
     /**

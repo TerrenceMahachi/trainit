@@ -34,14 +34,45 @@ $router->addRoute('POST', '/admin/clients/terminate-plan', function () {
     exit;
 });
 
-// 6. Client Self-Service Portal
+// 6. Client Self-Service Portal Overview
 $router->addRoute('GET', '/client/portal', function () {
     (new ClientController())->portal();
     exit;
 });
 
-// 7. Service Catalogue & SLA Policies Framework
+// 7. Client Dedicated Work Request Brief Builder
+$router->addRoute('GET', '/client/requests/new', function () {
+    (new ClientController())->newRequest();
+    exit;
+});
+
+// 8. Client Work Requests Ledger & Status Filters
+$router->addRoute('GET', '/client/requests', function () {
+    (new ClientController())->requests();
+    exit;
+});
+
+// 9. Client Request Delivery Workspace & Collaboration
+$router->addRoute('GET', '/client/requests/view/:id', function ($id) {
+    (new ClientController())->viewRequest((int)$id);
+    exit;
+});
+
+// 10. Client Retainer Subscriptions & Hours Capacity
+$router->addRoute('GET', '/client/plans', function () {
+    (new ClientController())->plans();
+    exit;
+});
+
+// 11. Client Organization Profile & Authorized Team Roster
+$router->addRoute('GET', '/client/team', function () {
+    (new ClientController())->team();
+    exit;
+});
+
+// 12. Service Catalogue & SLA Policies Framework
 $router->addRoute('GET', '/admin/service-catalogue', function () {
     (new ServiceCatalogueController())->index();
     exit;
 });
+

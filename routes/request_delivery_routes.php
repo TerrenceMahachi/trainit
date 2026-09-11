@@ -45,8 +45,15 @@ $router->addRoute('POST', '/requests/message', function () {
     exit;
 });
 
-// 8. Complete & Close Engagement
+// 8. Complete & Close Engagement (Admin Desk)
 $router->addRoute('POST', '/admin/requests/close', function () {
     (new RequestController())->closeRequestAction();
     exit;
 });
+
+// 9. Approve Deliverables & Close Engagement with Star Rating (Client Portal)
+$router->addRoute('POST', '/client/requests/signoff', function () {
+    (new RequestController())->signoffRequestAction();
+    exit;
+});
+
