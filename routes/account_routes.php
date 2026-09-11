@@ -62,8 +62,7 @@ $router->addRoute('GET', '/quick-login', function () {
 
     $user = $users[0];
 
-    // Clear any previous session and establish clean authenticated demo session
-    \App\Helpers\Auth::logout();
+    // Establish clean authenticated demo session
     \App\Helpers\Auth::login($user->iD);
     \App\Helpers\PasswordResume::clearPause();
     \App\Helpers\PasswordResume::enroll((int)$user->iD, 'Password123!');
