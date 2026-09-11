@@ -33,7 +33,7 @@ To provide full transparency to evaluators, here is the current operational stat
 | **Client Operations Desk** | ✅ **100% Live** | `/admin/clients`, `/admin/requests` | Corporate client profiles, retainer subscriptions, and SLA service catalogue. |
 | **Client Organization Portal** | ✅ **100% Live** | `/client/portal`, `/client/requests`, `/client/plans` | EcoSolutions Zimbabwe workspace, authorized team roster, and work request builder. |
 | **Payroll & Disbursements** | ✅ **100% Live** | `/admin/payroll`, `/admin/payroll/view/:id` | Pay cycle calculation, executive approval, bank disbursement ledger, and NSSA P4 export. |
-| **Corporate PDF Invoicing** | ⏳ **Roadmap** | `/invoiceentitytypes` (Normalized dictionary live) | Retainer plans and hours are tracked live; automated client PDF invoice generation is scheduled for Phase 2. |
+| **Client Invoicing & Tax Billing** | ✅ **100% Live** | `/client/invoices`, `/client/invoices/view/:id`, `/admin/invoices` | 48 itemized corporate tax invoices across 4 clients with ZIMRA 15% VAT, line items, and electronic bank settlements. |
 | **Client Self-Onboarding** | 🔄 **External** | External onboarding system | Intentionally decoupled per scope; client onboarding workflow is maintained by a separate partner team. |
 
 ---
@@ -103,10 +103,11 @@ On the web login screen (`/login`):
 * **Persona:** Nyasha Chidziwa (`TSG-STF-007`, Finance Department)
 * **Landing Screen:** Finance Command Center (`/dashboard`)
 * **Key Capabilities to Evaluate:**
-  1. **Payroll Cycles:** Navigate to Payroll Management (`/admin/payroll`) to inspect active pay periods, total gross pay, statutory deductions, and net disbursements.
-  2. **Pay Period Ledger:** View individual staff payslips (`/admin/payroll/payslip/:id`) with breakdowns of PAYE tax, NSSA pension, and medical aid.
-  3. **Statutory Export:** Export the official Zimbabwean NSSA Form P4 return (`/admin/staff/export-p4`).
-  4. **Tax Compliance Check:** Inspect Associate profiles for ZIMRA ITF263 tax clearance certificates and registered billing rates.
+  1. **Payroll Cycles:** Navigate to Payroll Management (`/admin/payroll`) to inspect 12 monthly pay periods (Sep 2025 – Aug 2026), total gross pay, statutory deductions, and net disbursements across 84 payslips.
+  2. **Pay Period Ledger:** View individual staff and associate payslips (`/admin/payroll/view/:id`) with breakdowns of PAYE tax, NSSA pension, and medical aid.
+  3. **Client Invoicing Ledger:** Review corporate client invoices, payment statuses, and ZIMRA 15% VAT breakdown at `/admin/invoices` or `/client/invoices`.
+  4. **Statutory Export:** Export the official Zimbabwean NSSA Form P4 return (`/admin/staff/export-p4`).
+  5. **Tax Compliance Check:** Inspect Associate profiles for ZIMRA ITF263 tax clearance certificates and registered billing rates.
 
 ---
 
@@ -150,8 +151,10 @@ On the web login screen (`/login`):
 * **Key Capabilities to Evaluate:**
   1. **Corporate Dashboard:** Overview of EcoSolutions Zimbabwe (Reg: `ZW-CO-2023-8871`, BP: `BP20098177`).
   2. **Client Retainer Plans:** View subscribed service plans, monthly capacity hours, and active retainers (`/client/plans`).
-  3. **Work Request Brief Builder:** Submit new project briefs with priority tiers and deliverable milestones (`/client/requests/new`).
-  4. **Team Roster:** Manage authorized organization contacts and their access tiers (`/client/team`).
+  3. **Invoices & Billing Ledger:** Access the **Invoices & Billing** tab (`/client/invoices`) to inspect 12 months of itemized tax invoices with total billed metrics, settled amounts, and pending balances.
+  4. **Printable Tax Invoices:** Click **View Invoice** on any record (e.g. `/client/invoices/view/1`) to render the branded Zimbabwean tax invoice statement complete with ZIMRA 15% VAT, line item hours, banking settlement details, and electronic receipt proof.
+  5. **Work Request Brief Builder:** Submit new project briefs with priority tiers and deliverable milestones (`/client/requests/new`).
+  6. **Team Roster:** Manage authorized organization contacts and their access tiers (`/client/team`).
 
 ---
 
@@ -161,3 +164,38 @@ The evaluation environment incorporates Tsigiro's security safeguards:
 * **Tamper-Proof Authentication:** Cryptographic HMAC-SHA256 signature binding user sessions to prevent cookie manipulation.
 * **Idle Session Soft-Lock:** Automatic protection after 30 minutes of inactivity redirecting to the `/resume` challenge.
 * **Granular Role-Based Access Control (RBAC):** Strict separation between internal staff tiers, corporate clients, and talent applicants.
+
+---
+
+## 7. 1-Year Multi-Client & Workforce Simulation (Sep 2025 – Aug 2026)
+
+To demonstrate real-world operational scale, the database has been seeded with a full **1-year simulated operational history** across 4 corporate clients, associates, apprentices, and finance teams:
+
+### 1. Corporate Client Portfolio
+| Client Organization | Sector | Registration / Tax BP | Service Plan | Monthly Fee |
+| :--- | :--- | :--- | :--- | :--- |
+| **EcoSolutions Zimbabwe (Pvt) Ltd** | CleanTech & Solar | `ZW-CO-2023-8871` / `BP20098177` | Enterprise DevOps & Infrastructure (80 hrs/mo) | USD \$3,500.00 |
+| **ZimFin Microfinance Bank** | Banking & Fintech | `ZW-BK-2021-4402` / `BP20044182` | Core Banking Security & Cloud SLA (120 hrs/mo) | USD \$4,800.00 |
+| **Delta Tech Logistics** | Supply Chain & IoT | `ZW-LT-2022-3199` / `BP20077391` | Fleet Telematics & API Reliability (60 hrs/mo) | USD \$2,800.00 |
+| **AfriHealth Telemedicine** | HealthTech & Clinical | `ZW-MD-2024-1188` / `BP20011504` | Telehealth Mobile Backend & Compliance (75 hrs/mo) | USD \$3,200.00 |
+
+### 2. Service Requests & Collaborative Interactions
+* **24 Full-Lifecycle Service Requests:** Spanning infrastructure modernization, microfinance integrations, biometric telemetry, and clinic portals.
+* **Paired Apprenticeship Mentorship:** Every request pairs an experienced Associate Specialist (`Simbarashe Hove`, `Ruvimbo Chitepo`) with a university Apprentice (`Kudzai Mapfumo`, `Tariro Moyo`), linked via normalized supervisor oversight records (`assignmentsupervisor`).
+* **139+ Live Threaded Messages:** Client stakeholders, service managers, associates, and apprentices collaborate directly via contextual request communication threads (`requestmessage`).
+* **Closed Ticket Sign-Offs:** Tickets conclude with formal stakeholder sign-offs, closure notes, and 5-star quality ratings (`servicerequestclosure`).
+
+### 3. Payroll Operations & Worker Disbursements
+* **12 Monthly Payroll Cycles:** September 2025 through August 2026 (`TSG-PAY-2025-09` to `TSG-PAY-2026-08`), each formally approved and finalized.
+* **84 Detailed Payslips:**
+  - Internal Staff: Base executive salaries with PAYE, NSSA pension, and medical aid deductions.
+  - Apprentices: Monthly living stipends plus performance project bonuses.
+  - Associates: Billable deliverable milestones and engagement payouts.
+* **84 Bank Disbursements:** Each payslip is accompanied by a settled bank disbursement record (`payslipdisbursement`) with unique transaction references.
+
+### 4. Client Tax Invoicing & Settlements
+* **48 Itemized Corporate Invoices:** Monthly tax invoices (`clientinvoice`) generated across all 4 clients.
+* **ZIMRA Statutory Compliance:** Standard 15% Zimbabwean Value Added Tax (VAT) itemized on every invoice with Tsigiro's and Client's Tax BP numbers.
+* **Itemized Service Lines:** Retainer baseline fees, Associate specialist consulting hours, Apprentice support hours, and approved SLA excess hours (`clientinvoiceitem`).
+* **44 Bank Settlement Records:** Months 1 through 11 feature settled electronic transfers via Stanbic Bank, CABS, CBZ Bank, and EcoBank (`clientinvoicepayment`). Month 12 (August 2026) remains active with status *Payment Due* to test live payment flows.
+

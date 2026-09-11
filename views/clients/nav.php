@@ -73,6 +73,13 @@ $clientName = htmlspecialchars($clientObj ? (is_object($clientObj) ? $clientObj-
                     <i class="fa fa-users me-1 <?= $activeTab === 'team' ? 'text-warning' : 'text-dark' ?>"></i> Team &amp; Access
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link rounded-pill fw-semibold py-2 px-3 <?= $activeTab === 'invoices' ? 'active shadow-sm text-white' : 'text-dark' ?>" 
+                   style="<?= $activeTab === 'invoices' ? 'background-color: #2A114B;' : '' ?>"
+                   href="<?= $siteConfig->siteUrl ?>/client/invoices">
+                    <i class="fa fa-file-invoice-dollar me-1 <?= $activeTab === 'invoices' ? 'text-warning' : 'text-success' ?>"></i> Invoices &amp; Billing
+                </a>
+            </li>
         </ul>
     </div>
 </div>

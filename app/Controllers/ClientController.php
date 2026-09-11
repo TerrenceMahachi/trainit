@@ -25,6 +25,9 @@ use App\Models\Servicefunction;
 use App\Models\Prioritylevel;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\Clientinvoice;
+use App\Models\Clientinvoiceitem;
+use App\Models\Clientinvoicepayment;
 
 class ClientController extends Controller
 {
@@ -746,6 +749,126 @@ class ClientController extends Controller
             'members' => $enrichedMembers,
             'roles' => $roles,
             'activeTab' => 'team',
+        ]);
+    }
+
+    /**
+     * Client Portal: Monthly Invoices & Billing Statements Ledger
+     */
+    public function invoices()
+    {
+        $user = Auth::user();
+        if (!$user) {
+            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
+            exit;
+        }
+
+        $client = $this->getClientForUser();
+        if (!$client) {
+            $this->render('clients.portal_empty', ['user' => $user]);
+            return;
+        }
+
+        $clientId = is_object($client) ? $client->iD : $client['iD'];
+        $rawInvoices = Clientinvoice::findByQuery(
+            "SELECT * FROM clientinvoice WHERE clientorganization = ? AND status = 1 ORDER BY billing_period_start DESC",
+            [$clientId]
+        );
+
+        $enrichedInvoices = [];
+        $totalBilled = 0;
+        $totalPaid = 0;
+        $totalPending = 0;
+
+        foreach ($rawInvoices as $inv) {
+            $plan = $inv->clientserviceplan ? Clientserviceplan::find($inv->clientserviceplan) : null;
+            $items = Clientinvoiceitem::where('clientinvoice', $inv->iD);
+            $payments = Clientinvoicepayment::where('clientinvoice', $inv->iD);
+
+            $amt = (float)$inv->total_amount;
+            $totalBilled += $amt;
+            if ((int)$inv->payment_status === 2) {
+                $totalPaid += $amt;
+            } else {
+                $totalPending += $amt;
+            }
+
+            $enrichedInvoices[] = [
+                'iD' => $inv->iD,
+                'invoice_number' => $inv->invoice_number,
+                'billing_period_start' => $inv->billing_period_start,
+                'billing_period_end' => $inv->billing_period_end,
+                'currency' => $inv->currency,
+                'subtotal' => $inv->subtotal,
+                'vat_rate' => $inv->vat_rate,
+                'vat_amount' => $inv->vat_amount,
+                'total_amount' => $inv->total_amount,
+                'payment_status' => $inv->payment_status,
+                'issue_date' => $inv->issue_date,
+                'due_date' => $inv->due_date,
+                'paid_date' => $inv->paid_date,
+                'plan_name' => $plan ? $plan->plan_name : 'Enterprise Retainer',
+                'items_count' => count($items),
+                'payments_count' => count($payments),
+            ];
+        }
+
+        $this->render('clients.invoices', [
+            'user' => $user,
+            'client' => $client,
+            'invoices' => $enrichedInvoices,
+            'stats' => [
+                'total_billed' => $totalBilled,
+                'total_paid' => $totalPaid,
+                'total_pending' => $totalPending,
+                'invoices_count' => count($enrichedInvoices),
+            ],
+            'activeTab' => 'invoices',
+        ]);
+    }
+
+    /**
+     * Client Portal: View Individual Detailed Tax Invoice Statement
+     */
+    public function viewInvoice(int $id)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
+            exit;
+        }
+
+        $client = $this->getClientForUser();
+        if (!$client) {
+            $this->render('clients.portal_empty', ['user' => $user]);
+            return;
+        }
+
+        $invoice = Clientinvoice::find($id);
+        if (!$invoice) {
+            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/client/invoices?error=not_found');
+            exit;
+        }
+
+        $reqClientId = (int)$invoice->clientorganization;
+        $clientId = (int)(is_object($client) ? $client->iD : $client['iD']);
+
+        if ($reqClientId !== $clientId && !Auth::isStaff()) {
+            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/client/invoices?error=unauthorized');
+            exit;
+        }
+
+        $items = Clientinvoiceitem::where('clientinvoice', $id);
+        $payments = Clientinvoicepayment::where('clientinvoice', $id);
+        $plan = $invoice->clientserviceplan ? Clientserviceplan::find($invoice->clientserviceplan) : null;
+
+        $this->render('clients.invoice_view', [
+            'user' => $user,
+            'client' => $client,
+            'invoice' => $invoice,
+            'items' => $items,
+            'payments' => $payments,
+            'plan' => $plan,
         ]);
     }
 }

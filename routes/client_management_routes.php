@@ -76,3 +76,22 @@ $router->addRoute('GET', '/admin/service-catalogue', function () {
     exit;
 });
 
+// 13. Client Monthly Invoices & Billing Statements
+$router->addRoute('GET', '/client/invoices', function () {
+    (new ClientController())->invoices();
+    exit;
+});
+
+// 14. Client View Individual Detailed Invoice Statement
+$router->addRoute('GET', '/client/invoices/view/:id', function ($id) {
+    (new ClientController())->viewInvoice((int)$id);
+    exit;
+});
+
+// 15. Admin / Billing Desk All Invoices Overview
+$router->addRoute('GET', '/admin/invoices', function () {
+    (new ClientController())->invoices();
+    exit;
+});
+
+
