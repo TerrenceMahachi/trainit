@@ -92,12 +92,6 @@ class ViewAccess
 
     protected static function deny(): void
     {
-        global $siteConfig;
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            echo json_encode(['status' => '2', 'message' => 'Error: You do not have permission to access this section']);
-        } else {
-            header("Location: " . $siteConfig->siteUrl . "/dashboard");
-        }
-        exit;
+        \App\Helpers\Auth::denyAccess('You do not have access to this page.');
     }
 }

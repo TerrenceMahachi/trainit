@@ -173,7 +173,7 @@ $router->addRoute('POST', '/dashboard/application/onboarding', function () {
 $router->addRoute('GET', '/admin/roster', function () {
     global $siteConfig;
     if (!Auth::check() || (!Auth::isAdmin() && !Auth::isVettingOfficer())) {
-        header("Location: " . $siteConfig->siteUrl . "/dashboard");
+        Auth::denyAccess();
         exit;
     }
     echo (new RosterApplicationController())->adminPipeline();
@@ -195,7 +195,7 @@ $router->addRoute('POST', '/get-admin-roster-records', function () {
 $router->addRoute('GET', '/admin/roster/review', function () {
     global $siteConfig;
     if (!Auth::check() || (!Auth::isAdmin() && !Auth::isVettingOfficer() && !Auth::isServiceManager())) {
-        header("Location: " . $siteConfig->siteUrl . "/dashboard");
+        Auth::denyAccess();
         exit;
     }
     $appId = isset($_GET['id']) ? (int)$_GET['id'] : 0;

@@ -351,6 +351,30 @@ class RosterApplicationController
                     $login->password = password_hash($tempPass, PASSWORD_BCRYPT);
                     $login->status = 1;
                     $login->save();
+
+                    // Auto-provision General User and Apprentice/Associate profile
+                    try {
+                        $pdo = \App\Models\Database::sharedPdo();
+                        $chk = $pdo->prepare("SELECT iD FROM userprofile WHERE user = ? AND profiletype = 1");
+                        $chk->execute([$userId]);
+                        if (!$chk->fetch()) {
+                            $ins = $pdo->prepare("INSERT INTO userprofile (user, profiletype, profilestatus, display_title, is_default, reg_by, reg_date, status) VALUES (?, 1, 3, 'General User', 0, 1, CURRENT_TIMESTAMP, 1)");
+                            $ins->execute([$userId]);
+                        }
+
+                        $trackTypeId = ($trackCode === 'apprentice') ? 2 : (($trackCode === 'associate') ? 3 : null);
+                        if ($trackTypeId) {
+                            $chkTrack = $pdo->prepare("SELECT iD FROM userprofile WHERE user = ? AND profiletype = ?");
+                            $chkTrack->execute([$userId, $trackTypeId]);
+                            if (!$chkTrack->fetch()) {
+                                $title = ($trackTypeId === 2) ? 'Apprentice' : 'Associate Consultant';
+                                $insTrack = $pdo->prepare("INSERT INTO userprofile (user, profiletype, profilestatus, display_title, is_default, reg_by, reg_date, status) VALUES (?, ?, 3, ?, 1, 1, CURRENT_TIMESTAMP, 1)");
+                                $insTrack->execute([$userId, $trackTypeId, $title]);
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        error_log("Failed to auto-provision userprofile in RosterApplicationController: " . $e->getMessage());
+                    }
                 }
                 Auth::login($userId);
             }
@@ -433,6 +457,21 @@ class RosterApplicationController
             $candidate = (new User())->find($userId);
             if ($candidate) {
                 Mailer::sendApplicationSubmitted($app, $candidate, $tempPass);
+                \App\Helpers\NotificationHelper::notify(
+                    (int)$candidate->iD,
+                    'Application Received',
+                    'Your application has been received and logged under reference #APP-' . str_pad((string)$app->iD, 5, '0', STR_PAD_LEFT) . '.',
+                    '/roster/application/status?id=' . $app->iD,
+                    'success',
+                    'fa-file-signature'
+                );
+                \App\Helpers\NotificationHelper::notifyAdmins(
+                    'New Candidate Application',
+                    $candidate->name . ' submitted an application (#APP-' . str_pad((string)$app->iD, 5, '0', STR_PAD_LEFT) . ').',
+                    '/admin/roster',
+                    'info',
+                    'fa-user-plus'
+                );
             }
 
             $redirectUrl = $siteConfig->siteUrl . '/roster/application/status?id=' . $appId;
@@ -1325,8 +1364,13 @@ class RosterApplicationController
         $userId = Auth::id();
         $app = (new Rosterapplication())->find($appId);
 
-        if (!$app || ((int)$app->user !== (int)$userId && !Auth::isAdmin())) {
+        if (!$app) {
             header("Location: " . _BASEURL . "/dashboard");
+            exit;
+        }
+
+        if ((int)$app->user !== (int)$userId && !Auth::isAdmin()) {
+            Auth::denyAccess();
             exit;
         }
 
@@ -1347,8 +1391,13 @@ class RosterApplicationController
         $userId = Auth::id();
         $app = (new Rosterapplication())->find($appId);
 
-        if (!$app || (int)$app->user !== (int)$userId) {
+        if (!$app) {
             header("Location: " . _BASEURL . "/dashboard");
+            exit;
+        }
+
+        if ((int)$app->user !== (int)$userId) {
+            Auth::denyAccess();
             exit;
         }
 
@@ -1703,6 +1752,14 @@ class RosterApplicationController
                 $token = $this->generateShortlistToken($app);
                 $dossierLink = $siteConfig->siteUrl . '/roster/shortlist/complete?id=' . $app->iD . '&token=' . $token;
                 Mailer::sendShortlistInvitation($app, $candidate, $dossierLink);
+                \App\Helpers\NotificationHelper::notify(
+                    (int)$candidate->iD,
+                    'Congratulations! You Have Been Shortlisted',
+                    'Your application has been shortlisted. Please complete your verified talent dossier.',
+                    '/roster/shortlist/complete?id=' . $app->iD . '&token=' . $token,
+                    'success',
+                    'fa-award'
+                );
             } else {
                 $recTitle = "Under Assessment";
                 if ($assessment->vettingrecommendation) {
@@ -1719,6 +1776,15 @@ class RosterApplicationController
                     $recTitle,
                     $assessment->interview_notes,
                     $assessment->total_score
+                );
+
+                \App\Helpers\NotificationHelper::notify(
+                    (int)$candidate->iD,
+                    'Application Status Update',
+                    'Your application review outcome has been recorded: ' . $recTitle . ' (Score: ' . number_format($assessment->total_score, 1) . '/100).',
+                    '/dashboard',
+                    'info',
+                    'fa-clipboard-check'
                 );
             }
         }

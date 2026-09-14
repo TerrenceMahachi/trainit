@@ -281,6 +281,19 @@ class VacancyController
                 $login->status = 1;
                 $login->reg_by = 1;
                 $login->save();
+
+                // Auto-provision General User profile
+                try {
+                    $pdo = \App\Models\Database::sharedPdo();
+                    $chk = $pdo->prepare("SELECT iD FROM userprofile WHERE user = ? AND profiletype = 1");
+                    $chk->execute([$userId]);
+                    if (!$chk->fetch()) {
+                        $ins = $pdo->prepare("INSERT INTO userprofile (user, profiletype, profilestatus, display_title, is_default, reg_by, reg_date, status) VALUES (?, 1, 3, 'Candidate', 1, 1, CURRENT_TIMESTAMP, 1)");
+                        $ins->execute([$userId]);
+                    }
+                } catch (\Throwable $e) {
+                    error_log("Failed to auto-provision userprofile in VacancyController: " . $e->getMessage());
+                }
             }
             Auth::login($userId);
         }
@@ -391,7 +404,7 @@ class VacancyController
     {
         global $siteConfig;
         if (!Auth::isStaff()) {
-            header("Location: " . $siteConfig->siteUrl . "/dashboard");
+            Auth::denyAccess();
             return;
         }
 
@@ -461,7 +474,7 @@ class VacancyController
     {
         global $siteConfig;
         if (!Auth::isStaff()) {
-            header("Location: " . $siteConfig->siteUrl . "/dashboard");
+            Auth::denyAccess();
             return;
         }
 
@@ -589,6 +602,11 @@ class VacancyController
             }
         }
 
+        // Trigger candidate job alert notifications if published
+        if ((int)$vacancy->vacancystatus === 2) {
+            \App\Helpers\JobAlertService::matchAndNotify($vacancy);
+        }
+
         echo json_encode([
             'status'   => 1,
             'msg'      => "Vacancy {$title} [{$refNumber}] created successfully.",
@@ -605,7 +623,7 @@ class VacancyController
     {
         global $siteConfig;
         if (!Auth::isStaff()) {
-            header("Location: " . $siteConfig->siteUrl . "/dashboard");
+            Auth::denyAccess();
             return;
         }
 
@@ -726,6 +744,11 @@ class VacancyController
             }
         }
 
+        // Trigger candidate job alert notifications if published
+        if ((int)$vacancy->vacancystatus === 2) {
+            \App\Helpers\JobAlertService::matchAndNotify($vacancy);
+        }
+
         echo json_encode([
             'status'   => 1,
             'msg'      => "Vacancy {$title} updated successfully.",
@@ -763,6 +786,11 @@ class VacancyController
         $vacancy->vacancystatus = $newStatus;
         $vacancy->update();
 
+        // Trigger candidate job alert notifications if changed to published
+        if ($newStatus === 2) {
+            \App\Helpers\JobAlertService::matchAndNotify($vacancy);
+        }
+
         echo json_encode([
             'status'      => 1,
             'msg'         => "Vacancy status updated to {$statusObj->name}.",
@@ -779,7 +807,7 @@ class VacancyController
     {
         global $siteConfig;
         if (!Auth::isStaff()) {
-            header("Location: " . $siteConfig->siteUrl . "/dashboard");
+            Auth::denyAccess();
             return;
         }
 

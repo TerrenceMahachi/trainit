@@ -21,9 +21,8 @@ class PayrollController extends Controller
      */
     public function index()
     {
-        if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+        if (!Auth::check() || (!Auth::isAdmin() && !Auth::isBillingOfficer())) {
+            Auth::denyAccess();
         }
 
         $periods = Payrollperiod::all();
@@ -90,9 +89,8 @@ class PayrollController extends Controller
      */
     public function viewPeriod($id)
     {
-        if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+        if (!Auth::check() || (!Auth::isAdmin() && !Auth::isBillingOfficer())) {
+            Auth::denyAccess();
         }
 
         $period = Payrollperiod::find($id);
@@ -167,9 +165,8 @@ class PayrollController extends Controller
      */
     public function createPeriodAction()
     {
-        if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+        if (!Auth::check() || (!Auth::isAdmin() && !Auth::isBillingOfficer())) {
+            Auth::denyAccess();
         }
 
         $periodCode = trim($_POST['period_code'] ?? '');
@@ -219,9 +216,8 @@ class PayrollController extends Controller
      */
     public function calculateAction()
     {
-        if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+        if (!Auth::check() || (!Auth::isAdmin() && !Auth::isBillingOfficer())) {
+            Auth::denyAccess();
         }
 
         $periodId = (int)($_POST['period_id'] ?? 0);
@@ -392,9 +388,8 @@ class PayrollController extends Controller
      */
     public function approveAction()
     {
-        if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+        if (!Auth::check() || (!Auth::isAdmin() && !Auth::isBillingOfficer())) {
+            Auth::denyAccess();
         }
 
         $periodId = (int)($_POST['period_id'] ?? 0);
@@ -427,9 +422,8 @@ class PayrollController extends Controller
      */
     public function disburseAction()
     {
-        if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+        if (!Auth::check() || (!Auth::isAdmin() && !Auth::isBillingOfficer())) {
+            Auth::denyAccess();
         }
 
         $periodId = (int)($_POST['period_id'] ?? 0);
@@ -494,6 +488,14 @@ class PayrollController extends Controller
 
         $period = Payrollperiod::find(is_object($payslip) ? $payslip->payrollperiod : $payslip['payrollperiod']);
         $staff = Staffprofile::find(is_object($payslip) ? $payslip->staffprofile : $payslip['staffprofile']);
+
+        // Check view permission: must be own payslip, admin, or billing officer
+        $payslipStaffUserId = $staff ? (int)(is_object($staff) ? $staff->user : $staff['user']) : 0;
+        $currentUserId = (int)(is_object($user) ? $user->iD : $user['iD']);
+        if ($payslipStaffUserId !== $currentUserId && !Auth::isAdmin() && !Auth::isBillingOfficer()) {
+            Auth::denyAccess();
+        }
+
         $items = Payslipitem::where('payslip', $id);
         $disbursement = Payslipdisbursement::where('payslip', $id);
 
@@ -533,9 +535,8 @@ class PayrollController extends Controller
      */
     public function statutoryReturnAction()
     {
-        if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+        if (!Auth::check() || (!Auth::isAdmin() && !Auth::isBillingOfficer())) {
+            Auth::denyAccess();
         }
 
         $periodId = (int)($_POST['period_id'] ?? 0);

@@ -38,8 +38,7 @@ class ClientController extends Controller
     public function index()
     {
         if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+            Auth::denyAccess();
         }
 
         $clients = Clientorganization::all();
@@ -91,8 +90,7 @@ class ClientController extends Controller
     public function view($id)
     {
         if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+            Auth::denyAccess();
         }
 
         $client = Clientorganization::find($id);
@@ -164,8 +162,7 @@ class ClientController extends Controller
     public function addMemberAction()
     {
         if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+            Auth::denyAccess();
         }
 
         $clientId = (int)($_POST['client_id'] ?? 0);
@@ -323,8 +320,7 @@ class ClientController extends Controller
     public function removeMemberAction()
     {
         if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+            Auth::denyAccess();
         }
 
         $clientId = (int)($_POST['client_id'] ?? 0);
@@ -347,8 +343,7 @@ class ClientController extends Controller
     public function createAction()
     {
         if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+            Auth::denyAccess();
         }
 
         $legalName = trim($_POST['legal_name'] ?? '');
@@ -392,8 +387,7 @@ class ClientController extends Controller
     public function assignPlanAction()
     {
         if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+            Auth::denyAccess();
         }
 
         $clientId = (int)($_POST['client_id'] ?? 0);
@@ -443,8 +437,7 @@ class ClientController extends Controller
     public function terminatePlanAction()
     {
         if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+            Auth::denyAccess();
         }
 
         $planId = (int)($_POST['plan_id'] ?? 0);
@@ -1481,8 +1474,7 @@ class ClientController extends Controller
     public function reconcilePaymentAction()
     {
         if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+            Auth::denyAccess();
         }
 
         $invoiceId = (int)($_POST['invoice_id'] ?? 0);

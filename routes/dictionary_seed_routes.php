@@ -19,8 +19,7 @@ $seedHandler = function () use ($router, $siteConfig) {
 
     $currentUser = Auth::user();
     if (!$currentUser || (int)$currentUser->role !== 1) {
-        http_response_code(403);
-        echo "403 Forbidden: Administrator role required to seed reference dictionaries.";
+        Auth::denyAccess('Administrator role required to seed reference dictionaries.');
         exit;
     }
 

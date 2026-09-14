@@ -202,12 +202,22 @@ $router->addRoute('POST', '/login', function () {
     exit;
 });
 $router->addRoute('GET', '/register', function () {
+    global $siteConfig;
+    if (defined('_ALLOW_PUBLIC_REGISTRATION') && !_ALLOW_PUBLIC_REGISTRATION) {
+        header("Location: " . $siteConfig->siteUrl . "/login");
+        exit;
+    }
     // Generate a server-side CAPTCHA challenge and pass the question to the view.
     $data = ['title' => 'Register', 'captcha_question' => \App\Helpers\Captcha::issue()];
     echo view('account.register', compact('data'));
     exit;
 });
 $router->addRoute('POST', '/register', function () use ($router) {
+    if (defined('_ALLOW_PUBLIC_REGISTRATION') && !_ALLOW_PUBLIC_REGISTRATION) {
+        echo json_encode(['status' => 0, 'msg' => 'Public registration is currently disabled. Please contact support.']);
+        exit;
+    }
+
     // Server-side CAPTCHA: the answer is verified against the signed cookie,
     // so the check cannot be skipped or forged by the client.
     if (!\App\Helpers\Captcha::verify($_POST['txt_not_robot_answer'] ?? '')) {
@@ -449,3 +459,10 @@ $router->addRoute('POST', '/admin/update-user-password', function () use ($route
     echo json_encode(['status' => '001', 'message' => $updated, 'us' => $_POST['user']]);
     exit;
 });
+
+// Explicit 403 Forbidden Error Page Route
+$router->addRoute('GET', '/403', function () {
+    \App\Helpers\Auth::denyAccess();
+    exit;
+});
+

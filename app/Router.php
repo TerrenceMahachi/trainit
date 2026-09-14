@@ -135,12 +135,7 @@ class Router
         $user = $id ? \App\Models\User::find($id) : null;
 
         if (!$user || !in_array((int) $user->role, array_map('intval', $roles), true)) {
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                echo json_encode(['status' => '2', 'message' => 'Error: You do not have permission to perform this action']);
-            } else {
-                header("Location: " . $siteConfig->siteUrl . "/dashboard");
-            }
-            exit;
+            \App\Helpers\Auth::denyAccess('You do not have access to this page.');
         }
 
         return $user;

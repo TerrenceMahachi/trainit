@@ -42,4 +42,15 @@ class Controller
         header("Location: " . $url);
         exit;
     }
+
+    /**
+     * Terminate request with a 403 Forbidden Access Denied page.
+     *
+     * @param string|null $message
+     * @return void
+     */
+    protected function denyAccess(?string $message = null): void
+    {
+        \App\Helpers\Auth::denyAccess($message);
+    }
 }

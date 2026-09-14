@@ -15,8 +15,8 @@ class ServiceCatalogueController extends Controller
     public function index()
     {
         if (!Auth::isStaff()) {
-            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
-            exit;
+            Auth::denyAccess();
+            return;
         }
 
         $categories = Servicecategory::all();

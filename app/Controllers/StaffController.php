@@ -40,8 +40,7 @@ class StaffController
     {
         global $siteConfig;
         if (!Auth::check() || !Auth::isAdmin()) {
-            header("Location: " . $siteConfig->siteUrl . "/dashboard");
-            exit;
+            Auth::denyAccess();
         }
 
         $rolesIn = implode(',', self::STAFF_ROLES);
@@ -94,8 +93,7 @@ class StaffController
     {
         global $siteConfig;
         if (!Auth::check() || !Auth::isAdmin()) {
-            header("Location: " . $siteConfig->siteUrl . "/dashboard");
-            exit;
+            Auth::denyAccess();
         }
 
         $roles = Role::findByQuery("SELECT * FROM user_role WHERE iD IN (1, 6, 7, 8)");
@@ -557,8 +555,7 @@ class StaffController
         $targetId = (int)$id;
 
         if (!Auth::check() || (!Auth::isAdmin() && Auth::id() !== $targetId)) {
-            header("Location: " . $siteConfig->siteUrl . "/dashboard");
-            exit;
+            Auth::denyAccess();
         }
 
         $user = User::find($targetId);
@@ -674,8 +671,7 @@ class StaffController
         $targetId = (int)$id;
 
         if (!Auth::check() || (!Auth::isAdmin() && Auth::id() !== $targetId)) {
-            header("Location: " . $siteConfig->siteUrl . "/dashboard");
-            exit;
+            Auth::denyAccess();
         }
 
         $user = User::find($targetId);
@@ -972,12 +968,7 @@ class StaffController
     {
         global $siteConfig;
         if (!Auth::check() || !Auth::isAdmin()) {
-            if ($this->isAjax()) {
-                echo json_encode(['status' => 'error', 'message' => 'Unauthorized access.']);
-                exit;
-            }
-            header("Location: " . $siteConfig->siteUrl . "/dashboard");
-            exit;
+            Auth::denyAccess();
         }
 
         $docId = (int)($_POST['staffdocument_id'] ?? 0);
@@ -1099,12 +1090,7 @@ class StaffController
     {
         global $siteConfig;
         if (!Auth::check() || !Auth::isAdmin()) {
-            if ($this->isAjax()) {
-                echo json_encode(['status' => 'error', 'message' => 'Unauthorized access.']);
-                exit;
-            }
-            header("Location: " . $siteConfig->siteUrl . "/dashboard");
-            exit;
+            Auth::denyAccess();
         }
 
         $leaveId = (int)($_POST['staffleave_id'] ?? 0);
@@ -1198,12 +1184,7 @@ class StaffController
     {
         global $siteConfig;
         if (!Auth::check() || !Auth::isAdmin()) {
-            if ($this->isAjax()) {
-                echo json_encode(['status' => 'error', 'message' => 'Unauthorized access.']);
-                exit;
-            }
-            header("Location: " . $siteConfig->siteUrl . "/dashboard");
-            exit;
+            Auth::denyAccess();
         }
 
         $timeEntryId = (int)($_POST['stafftimeentry_id'] ?? 0);
@@ -1377,8 +1358,7 @@ class StaffController
     {
         global $siteConfig;
         if (!Auth::check() || !Auth::isAdmin()) {
-            header("Location: " . $siteConfig->siteUrl . "/dashboard");
-            exit;
+            Auth::denyAccess();
         }
 
         $validSections = ['documents', 'expiring', 'leave', 'timesheets'];

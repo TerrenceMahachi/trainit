@@ -219,4 +219,50 @@ class Auth
         setcookie('seen', '', time() - 3600, '/');
         unset($_COOKIE['user'], $_COOKIE['auth'], $_COOKIE['seen']);
     }
+
+    /**
+     * Terminate request with an Access Denied (403) response and view.
+     * Replaces silent redirects to /dashboard with an informative screen.
+     */
+    public static function denyAccess(?string $message = null): void
+    {
+        global $siteConfig;
+        $siteUrl = $siteConfig ? $siteConfig->siteUrl : _BASEURL;
+
+        // If not authenticated at all, redirect to login with return path
+        if (!self::check()) {
+            \App\Helpers\AuthReturn::captureCurrentRequest();
+            header("Location: {$siteUrl}/login");
+            exit;
+        }
+
+        // If AJAX, API or POST request, respond with 403 JSON
+        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+            || (strpos($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json') !== false)
+            || (strpos($_SERVER['REQUEST_URI'] ?? '', '/api/') !== false)
+            || ($_SERVER['REQUEST_METHOD'] === 'POST');
+
+        if ($isAjax) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'status' => 'forbidden',
+                'response_code' => 403,
+                'message' => $message ?? 'You do not have access to this page.'
+            ]);
+            exit;
+        }
+
+        // Render HTTP 403 Access Denied view
+        http_response_code(403);
+        $data = [
+            'status' => 'forbidden',
+            'response_code' => 403,
+            'title' => 'Access Restricted — 403',
+            'message' => $message ?? 'You do not have access to this page.',
+            'user' => self::user()
+        ];
+        echo view('errors.403', compact('data'));
+        exit;
+    }
 }
