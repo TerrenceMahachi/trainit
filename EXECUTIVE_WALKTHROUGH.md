@@ -342,4 +342,50 @@ The interactive **Add Representative** modal (`#modalAddClientMember`) provides 
 | **Representative Removal** | Removed `ops@acmelogistics.co.zw` | [Acme Logistics Profile](https://portal.tsigiro.co.zw/admin/clients/view/1) | Unlinked representative; roster updated instantly while preserving historical data. |
 | **Client Team View** | Inspected roster as client | [Client Team Roster](https://portal.tsigiro.co.zw/client/team) | Verified `Tendai Moyo` displayed with active status and role badge. |
 
+---
+
+## 11. Explicit HTTP 403 Access Denied Protection (NEW)
+
+Previously, when an authenticated user navigated to an administrative or departmental screen outside their permitted scope (e.g., a Vetting Officer attempting to view `/admin/staff` or `/admin/payroll`), the router silently bounced them back to `/dashboard` without explanation.
+
+The portal now enforces an informative, transparent **HTTP 403 Forbidden Access Denied** system across all routes and controllers.
+
+### 1. User Experience & Messaging
+When an authenticated user attempts to access an unauthorized route, the system presents an explicit Access Denied screen ([`views/errors/403.php`](file:///Library/WebServer/Documents/trainit/views/errors/403.php)):
+* **Header:** **"You do not have access to this page"** with an amber security badge `HTTP 403 • Access Restricted`.
+* **Account Context:** Displays the authenticated user's name and role badge (e.g., *Ruvimbo Sithole • Vetting Officer*), clarifying why access was blocked.
+* **Primary Call-to-Action:** **"Click here to go to the dashboard"** button linking directly to `/dashboard`.
+* **Secondary Action:** **"Return to Previous Page"** button allowing the user to navigate back safely in browser history.
+* **Support Contact:** Direct contact link to `support@tsigiro.co.zw` for privilege escalation requests.
+
+### 2. Centralized Security Architecture
+Access denials are consolidated through [`\App\Helpers\Auth::denyAccess(?string $message = null)`](file:///Library/WebServer/Documents/trainit/app/Helpers/Auth.php#L223-L267) and integrated across all layers:
+1. **Router Role Protection ([`Router::requireRole()`](file:///Library/WebServer/Documents/trainit/app/Router.php)):**
+   - Automatically triggers `Auth::denyAccess()` when a user's role is not in the required whitelist.
+2. **ViewAccess Governance ([`ViewAccess::deny()`](file:///Library/WebServer/Documents/trainit/app/Helpers/ViewAccess.php)):**
+   - Replaced silent header redirects with `Auth::denyAccess()`.
+3. **Controller-Level Guards:**
+   - [`StaffController`](file:///Library/WebServer/Documents/trainit/app/Controllers/StaffController.php): Blocks unauthorized viewing or actioning of staff directories, approvals queues, and leave approvals.
+   - [`PayrollController`](file:///Library/WebServer/Documents/trainit/app/Controllers/PayrollController.php): Strictly restricts payroll calculations, approvals, and NSSA statutory returns to Administrators and Billing Officers (`Role 1` and `Role 7`).
+   - [`ClientController`](file:///Library/WebServer/Documents/trainit/app/Controllers/ClientController.php): Enforces staff-only access on corporate clients, retainer assignments, and payment reconciliations.
+   - [`VacancyController`](file:///Library/WebServer/Documents/trainit/app/Controllers/VacancyController.php): Protects vacancy authoring, applicant scoring, and staff appointment consoles.
+   - [`ServiceCatalogueController`](file:///Library/WebServer/Documents/trainit/app/Controllers/ServiceCatalogueController.php): Guards service catalog SLA policies.
+   - [`RosterApplicationController`](file:///Library/WebServer/Documents/trainit/app/Controllers/RosterApplicationController.php): Denies unauthorized access if a user attempts to view another applicant's private dossier or onboarding form.
+4. **Intelligent Request Handling:**
+   - **Unauthenticated Visitors:** Automatically 302-redirected to `/login` with the attempted URI preserved in `AuthReturn::captureCurrentRequest()`.
+   - **AJAX / POST / API Calls:** Responds with `HTTP 403` and JSON payload `{"status":"forbidden","response_code":403,"message":"You do not have access to this page."}`.
+   - **Browser Page Navigation:** Responds with `HTTP 403` and renders the rich Tsigiro 403 error page.
+
+### 3. Production Verification Matrix (`portal.tsigiro.co.zw`)
+| Test Case | Persona / State | Target URL | Expected Status | Result |
+| :--- | :--- | :--- | :---: | :--- |
+| **Unauthenticated Request** | Guest | `/admin/staff` | `302 Found` | Redirects to `/login` with return URL captured. |
+| **Unauthorized Web Page** | Vetting Officer (`Role 8`) | `/admin/staff` | `403 Forbidden` | Displays *"You do not have access to this page"* & *"Click here to go to the dashboard"*. |
+| **Unauthorized Payroll** | Vetting Officer (`Role 8`) | `/admin/payroll` | `403 Forbidden` | Displays 403 screen with user role context. |
+| **Unauthorized AJAX** | Vetting Officer (`Role 8`) | `/admin/staff` (AJAX) | `403 Forbidden` | Returns JSON `{"status":"forbidden","response_code":403,"message":"..."}`. |
+| **Authorized Access** | Administrator (`Role 1`) | `/admin/staff` | `200 OK` | Fully renders Staff Management console. |
+| **Authorized Payroll** | Administrator (`Role 1`) | `/admin/payroll` | `200 OK` | Fully renders Payroll & Payouts ledger. |
+| **Direct Error Route** | Authenticated User | `/403` | `403 Forbidden` | Renders the standard Access Denied view. |
+
+
 
