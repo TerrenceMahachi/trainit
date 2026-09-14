@@ -2,9 +2,19 @@
 
 > [!TIP]
 > **Executive PDF Edition Available:**
-> A formatted 4-page executive PDF edition of this guide has been generated:
-> * **Local PDF:** [`TSIGIROS_EXECUTIVE_WALKTHROUGH_GUIDE.pdf`](./TSIGIROS_EXECUTIVE_WALKTHROUGH_GUIDE.pdf)
+> A 4-page executive print document has been compiled and published:
+> * **Local File:** [TSIGIROS_EXECUTIVE_WALKTHROUGH_GUIDE.pdf](file:///Library/WebServer/Documents/trainit/TSIGIROS_EXECUTIVE_WALKTHROUGH_GUIDE.pdf)
 > * **Live Production URL:** [https://portal.tsigiro.co.zw/TSIGIROS_EXECUTIVE_WALKTHROUGH_GUIDE.pdf](https://portal.tsigiro.co.zw/TSIGIROS_EXECUTIVE_WALKTHROUGH_GUIDE.pdf)
+
+````carousel
+![Page 1 - Executive Summary & Implementation Status](/Users/terrencemahachi/.gemini/antigravity/brain/1a959035-59a1-410c-8002-1623b7a9cc82/guide_page_1.png)
+<!-- slide -->
+![Page 2 - Testing Personas & Internal Staff Journeys](/Users/terrencemahachi/.gemini/antigravity/brain/1a959035-59a1-410c-8002-1623b7a9cc82/guide_page_2.png)
+<!-- slide -->
+![Page 3 - Candidate/Client Journeys & 1-Year Simulation Portfolio](/Users/terrencemahachi/.gemini/antigravity/brain/1a959035-59a1-410c-8002-1623b7a9cc82/guide_page_3.png)
+<!-- slide -->
+![Page 4 - Operations Deep-Dive, Security Architecture & Certification](/Users/terrencemahachi/.gemini/antigravity/brain/1a959035-59a1-410c-8002-1623b7a9cc82/guide_page_4.png)
+````
 
 **Audience:** Executive Leadership, Project Evaluators, Stakeholders, and Systems Auditors  
 **Standard Password for All Demo Accounts:** `Password123!`  
@@ -291,5 +301,45 @@ The universal `/dashboard` route automatically delivers a tailored operational w
 | **Finance Officer** | `finance@tsigiro.co.zw` | [Finance Dashboard](https://portal.tsigiro.co.zw/dashboard) | `Billing Desk`, `Staff Portal` |
 | **Administrator** | `admin@tsigiro.co.zw` | [Admin Dashboard](https://portal.tsigiro.co.zw/dashboard) | `Admin` (16 tools), `Staff Directory` |
 | **Client Lead** | `client@tsigiro.co.zw` | [Client Portal](https://portal.tsigiro.co.zw/client/portal) | `Client Desk` (Workspace, Requests, Plans, Invoices) |
+
+---
+
+## 10. Client Representative Provisioning & Management Desk (NEW)
+
+Authorized internal staff (Administrators, Service Delivery Managers, Billing Officers, and Vetting Officers) accessing the Client 360° Profile & Retainer Plans console (`/admin/clients/view/:id`) can now directly provision and manage authorized client representatives on each organization's team roster.
+
+### 1. Flexible Addition Workflows
+The interactive **Add Representative** modal (`#modalAddClientMember`) provides three dedicated provisioning modes:
+1. **Quick Add (Email Only):**
+   - For rapid invites and onboarding. Enter corporate email and select representative role.
+   - If the email belongs to an existing registered user, they are linked immediately and promoted to Client User role (`role = 3`).
+   - If the email is new, a user account is auto-created with a friendly name derived from their email address and provisioned with default credentials (`Password123!`).
+2. **Full Details (Name, Email & Password):**
+   - For explicit account setup with custom corporate credentials.
+   - Enter Full Name, Corporate Email Address, custom Portal Access Password (with random password generator helper), and Representative Capacity.
+   - Creates or updates the user and login credentials with bcrypt hashing, giving the representative immediate login access.
+3. **Select Existing User:**
+   - For linking an existing registered non-staff user from a searchable dropdown.
+   - Allows assigning representative capacity and optionally setting or overriding their password.
+
+### 2. Supported Representative Roles (`clientmemberrole`)
+- **Organization Owner / Signatory (Role 1):** Full governance over organization, billing, and all requests.
+- **Billing & Financial Officer (Role 2):** Receives invoices, makes payments, and reviews retainers.
+- **Authorized Requester (Role 3):** Can submit and collaborate on service requests.
+- **General Team Member (Role 4):** Read-only visibility into organization workspace.
+
+### 3. Roster Management & One-Click Unlinking
+- **Visual Roster Cards:** Display user avatar initials, full name, corporate email address, and role-colored badges.
+- **One-Click Removal:** Staff can unlink any representative via a secure POST request with a confirmation dialog, keeping client rosters accurate and up-to-date.
+- **Two-Way Synchronization:** Representatives added or removed on `/admin/clients/view/:id` immediately appear in the client-facing team roster at `/client/team`.
+
+### 4. Verified Live Scenarios on Production (`portal.tsigiro.co.zw`)
+| Scenario | Action | Production Target | Result |
+| :--- | :--- | :--- | :--- |
+| **Email-Only Addition** | Added `ops@acmelogistics.co.zw` | [Acme Logistics Profile](https://portal.tsigiro.co.zw/admin/clients/view/1) | Auto-provisioned account with default password `Password123!` and linked as Organization Owner. |
+| **Login Verification** | Signed in as `ops@acmelogistics.co.zw` | `/login` | Successfully logged in and accessed `/client/portal` and `/client/team`. |
+| **Full Provisioning** | Added `tendai.moyo@acmelogistics.co.zw` | [Acme Logistics Profile](https://portal.tsigiro.co.zw/admin/clients/view/1) | Created account with custom password `AcmeFleet2026!` and linked as Billing & Financial Officer. |
+| **Representative Removal** | Removed `ops@acmelogistics.co.zw` | [Acme Logistics Profile](https://portal.tsigiro.co.zw/admin/clients/view/1) | Unlinked representative; roster updated instantly while preserving historical data. |
+| **Client Team View** | Inspected roster as client | [Client Team Roster](https://portal.tsigiro.co.zw/client/team) | Verified `Tendai Moyo` displayed with active status and role badge. |
 
 
