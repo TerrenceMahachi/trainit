@@ -246,3 +246,50 @@ The invoicing pipeline now features full-lifecycle dynamic document generation, 
 | **Finance Officer** | `finance@tsigiro.co.zw` | [Invoice #46 Reconcile](https://portal.tsigiro.co.zw/client/invoices/view/46) | Test the Billing Desk reconciliation card to certify or reopen unpaid invoices. |
 | **Admin** | `admin@tsigiro.co.zw` | [Admin Invoices Ledger](https://portal.tsigiro.co.zw/admin/invoices) | Oversee portfolio-wide billing, download PDF statements, and inspect audit logs. |
 
+---
+
+## 9. Role-Aware Menus, Navigation & Departmental Dashboards (NEW)
+
+The portal navigation bar and dashboard command centers now dynamically adapt according to the authenticated user's role:
+
+### 1. Granular Role Tags in Navigation (`config/nav.php` & `views/partials/nav.php`)
+Menu items and dropdown groups now map to specific role identifiers:
+- **Vetting Officer (`vetting`, Role 8):**
+  - Top Navigation: `Opportunities`, `Mobile App`, `Dashboard`, `Staff Portal`, and dedicated **`Vetting Desk`** dropdown (`Talent Vetting Pipeline`, `Compliance Radar & Expiry Tracker`, `Recruitment & Vacancies`, `Candidate Vacancy Alerts`).
+  - Completely hidden from: `Staff Directory`, `Staff Payroll`, `NSSA P4 Export`, `Client Retainers`, `Delivery Desk`, and boilerplate `System Dictionaries`.
+- **Service Delivery Manager (`manager`, Role 6):**
+  - Top Navigation: `Opportunities`, `Mobile App`, `Dashboard`, `Staff Portal`, and dedicated **`Service Desk`** dropdown (`Service Requests & Dispatch`, `Client Organizations & Retainers`, `Client Onboarding Queue`, `Service Catalogue & SLA`, `Talent Roster Review`).
+  - Completely hidden from: `Staff Payroll`, `NSSA P4 Export`, `System Dictionaries`, etc.
+- **Billing & Finance Officer (`finance`, Role 7):**
+  - Top Navigation: `Opportunities`, `Mobile App`, `Dashboard`, `Staff Portal`, and dedicated **`Billing Desk`** dropdown (`Client Invoices & Settlements`, `Staff Payroll & Payslips`, `NSSA Form P4 Export`, `Client Organizations & Retainers`).
+  - Completely hidden from: `Talent Pipeline scoring rubrics`, `Service dispatch`, and `System Dictionaries`.
+- **System Administrator (`admin`, Role 1):**
+  - Full governance access with the complete `Admin` command dropdown and `Staff Directory`.
+- **Client Organization User (`client`, Role 3):**
+  - Dedicated **`Client Desk`** dropdown (`Overview Workspace`, `Work Requests`, `Submit Request`, `Retainer Plans`, `Team Roster`, `Tax Invoices`).
+- **Candidates / General Users (`user`, Role 2, 4, 5):**
+  - Simplified navigation: `Opportunities`, `Mobile App`, `Dashboard`.
+
+### 2. Departmental Command Center Dashboards (`routes/web.php` & `views/dashboard/`)
+The universal `/dashboard` route automatically delivers a tailored operational workspace:
+1. **Vetting & Compliance Command Center (`views/dashboard/vetting.php`):**
+   - KPI counters: Total Applications, Pending Vetting, Admitted on Roster, and Compliance Radar alerts.
+   - Priority review queue with 1-click **"Review Dossier"** links to candidate scoring consoles.
+   - Quick tools for Talent Pipeline, Compliance Radar, Vacancies, and Candidate Alerts.
+2. **Service Delivery Dashboard (`views/dashboard/manager.php`):**
+   - Retainer plan tracking, active service ticket ledger, team allocations, and SLA dispatch tools.
+3. **Finance & Billing Dashboard (`views/dashboard/finance.php`):**
+   - Total invoiced vs settled collections counters, recent corporate tax invoices, payroll runs, and NSSA P4 exports.
+4. **Administrator Dashboard (`views/dashboard/admin.php`):**
+   - Multi-departmental overview with executive analytics, staff registration hub, client delivery desk, and dictionary governance.
+
+### 3. Verification & Testing Personas
+| Role | Account | Live Dashboard Link | Key Menus Displayed |
+| :--- | :--- | :--- | :--- |
+| **Vetting Officer** | `vetting@tsigiro.co.zw` | [Vetting Dashboard](https://portal.tsigiro.co.zw/dashboard) | `Vetting Desk`, `Staff Portal` |
+| **Service Manager** | `manager@tsigiro.co.zw` | [Service Dashboard](https://portal.tsigiro.co.zw/dashboard) | `Service Desk`, `Staff Portal` |
+| **Finance Officer** | `finance@tsigiro.co.zw` | [Finance Dashboard](https://portal.tsigiro.co.zw/dashboard) | `Billing Desk`, `Staff Portal` |
+| **Administrator** | `admin@tsigiro.co.zw` | [Admin Dashboard](https://portal.tsigiro.co.zw/dashboard) | `Admin` (16 tools), `Staff Directory` |
+| **Client Lead** | `client@tsigiro.co.zw` | [Client Portal](https://portal.tsigiro.co.zw/client/portal) | `Client Desk` (Workspace, Requests, Plans, Invoices) |
+
+
