@@ -1,0 +1,110 @@
+<div class="view">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+        <button type="button" id="btn-back-to-profile" class="btn-link-action" style="font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+            ← Back to Profile
+        </button>
+        <span id="personal-status-pill" class="status-pill status-pill-pending" style="font-size: 0.72rem;">Checking...</span>
+    </div>
+
+    <div class="card" style="margin-bottom: 12px; background: linear-gradient(135deg, #090b0b 0%, #111a17 100%); color: #fff; border: 1px solid rgba(21, 155, 117, 0.3);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(21, 155, 117, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                👤
+            </div>
+            <div>
+                <h3 style="font-size: 1.05rem; font-weight: 700; color: #fff; margin: 0 0 2px 0;">Personal Details Profile</h3>
+                <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Verified credentials shared with reviewers & client partners.</p>
+            </div>
+        </div>
+    </div>
+
+    <form id="personal-details-form" class="card" style="padding: 18px 16px;" onsubmit="return false;">
+        <div id="personal-alert" class="alert-box" style="display: none; margin-bottom: 14px;"></div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" for="personal-legal-name" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">Full Legal Name *</label>
+            <input type="text" id="personal-legal-name" class="form-input" required placeholder="e.g. Tendai Samuel Moyo">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" for="personal-preferred-name" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">Preferred / Common Name</label>
+            <input type="text" id="personal-preferred-name" class="form-input" placeholder="e.g. Tendai">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="personal-mobile" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">Mobile Number *</label>
+                <input type="tel" id="personal-mobile" class="form-input" required placeholder="+263 77 123 4567">
+            </div>
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="personal-whatsapp" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">WhatsApp Number</label>
+                <input type="tel" id="personal-whatsapp" class="form-input" placeholder="+263 77 123 4567">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="personal-dob" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">Date of Birth</label>
+                <input type="date" id="personal-dob" class="form-input">
+            </div>
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="personal-gender" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">Gender</label>
+                <select id="personal-gender" class="form-input">
+                    <option value="">-- Select --</option>
+                    <option value="1">Male</option>
+                    <option value="2">Female</option>
+                    <option value="3">Other</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="personal-city" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">City / Town *</label>
+                <input type="text" id="personal-city" class="form-input" required placeholder="e.g. Harare">
+            </div>
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="personal-suburb" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">Suburb / Area</label>
+                <input type="text" id="personal-suburb" class="form-input" placeholder="e.g. Avondale">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="personal-province" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">Province / State</label>
+                <input type="text" id="personal-province" list="province-suggestions" class="form-input" placeholder="e.g. Harare, Bulawayo">
+                <datalist id="province-suggestions">
+                    <option value="Harare">
+                    <option value="Bulawayo">
+                    <option value="Manicaland">
+                    <option value="Mashonaland Central">
+                    <option value="Mashonaland East">
+                    <option value="Mashonaland West">
+                    <option value="Masvingo">
+                    <option value="Matabeleland North">
+                    <option value="Matabeleland South">
+                    <option value="Midlands">
+                </datalist>
+            </div>
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="personal-country" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">Country</label>
+                <input type="text" id="personal-country" class="form-input" value="Zimbabwe">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="personal-id-number" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">National ID / Passport</label>
+                <input type="text" id="personal-id-number" class="form-input" placeholder="e.g. 63-1234567-X00">
+            </div>
+            <div class="form-group" style="margin: 0;">
+                <label class="form-label" for="personal-nationality" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main);">Nationality</label>
+                <input type="text" id="personal-nationality" class="form-input" value="Zimbabwean">
+            </div>
+        </div>
+
+        <button type="button" id="btn-save-personal" class="btn-primary" style="margin-top: 6px; font-weight: 700;">
+            Save &amp; Update Personal Details
+        </button>
+    </form>
+</div>

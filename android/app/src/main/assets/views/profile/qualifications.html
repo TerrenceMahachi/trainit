@@ -1,0 +1,79 @@
+<div class="view">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+        <button type="button" id="btn-back-to-profile-from-quals" class="btn-link-action" style="font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+            ← Back to Profile
+        </button>
+        <span id="quals-count-badge" class="status-pill status-pill-pending" style="font-size: 0.72rem;">0 Qualifications</span>
+    </div>
+
+    <!-- Header Banner -->
+    <div class="card" style="margin-bottom: 14px; background: linear-gradient(135deg, #090b0b 0%, #15221d 100%); color: #fff; border: 1px solid rgba(21, 155, 117, 0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(21, 155, 117, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                    🎓
+                </div>
+                <div>
+                    <h3 style="font-size: 1.05rem; font-weight: 700; color: #fff; margin: 0 0 2px 0;">Qualifications &amp; Education</h3>
+                    <p style="font-size: 0.75rem; color: #94a3b8; margin: 0;">Degrees, diplomas &amp; certifications for 1-Click review.</p>
+                </div>
+            </div>
+            <button type="button" id="btn-show-add-qual" class="btn-primary" style="width: auto; padding: 7px 14px; font-size: 0.76rem; font-weight: 700; margin: 0; background: var(--primary);">
+                + Add
+            </button>
+        </div>
+    </div>
+
+    <!-- Add / Edit Qualification Card (Hidden by default, shown on click) -->
+    <div id="qual-form-card" class="card" style="display: none; padding: 18px 16px; margin-bottom: 16px; border: 1px solid rgba(50, 201, 154, 0.4); background: var(--card-bg, #111a17); border-radius: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h4 id="qual-form-title" style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--primary, #32c99a);">Add New Qualification</h4>
+            <button type="button" id="btn-cancel-qual-form" class="btn-link-action" style="font-size: 0.78rem; color: #94a3b8;">✕ Cancel</button>
+        </div>
+
+        <div id="qual-alert" class="alert-box" style="display: none; margin-bottom: 12px;"></div>
+
+        <form id="qual-form" onsubmit="return false;">
+            <input type="hidden" id="qual-id" value="">
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" for="qual-title" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main, #f8fafc); display: block; margin-bottom: 6px;">Qualification / Degree Title *</label>
+                <input type="text" id="qual-title" class="form-input" required placeholder="e.g. BSc Honours Computer Science" style="background: var(--input-bg, #1e293b); color: var(--text-main, #f8fafc); border: 1px solid var(--border);">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" for="qual-institution" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main, #f8fafc); display: block; margin-bottom: 6px;">Institution / College / University *</label>
+                <input type="text" id="qual-institution" class="form-input" required placeholder="e.g. University of Zimbabwe" style="background: var(--input-bg, #1e293b); color: var(--text-main, #f8fafc); border: 1px solid var(--border);">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" for="qual-field" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main, #f8fafc); display: block; margin-bottom: 6px;">Field of Study</label>
+                    <input type="text" id="qual-field" class="form-input" placeholder="e.g. Software Engineering" style="background: var(--input-bg, #1e293b); color: var(--text-main, #f8fafc); border: 1px solid var(--border);">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" for="qual-type" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main, #f8fafc); display: block; margin-bottom: 6px;">Type / Level</label>
+                    <select id="qual-type" class="form-input" style="background: var(--input-bg, #1e293b); color: var(--text-main, #f8fafc); border: 1px solid var(--border);">
+                        <!-- Loaded dynamically -->
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label" for="qual-date" style="font-size: 0.78rem; font-weight: 700; color: var(--text-main, #f8fafc); display: block; margin-bottom: 6px;">Date / Year Obtained</label>
+                <input type="date" id="qual-date" class="form-input" style="background: var(--input-bg, #1e293b); color: var(--text-main, #f8fafc); border: 1px solid var(--border);">
+            </div>
+
+            <button type="button" id="btn-save-qual" class="btn-primary" style="margin-top: 4px; font-weight: 700;">
+                Save Qualification Record
+            </button>
+        </form>
+    </div>
+
+    <!-- Qualifications List Container -->
+    <div id="quals-list-container" style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="text-align: center; padding: 24px 10px; color: var(--text-muted); font-size: 0.82rem;">
+            Loading qualifications...
+        </div>
+    </div>
+</div>

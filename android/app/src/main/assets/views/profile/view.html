@@ -1,0 +1,175 @@
+<div class="view">
+    <div class="section-title">
+        <span>User Profile & Settings</span>
+    </div>
+
+    <!-- Identity Card -->
+    <div class="card" style="text-align: center; padding: 24px 18px;">
+        <div id="profile-avatar" style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #1e40af); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; margin: 0 auto 12px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);">
+            U
+        </div>
+        <h3 id="profile-name" style="margin-bottom: 2px;">User Name</h3>
+        <p id="profile-email" style="font-size: 0.82rem; color: #64748b; margin-bottom: 10px;">user@tsigiro.co.zw</p>
+        <span id="profile-role-badge" class="badge badge-blue">Role</span>
+    </div>
+
+    <!-- Verified Credentials & Dossier Cards -->
+    <div class="card">
+        <div class="card-title" style="margin-bottom: 2px;">Application Credentials Profile</div>
+        <div style="font-size: 0.73rem; color: var(--text-muted); margin-bottom: 12px;">Required for 1-Click Applications &amp; Reviewer Access</div>
+        
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <!-- Personal Details Nav Button -->
+            <button type="button" id="btn-goto-personal" class="chip-btn" style="width: 100%; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px; text-align: left;">
+                    <div style="font-size: 1.3rem;">👤</div>
+                    <div>
+                        <div class="chip-name">Personal Details</div>
+                        <div class="chip-role">Legal name, phone, location &amp; ID</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span id="badge-personal-status" class="status-pill status-pill-pending" style="font-size: 0.68rem;">Checking...</span>
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">→</span>
+                </div>
+            </button>
+
+            <!-- Qualifications Nav Button -->
+            <button type="button" id="btn-goto-quals" class="chip-btn" style="width: 100%; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px; text-align: left;">
+                    <div style="font-size: 1.3rem;">🎓</div>
+                    <div>
+                        <div class="chip-name">Qualifications Profile</div>
+                        <div class="chip-role">Degrees, diplomas &amp; certifications</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span id="badge-quals-status" class="status-pill status-pill-pending" style="font-size: 0.68rem;">Checking...</span>
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">→</span>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Specialized Profiles & Role Accounts Card -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div>
+                <div class="card-title" style="margin: 0;">Multi-Role Accounts</div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Switch between your specialized profiles</div>
+            </div>
+            <button type="button" id="btn-profile-request-new" class="btn-link-action" style="font-size: 0.76rem; font-weight: 700;">+ Request Role</button>
+        </div>
+        <div id="profile-roles-list" style="display: flex; flex-direction: column; gap: 8px;">
+            <!-- Rendered dynamically -->
+        </div>
+    </div>
+
+    <!-- Quick Shortcuts Card -->
+    <div id="profile-shortcuts-card" class="card" style="display: none;">
+        <div class="card-title" style="margin-bottom: 10px;">Account Shortcuts</div>
+        <button type="button" id="btn-profile-invoices" class="chip-btn" style="width: 100%; margin-bottom: 8px; padding: 12px;">
+            <span class="chip-name">📄 Corporate Invoices & VAT Statements</span>
+            <span class="chip-role">View monthly tax invoices and payment history</span>
+        </button>
+    </div>
+
+    <!-- Appearance & Preferences -->
+    <div class="card">
+        <div class="card-title" style="margin-bottom: 12px;">Preferences</div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-main);">Dark Theme</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Switch between dark and light modes</div>
+            </div>
+            <button type="button" id="btn-toggle-darkmode" class="chip-btn" style="width: auto; padding: 8px 14px;">
+                <span id="darkmode-label">🌙 Enable</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Edit Account Profile -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div>
+                <div class="card-title" style="margin: 0;">Account Details</div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Edit full name and login email</div>
+            </div>
+            <span style="font-size: 1.15rem;">✏️</span>
+        </div>
+
+        <div id="edit-profile-alert" class="alert-box" style="display: none; margin-bottom: 12px;"></div>
+
+        <form id="form-edit-profile" onsubmit="return false;">
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label class="form-label" for="edit-profile-name">Full Name *</label>
+                <input type="text" id="edit-profile-name" class="form-input" required placeholder="e.g. Tendai Moyo">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label class="form-label" for="edit-profile-email">Email Address *</label>
+                <input type="email" id="edit-profile-email" class="form-input" required placeholder="name@tsigiro.co.zw">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" for="edit-profile-cur-pwd">Current Password (optional to confirm)</label>
+                <div class="password-input-wrap">
+                    <input type="password" id="edit-profile-cur-pwd" class="form-input" placeholder="Current password">
+                    <button type="button" class="btn-toggle-password" data-target="edit-profile-cur-pwd" title="Toggle visibility">👁️</button>
+                </div>
+            </div>
+
+            <button type="button" id="btn-save-profile" class="btn-primary" style="padding: 11px; font-size: 0.88rem; margin-top: 2px;">
+                Save Profile Changes
+            </button>
+        </form>
+    </div>
+
+    <!-- Security & Change Password -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div>
+                <div class="card-title" style="margin: 0;">Change Password</div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">Ensure your account uses a secure password</div>
+            </div>
+            <span style="font-size: 1.15rem;">🔐</span>
+        </div>
+
+        <div id="change-pwd-alert" class="alert-box" style="display: none; margin-bottom: 12px;"></div>
+
+        <form id="form-change-password" onsubmit="return false;">
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label class="form-label" for="pwd-current">Current Password *</label>
+                <div class="password-input-wrap">
+                    <input type="password" id="pwd-current" class="form-input" required placeholder="Enter current password">
+                    <button type="button" class="btn-toggle-password" data-target="pwd-current" title="Toggle visibility">👁️</button>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label class="form-label" for="pwd-new">New Password (min 6 chars) *</label>
+                <div class="password-input-wrap">
+                    <input type="password" id="pwd-new" class="form-input" required placeholder="New password" minlength="6">
+                    <button type="button" class="btn-toggle-password" data-target="pwd-new" title="Toggle visibility">👁️</button>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" for="pwd-confirm">Confirm New Password *</label>
+                <div class="password-input-wrap">
+                    <input type="password" id="pwd-confirm" class="form-input" required placeholder="Confirm new password" minlength="6">
+                    <button type="button" class="btn-toggle-password" data-target="pwd-confirm" title="Toggle visibility">👁️</button>
+                </div>
+            </div>
+
+            <button type="button" id="btn-save-password" class="btn-primary" style="padding: 11px; font-size: 0.88rem; margin-top: 2px; background: #090b0b;">
+                Update Password
+            </button>
+        </form>
+    </div>
+
+    <!-- Actions -->
+    <button type="button" id="btn-logout" class="btn-primary" style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; box-shadow: none;">
+        Sign Out / Switch Account
+    </button>
+</div>
