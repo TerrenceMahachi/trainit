@@ -387,5 +387,37 @@ Access denials are consolidated through [`\App\Helpers\Auth::denyAccess(?string 
 | **Authorized Payroll** | Administrator (`Role 1`) | `/admin/payroll` | `200 OK` | Fully renders Payroll & Payouts ledger. |
 | **Direct Error Route** | Authenticated User | `/403` | `403 Forbidden` | Renders the standard Access Denied view. |
 
+---
+
+## 12. Staff Portal Dropdown & Personal Remuneration Hub (NEW)
+
+Previously, **"Staff Portal"** on the top navigation was a flat, single link directing users to the generic documents view.
+
+The top navigation now renders **"Staff Portal"** as an interactive dropdown exposing all primary self-service functions available to internal personnel, paired with a new dedicated **Personal Remuneration & Payslips Hub**.
+
+### 1. Top Navigation Dropdown Structure ([`config/nav.php`](file:///Library/WebServer/Documents/trainit/config/nav.php))
+Internal staff members across all departments (Administrators, Vetting Officers, Service Delivery Managers, and Billing Officers) now have direct access to 5 dedicated self-service options in the top navigation bar:
+* **Staff Hub Overview ([`/staff/portal`](https://portal.tsigiro.co.zw/staff/portal)):** Digital staff ID credential card, employment station, and leave balances overview.
+* **My Payslips ([`/staff/portal/payslips`](https://portal.tsigiro.co.zw/staff/portal/payslips)):** Monthly compensation statements, gross earnings, itemized statutory deductions (PAYE, NSSA, AIDS Levy), net payout, and printable PDF payslip documents.
+* **Apply for Leave ([`/staff/portal/leave`](https://portal.tsigiro.co.zw/staff/portal/leave)):** Real-time tracking of statutory 22-day annual leave balances and vacation/medical leave submission dialog.
+* **Compliance Documents ([`/staff/portal/documents`](https://portal.tsigiro.co.zw/staff/portal/documents)):** Upload and track IDs, diplomas, professional certifications, and police clearance validity.
+* **Log Timesheets ([`/staff/portal/timesheets`](https://portal.tsigiro.co.zw/staff/portal/timesheets)):** Daily operational hour logging for billable and internal tasks.
+
+### 2. Personal Payslips Hub ([`views/staff/portal_payslips.php`](file:///Library/WebServer/Documents/trainit/views/staff/portal_payslips.php))
+* **KPI Header Cards:** Displays Latest Net Payout ($1,490.00), Total Cumulative Remuneration ($17,880.00), and Total Settled Cycles (12 Monthly Statements).
+* **Detailed Payslip Table:** Shows period codes, pay dates, gross salaries, statutory deductions, net payouts, and bank EFT disbursement references with green `Paid / Disbursed` badges.
+* **Confidential Printable Payslip View:** Each entry has a **"View Payslip"** button opening the official confidential payslip document ([`/admin/payroll/payslip/:id`](https://portal.tsigiro.co.zw/admin/payroll/payslip/81)) with one-click print/save-to-PDF formatting.
+* **Strict Privacy Isolation:** Staff members can only view their own confidential remuneration statements; attempts to access another employee's payslip ID are strictly blocked with the HTTP 403 Access Denied screen.
+
+### 3. Verification & Live Scenarios (`portal.tsigiro.co.zw`)
+| Scenario | Account / Persona | Action | Live Result |
+| :--- | :--- | :--- | :--- |
+| **Top Nav Dropdown** | `vetting@tsigiro.co.zw` (Ruvimbo Sithole) | Hover / Click `Staff Portal` | Dropdown renders all 5 options with font-awesome icons. |
+| **My Payslips Console** | `vetting@tsigiro.co.zw` | Navigate to `/staff/portal/payslips` | Renders 12 monthly settled statements with gross, deductions, net, and EFT references. |
+| **Printable Document** | `vetting@tsigiro.co.zw` | Click "View Payslip" on statement #81 | Opens official confidential printable payslip with full company header and deductions breakdown. |
+| **Cross-Staff Security** | `vetting@tsigiro.co.zw` | Attempt to open another employee's payslip | Returns HTTP 403 Forbidden Access Denied page. |
+| **Non-Staff Isolation** | `candidate@tsigiro.co.zw` (Candidate) | Check top navigation bar | Staff Portal dropdown is hidden; only public and candidate links are visible. |
+
+
 
 
