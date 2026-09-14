@@ -34,6 +34,18 @@ $router->addRoute('POST', '/admin/clients/terminate-plan', function () {
     exit;
 });
 
+// 5b. Add Client Representative to Organization Roster
+$router->addRoute('POST', '/admin/clients/add-member', function () {
+    (new ClientController())->addMemberAction();
+    exit;
+});
+
+// 5c. Remove Client Representative from Organization Roster
+$router->addRoute('POST', '/admin/clients/remove-member', function () {
+    (new ClientController())->removeMemberAction();
+    exit;
+});
+
 // 6. Client Self-Service Portal Overview
 $router->addRoute('GET', '/client/portal', function () {
     (new ClientController())->portal();

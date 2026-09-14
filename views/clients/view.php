@@ -41,6 +41,18 @@ $cId = is_object($client) ? $client->iD : $client['iD'];
                 <?php if ($_GET['msg'] === 'plan_assigned'): ?>Retainer plan successfully assigned to client.<?php endif; ?>
                 <?php if ($_GET['msg'] === 'plan_terminated'): ?>Retainer plan deactivated successfully.<?php endif; ?>
                 <?php if ($_GET['msg'] === 'client_created'): ?>Client organization created successfully.<?php endif; ?>
+                <?php if ($_GET['msg'] === 'member_added'): ?>Client representative added and linked to organization successfully.<?php endif; ?>
+                <?php if ($_GET['msg'] === 'member_removed'): ?>Client representative removed successfully.<?php endif; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($_GET['error'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show rounded-4 mb-4" role="alert">
+                <i class="fa fa-exclamation-triangle me-2"></i>
+                <?php if ($_GET['error'] === 'invalid_email'): ?>Please provide a valid corporate email address.<?php endif; ?>
+                <?php if ($_GET['error'] === 'user_not_found'): ?>The selected user could not be found.<?php endif; ?>
+                <?php if ($_GET['error'] === 'not_found'): ?>Client record not found.<?php endif; ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
@@ -89,24 +101,66 @@ $cId = is_object($client) ? $client->iD : $client['iD'];
                 <!-- Client Team Members -->
                 <div class="card border-0 shadow-sm rounded-4 p-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold mb-0" style="color: #2A114B;">
-                            <i class="fa fa-users me-2 text-warning"></i>Team Members
-                        </h5>
-                        <span class="badge bg-secondary-subtle text-dark"><?= count($members) ?> Members</span>
+                        <div>
+                            <h5 class="fw-bold mb-0" style="color: #2A114B;">
+                                <i class="fa fa-users me-2 text-warning"></i>Team Members
+                            </h5>
+                            <small class="text-muted"><?= count($members) ?> authorized representative(s)</small>
+                        </div>
+                        <button type="button" class="btn btn-sm text-white rounded-pill px-3 shadow-sm" style="background-color: #2A114B;" data-bs-toggle="modal" data-bs-target="#modalAddClientMember">
+                            <i class="fa fa-user-plus me-1"></i> Add Rep
+                        </button>
                     </div>
                     <?php if (empty($members)): ?>
-                        <p class="text-muted small mb-0">No dedicated client member accounts linked yet. Contact billing officer to provision accounts.</p>
+                        <div class="text-center py-4 px-2 bg-light rounded-4 border">
+                            <i class="fa fa-user-group fa-2x mb-2 text-secondary" style="opacity: 0.4;"></i>
+                            <p class="text-muted small mb-2">No dedicated client member accounts linked yet.</p>
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalAddClientMember">
+                                <i class="fa fa-plus me-1"></i> Add First Representative
+                            </button>
+                        </div>
                     <?php else: ?>
                         <div class="list-group list-group-flush small">
                             <?php foreach ($members as $m): ?>
+                                <?php
+                                $mObj = $m['membership'];
+                                $mId = is_object($mObj) ? $mObj->iD : $mObj['iD'];
+                                $u = $m['user'];
+                                $uName = htmlspecialchars($u ? (is_object($u) ? $u->name : $u['name']) : 'User #' . (is_object($mObj) ? $mObj->user : $mObj['user']));
+                                $uEmail = htmlspecialchars($u ? (is_object($u) ? $u->email : $u['email']) : '');
+                                $r = $m['role'];
+                                $rCode = is_object($r) ? ($r->code ?? '') : ($r['code'] ?? '');
+                                $rName = htmlspecialchars($r ? (is_object($r) ? $r->name : $r['name']) : 'Member');
+                                $badgeClass = match($rCode) {
+                                    'OWNER' => 'bg-dark text-white',
+                                    'BILLING_CONTACT' => 'bg-success-subtle text-success-emphasis border border-success-subtle',
+                                    'REQUESTER' => 'bg-primary-subtle text-primary-emphasis border border-primary-subtle',
+                                    default => 'bg-light text-dark border',
+                                };
+                                ?>
                                 <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <div class="fw-bold"><?= htmlspecialchars($m['user'] ? (is_object($m['user']) ? $m['user']->name : $m['user']['name']) : 'User #' . (is_object($m['membership']) ? $m['membership']->user : $m['membership']['user'])) ?></div>
-                                        <div class="text-muted small"><?= htmlspecialchars($m['user'] ? (is_object($m['user']) ? $m['user']->email : $m['user']['email']) : '') ?></div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+                                             style="width: 34px; height: 34px; background-color: #2A114B; font-size: 12px; flex-shrink: 0;">
+                                            <?= strtoupper(substr($uName, 0, 1)) ?>
+                                        </div>
+                                        <div style="min-width: 0;">
+                                            <div class="fw-bold text-truncate" style="max-width: 140px;"><?= $uName ?></div>
+                                            <div class="text-muted small text-truncate" style="max-width: 140px;"><?= $uEmail ?></div>
+                                        </div>
                                     </div>
-                                    <span class="badge bg-light text-dark border">
-                                        <?= htmlspecialchars($m['role'] ? (is_object($m['role']) ? $m['role']->name : $m['role']['name']) : 'Member') ?>
-                                    </span>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span class="badge rounded-pill <?= $badgeClass ?>" style="font-size: 10px;">
+                                            <?= $rName ?>
+                                        </span>
+                                        <form method="POST" action="<?= $siteConfig->siteUrl ?>/admin/clients/remove-member" class="d-inline" onsubmit="return confirm('Remove <?= addslashes($uName) ?> from representatives?');">
+                                            <input type="hidden" name="client_id" value="<?= $cId ?>">
+                                            <input type="hidden" name="membership_id" value="<?= $mId ?>">
+                                            <button type="submit" class="btn btn-sm btn-link text-danger p-0 ms-1" title="Remove Representative">
+                                                <i class="fa fa-trash-can"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -366,5 +420,201 @@ $cId = is_object($client) ? $client->iD : $client['iD'];
         </div>
     </div>
 </div>
+
+<?php
+$clientMemberRoles = $clientMemberRoles ?? [];
+$availableUsers = $availableUsers ?? [];
+$safeOrgName = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', is_object($client) ? $client->trading_name : $client['trading_name']));
+?>
+<!-- Modal: Add Client Representative -->
+<div class="modal fade" id="modalAddClientMember" tabindex="-1" aria-labelledby="modalAddClientMemberLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0 px-4 pt-4">
+                <div>
+                    <h5 class="modal-title fw-bold" id="modalAddClientMemberLabel" style="color: #2A114B;">
+                        <i class="fa fa-user-plus me-2 text-warning"></i>Add Client Representative
+                    </h5>
+                    <p class="text-muted small mb-0">Authorize client contacts for <strong><?= $cName ?></strong> to log into the client portal and manage requests.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-3">
+                <!-- Nav pills for the 3 provision modes -->
+                <ul class="nav nav-pills nav-fill mb-3 p-1 rounded-3 bg-light" id="addMemberTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active rounded-3 py-2 small fw-bold" id="tab-email-only" data-bs-toggle="pill" data-bs-target="#pane-email-only" type="button" role="tab">
+                            <i class="fa fa-envelope me-1"></i> Quick Add (Email Only)
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-3 py-2 small fw-bold" id="tab-full-details" data-bs-toggle="pill" data-bs-target="#pane-full-details" type="button" role="tab">
+                            <i class="fa fa-user-shield me-1"></i> Full Details (Name, Email &amp; Password)
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-3 py-2 small fw-bold" id="tab-existing-user" data-bs-toggle="pill" data-bs-target="#pane-existing-user" type="button" role="tab">
+                            <i class="fa fa-users me-1"></i> Select Existing User
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="addMemberTabContent">
+                    <!-- Tab 1: Email Only -->
+                    <div class="tab-pane fade show active" id="pane-email-only" role="tabpanel">
+                        <form method="POST" action="<?= $siteConfig->siteUrl ?>/admin/clients/add-member" id="formEmailOnly">
+                            <input type="hidden" name="client_id" value="<?= $cId ?>">
+                            <input type="hidden" name="add_mode" value="email_only">
+                            <div class="alert alert-info border-0 rounded-3 py-2 px-3 small mb-3">
+                                <i class="fa fa-info-circle me-1"></i> <strong>New representatives:</strong> Enter corporate email. Account is auto-provisioned with standard password (<code>Password123!</code>). If an account already exists with this email, they are linked immediately.
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-7">
+                                    <label class="form-label small fw-bold">Corporate Email Address <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white"><i class="fa fa-envelope text-muted"></i></span>
+                                        <input type="email" name="email" class="form-control rounded-end-3" placeholder="rep@<?= $safeOrgName ?: 'client' ?>.co.zw" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold">Representative Role <span class="text-danger">*</span></label>
+                                    <select name="clientmemberrole" class="form-select rounded-3" required>
+                                        <?php foreach ($clientMemberRoles as $cmr): ?>
+                                            <option value="<?= is_object($cmr) ? $cmr->iD : $cmr['iD'] ?>" <?= (is_object($cmr) ? $cmr->iD : $cmr['iD']) == 3 ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars(is_object($cmr) ? $cmr->name : $cmr['name']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn text-white rounded-pill px-4 shadow-sm" style="background-color: #2A114B;">
+                                    <i class="fa fa-plus me-1"></i> Add Representative
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tab 2: Full Details (Name, Email & Password) -->
+                    <div class="tab-pane fade" id="pane-full-details" role="tabpanel">
+                        <form method="POST" action="<?= $siteConfig->siteUrl ?>/admin/clients/add-member" id="formFullDetails">
+                            <input type="hidden" name="client_id" value="<?= $cId ?>">
+                            <input type="hidden" name="add_mode" value="full_provision">
+                            <div class="alert alert-info border-0 rounded-3 py-2 px-3 small mb-3">
+                                <i class="fa fa-info-circle me-1"></i> Explicitly create or update representative credentials with full name, email, and direct login password.
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Full Name <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white"><i class="fa fa-user text-muted"></i></span>
+                                        <input type="text" name="name" class="form-control rounded-end-3" placeholder="e.g. Tendai Moyo" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Corporate Email Address <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white"><i class="fa fa-envelope text-muted"></i></span>
+                                        <input type="email" name="email" class="form-control rounded-end-3" placeholder="tendai@<?= $safeOrgName ?: 'client' ?>.co.zw" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Portal Access Password <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white"><i class="fa fa-lock text-muted"></i></span>
+                                        <input type="text" name="password" id="inputCustomPassword" class="form-control" value="Password123!" required>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="generateRandomPass('inputCustomPassword')" title="Generate secure password">
+                                            <i class="fa fa-wand-magic-sparkles"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">Password credentials for representative login.</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Representative Role <span class="text-danger">*</span></label>
+                                    <select name="clientmemberrole" class="form-select rounded-3" required>
+                                        <?php foreach ($clientMemberRoles as $cmr): ?>
+                                            <option value="<?= is_object($cmr) ? $cmr->iD : $cmr['iD'] ?>" <?= (is_object($cmr) ? $cmr->iD : $cmr['iD']) == 3 ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars(is_object($cmr) ? $cmr->name : $cmr['name']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn text-white rounded-pill px-4 shadow-sm" style="background-color: #2A114B;">
+                                    <i class="fa fa-user-shield me-1"></i> Provision Representative
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tab 3: Select Existing User -->
+                    <div class="tab-pane fade" id="pane-existing-user" role="tabpanel">
+                        <form method="POST" action="<?= $siteConfig->siteUrl ?>/admin/clients/add-member" id="formExistingUser">
+                            <input type="hidden" name="client_id" value="<?= $cId ?>">
+                            <input type="hidden" name="add_mode" value="existing_user">
+                            <div class="alert alert-secondary border-0 rounded-3 py-2 px-3 small mb-3">
+                                <i class="fa fa-info-circle me-1"></i> Link an existing registered user to this client organization and assign their representative capacity.
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-7">
+                                    <label class="form-label small fw-bold">Select Existing User <span class="text-danger">*</span></label>
+                                    <select name="user_id" class="form-select rounded-3" required>
+                                        <option value="">-- Choose User --</option>
+                                        <?php foreach ($availableUsers as $au): ?>
+                                            <?php
+                                            $auId = is_object($au) ? $au->iD : $au['iD'];
+                                            $auName = htmlspecialchars(is_object($au) ? $au->name : $au['name']);
+                                            $auEmail = htmlspecialchars(is_object($au) ? $au->email : $au['email']);
+                                            ?>
+                                            <option value="<?= $auId ?>"><?= $auName ?> (<?= $auEmail ?>)</option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold">Representative Role <span class="text-danger">*</span></label>
+                                    <select name="clientmemberrole" class="form-select rounded-3" required>
+                                        <?php foreach ($clientMemberRoles as $cmr): ?>
+                                            <option value="<?= is_object($cmr) ? $cmr->iD : $cmr['iD'] ?>" <?= (is_object($cmr) ? $cmr->iD : $cmr['iD']) == 3 ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars(is_object($cmr) ? $cmr->name : $cmr['name']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-bold">Reset / Set Custom Password (Optional)</label>
+                                    <input type="text" name="password" class="form-control rounded-3" placeholder="Leave blank to preserve user's current password">
+                                    <small class="text-muted">Only fill this if you need to override their portal password.</small>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn text-white rounded-pill px-4 shadow-sm" style="background-color: #2A114B;">
+                                    <i class="fa fa-link me-1"></i> Link Representative
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function generateRandomPass(elementId) {
+    const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*';
+    let pass = '';
+    for (let i = 0; i < 10; i++) {
+        pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const el = document.getElementById(elementId);
+    if (el) {
+        el.value = pass;
+    }
+}
+</script>
 
 <?php include _BASE_PATH . '/views/partials/footer.php'; ?>

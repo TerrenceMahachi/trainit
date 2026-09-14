@@ -28,6 +28,7 @@ use App\Models\User;
 use App\Models\Clientinvoice;
 use App\Models\Clientinvoiceitem;
 use App\Models\Clientinvoicepayment;
+use App\Models\Login;
 
 class ClientController extends Controller
 {
@@ -137,6 +138,8 @@ class ClientController extends Controller
         $offerings = Serviceoffering::all();
         $excessPolicies = Excesspolicy::all();
         $staffUsers = User::where('role', 1);
+        $clientMemberRoles = Clientmemberrole::all();
+        $availableUsers = User::findByQuery("SELECT * FROM user WHERE role NOT IN (1, 6, 7, 8) ORDER BY name ASC");
 
         $this->render('clients.view', [
             'client' => $client,
@@ -146,7 +149,196 @@ class ClientController extends Controller
             'offerings' => $offerings,
             'excessPolicies' => $excessPolicies,
             'staffUsers' => $staffUsers,
+            'clientMemberRoles' => $clientMemberRoles,
+            'availableUsers' => $availableUsers,
         ]);
+    }
+
+    /**
+     * Admin/Staff: Add Client Representative to Organization Roster
+     * Supports:
+     * - Email only: auto-provisions user if new (default Password123!) or links existing
+     * - Name, Email & Password: direct full provisioning with custom credentials
+     * - Existing User Selection: selects existing registered non-staff user
+     */
+    public function addMemberAction()
+    {
+        if (!Auth::isStaff()) {
+            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
+            exit;
+        }
+
+        $clientId = (int)($_POST['client_id'] ?? 0);
+        $client = Clientorganization::find($clientId);
+        if (!$client || empty($client->iD ?? ($client['iD'] ?? null))) {
+            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/admin/clients?error=not_found');
+            exit;
+        }
+
+        $staffUser = Auth::user();
+        $staffId = $staffUser ? (is_object($staffUser) ? (int)$staffUser->iD : (int)$staffUser['iD']) : 1;
+
+        $mode = trim($_POST['add_mode'] ?? 'email_only');
+        $roleId = (int)($_POST['clientmemberrole'] ?? 3); // Default to Authorized Requester (3)
+        if ($roleId <= 0) {
+            $roleId = 3;
+        }
+
+        $targetUserId = null;
+
+        if ($mode === 'existing_user') {
+            $targetUserId = (int)($_POST['user_id'] ?? 0);
+            $user = $targetUserId > 0 ? User::find($targetUserId) : null;
+            if (!$user || empty($user->iD ?? ($user['iD'] ?? null))) {
+                header("Location: " . $GLOBALS['siteConfig']->siteUrl . "/admin/clients/view/{$clientId}?error=user_not_found");
+                exit;
+            }
+
+            // If a custom password was provided, update credentials
+            $customPassword = trim($_POST['password'] ?? '');
+            if (!empty($customPassword)) {
+                $hash = password_hash($customPassword, PASSWORD_BCRYPT);
+                $logins = Login::findByQuery("SELECT * FROM user_login WHERE user = ? LIMIT 1", [$targetUserId]);
+                if (!empty($logins)) {
+                    $login = $logins[0];
+                    $login->password = $hash;
+                    $login->status = 1;
+                    $login->update();
+                } else {
+                    $login = new Login();
+                    $login->user = $targetUserId;
+                    $login->password = $hash;
+                    $login->status = 1;
+                    $login->reg_by = $staffId;
+                    $login->save();
+                }
+            }
+
+            // Ensure role is at least Client User (3) if general user (2)
+            $curRole = is_object($user) ? (int)$user->role : (int)$user['role'];
+            if ($curRole === 2) {
+                $user->role = 3;
+                $user->update();
+            }
+        } else {
+            // Mode: 'email_only' or 'full_provision'
+            $email = strtolower(trim($_POST['email'] ?? ''));
+            if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                header("Location: " . $GLOBALS['siteConfig']->siteUrl . "/admin/clients/view/{$clientId}?error=invalid_email");
+                exit;
+            }
+
+            $name = trim($_POST['name'] ?? '');
+            $password = trim($_POST['password'] ?? '');
+
+            // Check if user already exists
+            $existingUsers = User::findByQuery("SELECT * FROM user WHERE LOWER(email) = ? LIMIT 1", [$email]);
+            if (!empty($existingUsers)) {
+                $user = $existingUsers[0];
+                $targetUserId = (int)(is_object($user) ? $user->iD : $user['iD']);
+
+                if (!empty($name)) {
+                    $user->name = $name;
+                }
+                $curRole = is_object($user) ? (int)$user->role : (int)$user['role'];
+                if ($curRole === 2) {
+                    $user->role = 3;
+                }
+                $user->update();
+
+                // If password was specified, update credentials
+                if (!empty($password)) {
+                    $hash = password_hash($password, PASSWORD_BCRYPT);
+                    $logins = Login::findByQuery("SELECT * FROM user_login WHERE user = ? LIMIT 1", [$targetUserId]);
+                    if (!empty($logins)) {
+                        $login = $logins[0];
+                        $login->password = $hash;
+                        $login->status = 1;
+                        $login->update();
+                    } else {
+                        $login = new Login();
+                        $login->user = $targetUserId;
+                        $login->password = $hash;
+                        $login->status = 1;
+                        $login->reg_by = $staffId;
+                        $login->save();
+                    }
+                }
+            } else {
+                // New user: derive name if missing
+                if (empty($name)) {
+                    $localPart = strstr($email, '@', true) ?: $email;
+                    $name = ucwords(str_replace(['.', '_', '-'], ' ', $localPart));
+                }
+                if (empty($password)) {
+                    $password = 'Password123!';
+                }
+
+                $user = new User();
+                $user->name = $name;
+                $user->email = $email;
+                $user->role = 3; // Client User
+                $user->status = 1;
+                $user->reg_by = $staffId;
+                $user->save();
+                $targetUserId = (int)$user->iD;
+
+                $login = new Login();
+                $login->user = $targetUserId;
+                $login->password = password_hash($password, PASSWORD_BCRYPT);
+                $login->status = 1;
+                $login->reg_by = $staffId;
+                $login->save();
+            }
+        }
+
+        // Link user to client organization via clientmembership
+        $existingMembership = Clientmembership::findByQuery(
+            "SELECT * FROM clientmembership WHERE clientorganization = ? AND user = ? LIMIT 1",
+            [$clientId, $targetUserId]
+        );
+
+        if (!empty($existingMembership)) {
+            $membership = $existingMembership[0];
+            $membership->clientmemberrole = $roleId;
+            $membership->status = 1;
+            $membership->update();
+        } else {
+            $membership = new Clientmembership();
+            $membership->clientorganization = $clientId;
+            $membership->user = $targetUserId;
+            $membership->clientmemberrole = $roleId;
+            $membership->status = 1;
+            $membership->reg_by = $staffId;
+            $membership->save();
+        }
+
+        header("Location: " . $GLOBALS['siteConfig']->siteUrl . "/admin/clients/view/{$clientId}?msg=member_added");
+        exit;
+    }
+
+    /**
+     * Admin/Staff: Remove Client Representative from Organization Roster
+     */
+    public function removeMemberAction()
+    {
+        if (!Auth::isStaff()) {
+            header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/login');
+            exit;
+        }
+
+        $clientId = (int)($_POST['client_id'] ?? 0);
+        $membershipId = (int)($_POST['membership_id'] ?? 0);
+
+        if ($membershipId > 0) {
+            $membership = Clientmembership::find($membershipId);
+            if ($membership && !empty($membership->iD ?? ($membership['iD'] ?? null))) {
+                $membership->delete();
+            }
+        }
+
+        header("Location: " . $GLOBALS['siteConfig']->siteUrl . "/admin/clients/view/{$clientId}?msg=member_removed");
+        exit;
     }
 
     /**
