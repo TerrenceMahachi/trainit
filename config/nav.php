@@ -43,8 +43,19 @@ return [
         ],
     ],
 
-    // Staff Portal for internal staff employees (Leaves, Profile, Timesheets)
-    ['label' => 'Staff Portal',  'url' => '/staff/portal',  'roles' => ['staff']],
+    // Staff Portal for internal staff employees (Overview, Payslips, Leave, Documents, Timesheets)
+    [
+        'label' => 'Staff Portal',
+        'roles' => ['staff'],
+        'match' => '/staff',
+        'children' => [
+            ['label' => 'Staff Hub Overview',    'url' => '/staff/portal',            'icon' => 'fa fa-user-circle'],
+            ['label' => 'My Payslips',          'url' => '/staff/portal/payslips',   'icon' => 'fa fa-money-check-dollar'],
+            ['label' => 'Apply for Leave',       'url' => '/staff/portal/leave',      'icon' => 'fa fa-calendar-check'],
+            ['label' => 'Compliance Documents',  'url' => '/staff/portal/documents',  'icon' => 'fa fa-folder-open'],
+            ['label' => 'Log Timesheets',        'url' => '/staff/portal/timesheets', 'icon' => 'fa fa-clock'],
+        ],
+    ],
 
     // Vetting Officer Dedicated Menu (Role 8)
     [

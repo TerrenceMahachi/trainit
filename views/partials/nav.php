@@ -98,8 +98,15 @@ $brandHref = $navUser ? ($siteConfig->siteUrl . '/dashboard') : (defined('_WEBSI
                             <a class="nav-link dropdown-toggle <?= $navActive($item) ?>" href="#" role="button"
                                 data-bs-toggle="dropdown" aria-expanded="false"><?= htmlspecialchars($item['label']) ?></a>
                             <ul class="dropdown-menu dropdown-menu-start">
-                                <?php foreach ($kids as $child): ?>
-                                    <li><a class="dropdown-item" href="<?= $formatUrl($child['url'] ?? '#') ?>"><?= htmlspecialchars($child['label']) ?></a></li>
+                                <?php foreach ($kids as $child): 
+                                    $childActive = (!empty($child['url']) && strpos($currentUrl, $child['url']) !== false) ? 'active' : '';
+                                ?>
+                                    <li><a class="dropdown-item <?= $childActive ?>" href="<?= $formatUrl($child['url'] ?? '#') ?>">
+                                        <?php if (!empty($child['icon'])): ?>
+                                            <i class="<?= htmlspecialchars($child['icon']) ?> me-2 text-muted"></i>
+                                        <?php endif; ?>
+                                        <?= htmlspecialchars($child['label']) ?>
+                                    </a></li>
                                 <?php endforeach; ?>
                             </ul>
                         </li>
@@ -170,24 +177,28 @@ $brandHref = $navUser ? ($siteConfig->siteUrl . '/dashboard') : (defined('_WEBSI
                                     <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/admin/clients"><i class="fa fa-building me-1"></i> Client Accounts</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/admin/payroll"><i class="fa fa-money-check-dollar me-1"></i> Staff Payroll</a></li>
                                     <li class="list-group-item border-0"><a class="text-secondary" href="<?= $siteConfig->siteUrl ?>/staff/portal"><i class="fa fa-user-circle me-1"></i> Staff Self-Service</a></li>
+                                    <li class="list-group-item border-0"><a class="text-secondary" href="<?= $siteConfig->siteUrl ?>/staff/portal/payslips"><i class="fa fa-money-check-dollar me-1"></i> My Payslips</a></li>
                                 <?php elseif ($rId === 8): ?>
                                     <li class="list-group-item border-0"><a class="text-primary fw-bold" href="<?= $siteConfig->siteUrl ?>/dashboard"><i class="fa fa-gavel me-1"></i> Vetting Dashboard</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark fw-bold" href="<?= $siteConfig->siteUrl ?>/admin/roster"><i class="fa fa-clipboard-check me-1"></i> Talent Pipeline</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/admin/compliance"><i class="fa fa-shield-halved me-1 text-warning"></i> Compliance Radar</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/admin/vacancies"><i class="fa fa-briefcase me-1"></i> Vacancies Console</a></li>
                                     <li class="list-group-item border-0"><a class="text-secondary" href="<?= $siteConfig->siteUrl ?>/staff/portal"><i class="fa fa-user-circle me-1"></i> Staff Self-Service</a></li>
+                                    <li class="list-group-item border-0"><a class="text-secondary" href="<?= $siteConfig->siteUrl ?>/staff/portal/payslips"><i class="fa fa-money-check-dollar me-1"></i> My Payslips</a></li>
                                 <?php elseif ($rId === 6): ?>
                                     <li class="list-group-item border-0"><a class="text-primary fw-bold" href="<?= $siteConfig->siteUrl ?>/dashboard"><i class="fa fa-handshake me-1"></i> Service Dashboard</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark fw-bold" href="<?= $siteConfig->siteUrl ?>/admin/requests"><i class="fa fa-tasks me-1"></i> Service Requests</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/admin/clients"><i class="fa fa-building me-1"></i> Client Accounts</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/admin/service-catalogue"><i class="fa fa-book me-1"></i> Service Catalogue</a></li>
                                     <li class="list-group-item border-0"><a class="text-secondary" href="<?= $siteConfig->siteUrl ?>/staff/portal"><i class="fa fa-user-circle me-1"></i> Staff Self-Service</a></li>
+                                    <li class="list-group-item border-0"><a class="text-secondary" href="<?= $siteConfig->siteUrl ?>/staff/portal/payslips"><i class="fa fa-money-check-dollar me-1"></i> My Payslips</a></li>
                                 <?php elseif ($rId === 7): ?>
                                     <li class="list-group-item border-0"><a class="text-primary fw-bold" href="<?= $siteConfig->siteUrl ?>/dashboard"><i class="fa fa-coins me-1"></i> Finance Dashboard</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark fw-bold" href="<?= $siteConfig->siteUrl ?>/client/invoices"><i class="fa fa-file-invoice-dollar me-1"></i> Client Invoices</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/admin/payroll"><i class="fa fa-money-check-dollar me-1"></i> Staff Payroll</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/admin/staff/export-p4"><i class="fa fa-file-excel me-1"></i> NSSA Form P4</a></li>
                                     <li class="list-group-item border-0"><a class="text-secondary" href="<?= $siteConfig->siteUrl ?>/staff/portal"><i class="fa fa-user-circle me-1"></i> Staff Self-Service</a></li>
+                                    <li class="list-group-item border-0"><a class="text-secondary" href="<?= $siteConfig->siteUrl ?>/staff/portal/payslips"><i class="fa fa-money-check-dollar me-1"></i> My Payslips</a></li>
                                 <?php elseif ($rId === 3): ?>
                                     <li class="list-group-item border-0"><a class="text-primary fw-bold" href="<?= $siteConfig->siteUrl ?>/client/portal"><i class="fa fa-building me-1"></i> Client Portal</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/client/requests"><i class="fa fa-tasks me-1"></i> Work Requests</a></li>

@@ -112,6 +112,10 @@ $router->addRoute('GET', '/staff/portal/timesheets', function () {
     (new StaffController())->selfService('timesheets');
     exit;
 });
+$router->addRoute('GET', '/staff/portal/payslips', function () {
+    (new StaffController())->selfService('payslips');
+    exit;
+});
 
 // 12. Unified Approvals & Compliance Queue (Admin)
 $router->addRoute('GET', '/admin/staff-approvals', function () {

@@ -22,6 +22,9 @@ use App\Models\Activitycategory;
 use App\Models\Stafftimeapproval;
 use App\Models\Department;
 use App\Models\Staffdepartmentassignment;
+use App\Models\Payslip;
+use App\Models\Payslipdisbursement;
+use App\Models\Payslipitem;
 use App\Helpers\Auth;
 use App\Helpers\Mailer;
 use DateTime;
@@ -1231,7 +1234,7 @@ class StaffController
             exit;
         }
 
-        $validSections = ['documents', 'leave', 'timesheets'];
+        $validSections = ['documents', 'leave', 'timesheets', 'payslips'];
         if (!in_array($section, $validSections, true)) {
             $section = 'documents';
         }
@@ -1311,6 +1314,24 @@ class StaffController
             ];
         }
 
+        // Fetch user's payslips
+        $payslipList = [];
+        $rawPayslips = Payslip::findByQuery(
+            "SELECT * FROM payslip WHERE staffprofile = ? ORDER BY payrollperiod DESC, iD DESC",
+            [$profile->iD]
+        );
+        foreach ($rawPayslips as $ps) {
+            $period = $ps->payrollperiod();
+            $disbs = Payslipdisbursement::where('payslip', $ps->iD);
+            $items = Payslipitem::where('payslip', $ps->iD);
+            $payslipList[] = [
+                'payslip'      => $ps,
+                'period'       => $period,
+                'disbursement' => !empty($disbs) ? $disbs[0] : null,
+                'items'        => $items,
+            ];
+        }
+
         // Department assignment
         $deptAssignments = Staffdepartmentassignment::where('staffprofile', $profile->iD);
         $deptAssignment = !empty($deptAssignments) ? [
@@ -1322,12 +1343,14 @@ class StaffController
             'documents'  => 'My Documents — Staff Hub',
             'leave'      => 'My Leave Applications — Staff Hub',
             'timesheets' => 'My Operational Time Logs — Staff Hub',
+            'payslips'   => 'My Remuneration & Payslips — Staff Hub',
         ];
 
         $viewMap = [
             'documents'  => 'staff.portal_documents',
             'leave'      => 'staff.portal_leave',
             'timesheets' => 'staff.portal_timesheets',
+            'payslips'   => 'staff.portal_payslips',
         ];
 
         $data = [
@@ -1339,6 +1362,7 @@ class StaffController
             'documents'        => $documents,
             'leaves'           => $leaves,
             'timeEntries'      => $timeEntries,
+            'payslips'         => $payslipList,
             'deptAssignment'   => $deptAssignment,
             'allDocTypes'      => Documenttype::all(),
             'allLeaveTypes'    => Leavetype::all(),

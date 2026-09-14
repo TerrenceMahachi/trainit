@@ -8,6 +8,7 @@ $roleName = $role ? $role->name : 'Staff Member';
 $documents = $data['documents'] ?? [];
 $leaves = $data['leaves'] ?? [];
 $timeEntries = $data['timeEntries'] ?? [];
+$payslips = $data['payslips'] ?? [];
 $activeTab = $data['activeTab'] ?? 'documents';
 
 // Calculate leave days taken this year
@@ -39,6 +40,7 @@ $sectionTitles = [
     'documents'  => 'My Compliance Documents',
     'leave'      => 'My Leave Applications',
     'timesheets' => 'My Operational Time Logs',
+    'payslips'   => 'My Remuneration & Payslips',
 ];
 $currentSectionTitle = $sectionTitles[$activeTab] ?? 'Staff Hub';
 ?>
@@ -77,7 +79,7 @@ $currentSectionTitle = $sectionTitles[$activeTab] ?? 'Staff Hub';
                 <a href="<?= $siteConfig->siteUrl; ?>/staff/portal/timesheets" class="btn btn-outline-light px-3 py-2 fw-semibold rounded-3">
                     <i class="fa fa-clock me-1"></i> Log Hours
                 </a>
-                <a href="<?= $siteConfig->siteUrl; ?>/admin/payroll" class="btn btn-outline-warning px-3 py-2 fw-semibold rounded-3">
+                <a href="<?= $siteConfig->siteUrl; ?>/staff/portal/payslips" class="btn btn-outline-warning px-3 py-2 fw-semibold rounded-3">
                     <i class="fa fa-money-check-dollar me-1"></i> Payslips
                 </a>
             </div>
@@ -217,6 +219,13 @@ $currentSectionTitle = $sectionTitles[$activeTab] ?? 'Staff Hub';
                            href="<?= $siteConfig->siteUrl; ?>/staff/portal/timesheets">
                             <i class="fa fa-clock <?= ($activeTab === 'timesheets') ? 'text-white' : 'text-info'; ?> me-1"></i> 
                             Logged Time Entries (<?= count($timeEntries); ?>)
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= ($activeTab === 'payslips') ? 'active bg-warning text-dark shadow-sm' : 'text-dark'; ?> fw-bold py-2" 
+                           href="<?= $siteConfig->siteUrl; ?>/staff/portal/payslips">
+                            <i class="fa fa-money-check-dollar <?= ($activeTab === 'payslips') ? 'text-dark' : 'text-warning'; ?> me-1"></i> 
+                            My Payslips (<?= count($payslips); ?>)
                         </a>
                     </li>
                 </ul>
