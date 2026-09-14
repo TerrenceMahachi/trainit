@@ -90,12 +90,23 @@ $router->addRoute('GET', '/apk/download', function () {
 $router->addRoute('GET', '/dashboard', function () use ($router) {
     $router->authMiddleware();
     $us = (new AccountController())->getUser($_COOKIE['user']);
-    if (in_array((int)$us->role, [1, 6, 7, 8], true)) {
-        $roleObj = $us->role();
-        $roleName = $roleObj ? $roleObj->name : 'Staff';
-        $data = ['title' => $roleName . ' Dashboard', 'user' => $us];
+    $roleId = (int)$us->role;
+    $roleObj = $us->role();
+    $roleName = $roleObj ? $roleObj->name : 'Staff';
+
+    if ($roleId === 1) {
+        $data = ['title' => 'Administrator Command Center', 'user' => $us];
         echo view('dashboard.admin', compact('data'));
-    } elseif ((int)$us->role === 3) {
+    } elseif ($roleId === 8) {
+        $data = ['title' => 'Vetting & Compliance Dashboard', 'user' => $us];
+        echo view('dashboard.vetting', compact('data'));
+    } elseif ($roleId === 6) {
+        $data = ['title' => 'Service Delivery Dashboard', 'user' => $us];
+        echo view('dashboard.manager', compact('data'));
+    } elseif ($roleId === 7) {
+        $data = ['title' => 'Finance & Billing Dashboard', 'user' => $us];
+        echo view('dashboard.finance', compact('data'));
+    } elseif ($roleId === 3) {
         header('Location: ' . $GLOBALS['siteConfig']->siteUrl . '/client/portal');
         exit;
     } else {
@@ -222,6 +233,37 @@ $router->addRoute('GET', '/about', function () use ($router) {
         $data['user'] = (new AccountController())->getUser($_COOKIE['user']);
     }
     echo view('home.about', compact('data'));
+    exit;
+});
+
+$router->addRoute('GET', '/mobile', function () use ($router) {
+    $data = ['title' => 'Mobile App'];
+    if (isset($_COOKIE['user'])) {
+        $data['user'] = (new AccountController())->getUser($_COOKIE['user']);
+    }
+    echo view('home.mobile', compact('data'));
+    exit;
+});
+
+$router->addRoute('GET', '/mobile/download', function () {
+    $apkPath = _BASE_PATH . '/public/downloads/tsigiro-mobile.apk';
+    if (!file_exists($apkPath)) {
+        $apkPath = _BASE_PATH . '/android/app/build/outputs/apk/release/app-release.apk';
+    }
+
+    if (!file_exists($apkPath)) {
+        http_response_code(404);
+        echo "APK file not found on server.";
+        exit;
+    }
+
+    header('Content-Description: File Transfer');
+    header('Content-Type: application/vnd.android.package-archive');
+    header('Content-Disposition: attachment; filename="tsigiro-mobile-v1.0.apk"');
+    header('Content-Length: ' . filesize($apkPath));
+    header('Cache-Control: public, max-age=3600');
+    header('Pragma: public');
+    readfile($apkPath);
     exit;
 });
 $router->addRoute('GET', '', function () use ($router) {
