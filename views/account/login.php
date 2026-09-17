@@ -1,12 +1,17 @@
 @extends('layouts.account')
 
+<?php 
+$showQuickLogin = !empty($data['show_quick_login']); 
+$loginActionUrl = $showQuickLogin ? $siteConfig->siteUrl . '/login-test' : $siteConfig->siteUrl . '/login';
+?>
+
 <div class="az-signin-wrapper">
-    <div class="container my-auto py-4" style="max-width: 1160px;">
+    <div class="container my-auto py-4" style="max-width: <?= $showQuickLogin ? '1160px' : '480px' ?>;">
         <div class="row g-4 align-items-stretch justify-content-center">
             
             <!-- Standard Sign-In Form Column -->
-            <div class="col-lg-5 col-md-10 d-flex">
-                <div class="az-card-signin w-100 h-100 shadow-sm">
+            <div class="<?= $showQuickLogin ? 'col-lg-5 col-md-10' : 'col-12' ?> d-flex">
+                <div class="az-card-signin w-100 h-100 shadow-sm" style="max-width: 100%;">
                     <div class="az-signin-header text-center">
                         <a href="<?php echo $siteConfig->siteUrl; ?>/home">
                             <img class="account-logo mx-auto mb-4"
@@ -14,7 +19,19 @@
                                 alt="<?= htmlspecialchars(_SITE) ?>" />
                         </a>
                         <h2 class="h4 mb-2 fw-bold text-dark">Welcome back</h2>
-                        <p class="text-muted small mb-4">Sign in to your Tsigiro Portal workspace</p>
+                        <p class="text-muted small mb-3">Sign in to your Tsigiro Portal workspace</p>
+
+                        <!-- Segmented Auth Switcher -->
+                        <div class="d-flex justify-content-center mb-4">
+                            <div class="btn-group p-1 bg-light rounded-pill border" role="group" style="max-width: 290px; width: 100%;">
+                                <a href="<?= $loginActionUrl ?>" class="btn btn-sm rounded-pill btn-primary fw-bold shadow-sm px-3">
+                                    <i class="fa fa-sign-in-alt me-1"></i> Sign In
+                                </a>
+                                <a href="<?php echo $siteConfig->siteUrl; ?>/register" class="btn btn-sm rounded-pill btn-light text-muted fw-semibold px-3">
+                                    <i class="fa fa-user-plus me-1"></i> Create Account
+                                </a>
+                            </div>
+                        </div>
 
                         <form id="_form" class="text-start">
                             <div class="input-group mb-3 rounded-3 border p-1 px-3 bg-white">
@@ -36,7 +53,17 @@
 
                             <button type="button" onclick="login()" id="submit_btn" class="btn btn-lg button1 rounded-pill w-100 mx-auto fw-semibold mt-2 shadow-sm">Sign In</button>
 
-                            <div class="mt-4 pt-2 border-top text-center">
+                            <div class="d-flex align-items-center my-3 text-muted">
+                                <hr class="flex-grow-1 my-0 border-secondary-subtle">
+                                <span class="px-2 small fw-bold text-uppercase text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">New to Tsigiro?</span>
+                                <hr class="flex-grow-1 my-0 border-secondary-subtle">
+                            </div>
+
+                            <a href="<?php echo $siteConfig->siteUrl; ?>/register" class="btn btn-lg btn-outline-primary rounded-pill w-100 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 mb-3">
+                                <i class="fa fa-user-plus"></i> Create a New Account &rarr;
+                            </a>
+
+                            <div class="pt-2 text-center">
                                 <p class="mb-1">
                                     <a class="auth-link small text-decoration-none fw-semibold" href="<?php echo $siteConfig->siteUrl; ?>/reset">Forgot your password?</a>
                                 </p>
@@ -49,6 +76,7 @@
                 </div><!-- az-card-signin -->
             </div>
 
+            <?php if ($showQuickLogin): ?>
             <!-- Testing & Demo Accounts Column -->
             <div class="col-lg-7 col-md-10 d-flex">
                 <div class="card border-0 shadow-sm rounded-4 w-100 h-100 p-4" style="background: #ffffff; border-top: 4px solid #2563eb !important;">
@@ -265,11 +293,13 @@
 
                 </div>
             </div>
+            <?php endif; ?>
 
         </div><!-- row -->
     </div><!-- container -->
 </div><!-- az-signin-wrapper -->
 
+<?php if ($showQuickLogin): ?>
 <script>
 function fillDemo(email) {
     var emailInput = document.getElementById('email');
@@ -286,5 +316,6 @@ function fillDemo(email) {
     }
 }
 </script>
+<?php endif; ?>
 
 <script src="<?php echo $siteConfig->siteUrl; ?>/assets/scripts/login.js?v=<?php echo _ASSET_VERSION; ?>"></script>

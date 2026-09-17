@@ -26,7 +26,35 @@ $router->addRoute('GET', '/login', function () {
     } elseif (isset($_GET['resume_expired'])) {
         $status = 'Your session expired before it could be resumed. Please sign in again.';
     }
-    $data = ['title' => 'Login', 'status' => $status];
+    $data = ['title' => 'Login', 'status' => $status, 'show_quick_login' => false];
+    echo view('account.login', compact('data'));
+    exit;
+});
+
+// Testing sandbox login route featuring 1-click quick-login role demo accounts
+$router->addRoute('GET', '/login-test', function () {
+    global $siteConfig;
+    if (\App\Helpers\Auth::check()) {
+        if (\App\Helpers\Auth::isIdle() && !isset($_GET['resume_locked'])) {
+            header("Location: " . $siteConfig->siteUrl . "/resume");
+            exit;
+        }
+        if (!isset($_GET['resume_locked']) && !isset($_GET['resume_expired'])) {
+            $destination = \App\Helpers\AuthReturn::consume('/dashboard');
+            header("Location: " . $siteConfig->siteUrl . $destination);
+            exit;
+        }
+    }
+
+    $status = '';
+    if (isset($_GET['resume_setup'])) {
+        $status = 'For your security, sign in once with your full password to enable three-character session resume.';
+    } elseif (isset($_GET['resume_locked'])) {
+        $status = 'Resume was locked after too many incorrect attempts. Please sign in with your full password.';
+    } elseif (isset($_GET['resume_expired'])) {
+        $status = 'Your session expired before it could be resumed. Please sign in again.';
+    }
+    $data = ['title' => 'Login (Testing Sandbox)', 'status' => $status, 'show_quick_login' => true];
     echo view('account.login', compact('data'));
     exit;
 });
@@ -50,13 +78,13 @@ $router->addRoute('GET', '/quick-login', function () {
     $email = $roleMap[$as] ?? (isset($_GET['email']) ? strtolower(trim($_GET['email'])) : '');
 
     if (empty($email)) {
-        header("Location: " . $siteConfig->siteUrl . "/login");
+        header("Location: " . $siteConfig->siteUrl . "/login-test");
         exit;
     }
 
     $users = \App\Models\User::findByQuery("SELECT * FROM user WHERE email = ?", [$email]);
     if (empty($users)) {
-        header("Location: " . $siteConfig->siteUrl . "/login");
+        header("Location: " . $siteConfig->siteUrl . "/login-test");
         exit;
     }
 

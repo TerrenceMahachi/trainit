@@ -39,7 +39,7 @@ To provide full transparency to evaluators, here is the current operational stat
 
 | Module / Feature | Implementation Status | Testable Screens / URLs | Notes |
 | :--- | :---: | :--- | :--- |
-| **Testing Accounts & Instant Login** | ✅ **100% Live** | `/login`, `/quick-login?as={role}` | All 8 roles seeded with relational data; 1-click login and pre-fill buttons active. |
+| **Testing Accounts & Instant Login** | ✅ **100% Live** | `/login-test`, `/quick-login?as={role}` | All 8 roles seeded with relational data; 1-click login and pre-fill buttons active on testing sandbox route `/login-test`. |
 | **Public Opportunities Hub** | ✅ **100% Live** | `/opportunities`, `/opportunities/vacancies` | Responsive public catalog with search, filters, and track selection. |
 | **Express Candidate Applications** | ✅ **100% Live** | `/opportunities/vacancy/:slug`, `/opportunities/apply/*` | Single-click application submission with automated candidate account creation. |
 | **Unified Candidate Dashboard** | ✅ **100% Live** | `/dashboard` (as Candidate / Apprentice / Associate) | Multi-track application cards, interview alerts, status badges, and onboarding links. |
@@ -56,7 +56,7 @@ To provide full transparency to evaluators, here is the current operational stat
 
 ## 3. Pre-Configured Testing Accounts
 
-Each account below has been seeded with realistic relational records, operational statuses, and documents. **All accounts share the password `Password123!`**, or can be accessed instantly using the **One-Click Quick Login** links on the login screen or via the direct URLs below.
+Each account below has been seeded with realistic relational records, operational statuses, and documents. **All accounts share the password `Password123!`**, or can be accessed instantly using the **One-Click Quick Login** links on the testing sandbox screen (`/login-test`) or via the direct URLs below.
 
 | Role | Business Persona | Demo Email | Direct Quick-Login URL | Primary Evaluation Scope |
 | :--- | :--- | :--- | :--- | :--- |
@@ -73,7 +73,7 @@ Each account below has been seeded with realistic relational records, operationa
 
 ## 4. Quick-Access Login Page Feature
 
-On the web login screen (`/login`):
+On the web testing sandbox screen (`/login-test`):
 * **One-Click Role Sign In:** Click any role button in the **Role-Based Demo Accounts** column to authenticate and jump directly into that user's customized workspace without typing.
 * **Pre-fill Helper:** Click the **Pre-fill** button next to any user to automatically populate the sign-in form with that email and `Password123!`.
 
