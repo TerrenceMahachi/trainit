@@ -1,84 +1,118 @@
 @extends('layouts.main')
+
 <?php
 use App\Models\User;
+use App\Models\Profiletype;
+use App\Models\Profilestatus;
+use App\Models\User;
 
-
-include('header.php');
+include __DIR__ . '/header.php';
 ?>
 
 <div>
-    <!-- Hero Section -->
-
-
-    <section class="hero-section" style="background-size: 100% auto; ">
-
+    <!-- Page header -->
+    <section class="hero-section">
         <div class="container text-start">
-
-            <p>
-            <nav aria-label="breadcrumb border rounded-2">
+            <h3>Edit <?= $page_name ?></h3>
+            <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="<?= $siteConfig->siteUrl ?>/dashboard">Home</a></li>
                     <li class="breadcrumb-item"><a class="text-capitalize"
                             href="<?= $siteConfig->siteUrl ?>/<?= $page ?>"><?= $page_name ?>s</a></li>
-                    <li class="breadcrumb-item active" aria-current="page"><?= $item->name; ?></li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <?= htmlspecialchars($item->name ?? ('#' . $item->iD)) ?></li>
                 </ol>
             </nav>
-            </p>
-
-
-
         </div>
     </section>
 
-    <section id="search" class="py-5 ">
-        <div class="container  rounded-3 p-4 border">
+    <!-- Edit form -->
+    <section class="py-4">
+        <div class="container rounded-4 p-4 bg-white shadow-sm">
 
-            <?php include("nav.php"); ?>
+            <?php include __DIR__ . '/nav.php'; ?>
 
-            <form class="form  py-5 m-3 " id="update_item_form">
+            <form class="form py-3 m-md-3" id="update_item_form">
                 <div class="row">
                     
-                <div class="form-group col-md-6 mb-4">
-                    <label class="mb-3"> name: </label>
-                    <input type="text" name="name" class="form-control form-control-lg" value="<?= $item->name ?>" />
-                </div>
-                <div class="form-group mb-4 col-md-6">
+                <div class="form-group mb-4 col-md-12">
                     <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> User: </label>
                     <select class="form-select form-select-lg f-sel" name="user" required>
                         <option value="">Select User</option>
                         <?php foreach (User::all() as $selector): ?>
-                            <option value="<?= $selector->iD; ?>" <?= $data['record']->user == $selector->iD ? 'selected' : ''; ?>><?= $selector->name; ?></option>
+                            <option value="<?= $selector->iD; ?>" <?= $data['record']->user == $selector->iD ? 'selected' : ''; ?>><?= htmlspecialchars($selector->name ?? ''); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <div class="form-group mb-4 col-md-12">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> Profiletype: </label>
+                    <select class="form-select form-select-lg f-sel" name="profiletype" required>
+                        <option value="">Select Profiletype</option>
+                        <?php foreach (Profiletype::all() as $selector): ?>
+                            <option value="<?= $selector->iD; ?>" <?= $data['record']->profiletype == $selector->iD ? 'selected' : ''; ?>><?= htmlspecialchars($selector->name ?? ''); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group mb-4 col-md-12">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> Profilestatus: </label>
+                    <select class="form-select form-select-lg f-sel" name="profilestatus" required>
+                        <option value="">Select Profilestatus</option>
+                        <?php foreach (Profilestatus::all() as $selector): ?>
+                            <option value="<?= $selector->iD; ?>" <?= $data['record']->profilestatus == $selector->iD ? 'selected' : ''; ?>><?= htmlspecialchars($selector->name ?? ''); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group col-md-12 mb-4">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> display_title: </label>
+                    <input type="text" name="display_title" class="form-control form-control-lg" value="<?= htmlspecialchars($item->display_title ?? '', ENT_QUOTES) ?>" />
+                </div>
+                <div class="form-group col-md-12 mb-4">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> is_default: </label>
+                    <input type="text" name="is_default" class="form-control form-control-lg" value="<?= htmlspecialchars($item->is_default ?? '', ENT_QUOTES) ?>" />
+                </div>
+                <div class="form-group col-md-12 mb-4">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> request_notes: </label>
+                    <input type="text" name="request_notes" class="form-control form-control-lg" value="<?= htmlspecialchars($item->request_notes ?? '', ENT_QUOTES) ?>" />
+                </div>
+                <div class="form-group col-md-12 mb-4">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> reviewer_notes: </label>
+                    <input type="text" name="reviewer_notes" class="form-control form-control-lg" value="<?= htmlspecialchars($item->reviewer_notes ?? '', ENT_QUOTES) ?>" />
+                </div>
+                <div class="form-group mb-4 col-md-12">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> Reviewed_by: </label>
+                    <select class="form-select form-select-lg f-sel" name="reviewed_by" required>
+                        <option value="">Select Reviewed_by</option>
+                        <?php foreach (User::all() as $selector): ?>
+                            <option value="<?= $selector->iD; ?>" <?= $data['record']->reviewed_by == $selector->iD ? 'selected' : ''; ?>><?= htmlspecialchars($selector->name ?? ''); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group col-md-12 mb-4">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> reviewed_at: </label>
+                    <input type="datetime-local" name="reviewed_at" class="form-control form-control-lg" value="<?= htmlspecialchars($item->reviewed_at ?? '', ENT_QUOTES) ?>" />
+                </div>
 
-
-                    <div class="form-group col-md-6 mb-4">
-                        <label class="mb-3" for="location">Status: </label>
-                        <select class="form-select  form-select-lg  f-sel" name="status">
+                    <div class="form-group col-sm-12 mb-4">
+                        <label class="mb-2" for="status">Status: </label>
+                        <select class="form-select form-select-lg f-sel" name="status">
                             <option value="1" <?= $item->status == "1" ? 'selected' : ''; ?>>Active</option>
-                            <option value="2" <?= $item->status == "2" ? 'selected' : ''; ?>>inActive
-                            </option>
-
+                            <option value="2" <?= $item->status == "2" ? 'selected' : ''; ?>>Inactive</option>
                         </select>
                     </div>
-                    <p id="form_result"></p>
-                    <br>
+
+                    <div class="mt-2" id="form_result"></div>
                     <input type="hidden" name="itemiD" value="<?= $item->iD; ?>" />
 
-                    <div class="d-flex justify-content-between">
-                        <button type="button" id="btn_edit_item" class="btn submit-btn btn-lg ">Update
-                            Record</button>
-                        <a class="d-block my-3 text-start  text-black"
-                            href="<?php echo $siteConfig->siteUrl; ?>/<?= $page ?>"> <i
-                                class="fa fa-arrow-left me-2"></i> Back to <?= $page_name ?>s</a>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="button" id="btn_edit_item" class="btn submit-btn btn-lg">Update Record</button>
+                        <a class="d-block my-3 text-start auth-link"
+                            href="<?php echo $siteConfig->siteUrl; ?>/<?= $page ?>">
+                            <i class="fa fa-arrow-left me-2"></i> Back to <?= $page_name ?>s</a>
                     </div>
-
                 </div>
             </form>
 
-
         </div>
     </section>
-
 </div>

@@ -192,14 +192,26 @@ function displayResults(records, pagination) {
 
             const trackBadgeClass = (app.track_code === 'apprentice') ? 'bg-success' : 'bg-primary';
 
+            const cvBadge = (app.has_cv && app.cv_doc_id)
+                ? `<a href="${site}/roster/document/view?id=${app.cv_doc_id}" target="_blank" class="badge bg-danger text-white text-decoration-none ms-1" title="View CV / Resume"><i class="fa fa-file-pdf me-1"></i>CV</a>`
+                : (app.doc_count > 0 ? `<span class="badge bg-secondary ms-1">${app.doc_count} docs</span>` : '');
+
+            const trackHighlight = app.track_summary ? `<div class="text-muted small">${escapeHtml(app.track_summary)}</div>` : '';
+
             const $row = $('<tr></tr>');
             $row.html(`
                 <td class="fw-bold">#${app.iD}</td>
                 <td>
-                    <div class="fw-bold text-dark">${escapeHtml(app.legal_name)}</div>
+                    <div class="fw-bold text-dark d-flex align-items-center">
+                        ${escapeHtml(app.legal_name)}
+                        ${cvBadge}
+                    </div>
                     <small class="text-muted">${escapeHtml(app.email)}</small>
                 </td>
-                <td><span class="badge ${trackBadgeClass}">${escapeHtml(app.track_name)}</span></td>
+                <td>
+                    <span class="badge ${trackBadgeClass}">${escapeHtml(app.track_name)}</span>
+                    ${trackHighlight}
+                </td>
                 <td>${escapeHtml(app.primary_function)}</td>
                 <td>${escapeHtml(app.city)}${app.province ? ', ' + escapeHtml(app.province) : ''}</td>
                 <td><span class="badge ${badgeClass}">${escapeHtml(app.status_name)}</span></td>
@@ -231,18 +243,28 @@ function displayResults(records, pagination) {
                 ? '<span class="badge bg-dark fs-6">' + parseFloat(app.total_score).toFixed(1) + ' / 100 PTS</span>'
                 : '<span class="badge bg-light text-muted border">Not Scored</span>';
 
+            const cvBadge = (app.has_cv && app.cv_doc_id)
+                ? `<a href="${site}/roster/document/view?id=${app.cv_doc_id}" target="_blank" class="badge bg-danger text-white text-decoration-none" title="View CV / Resume"><i class="fa fa-file-pdf me-1"></i>View CV</a>`
+                : (app.doc_count > 0 ? `<span class="badge bg-secondary">${app.doc_count} docs</span>` : '');
+
+            const trackHighlight = app.track_summary ? `<p class="text-muted small mb-2"><i class="fa fa-info-circle me-1"></i> ${escapeHtml(app.track_summary)}</p>` : '';
+
             const $card = $(`
                 <div class="col-md-6 col-lg-4">
                     <div class="card h-100 border shadow-sm" style="border-radius: 10px;">
                         <div class="card-body p-3 d-flex flex-column justify-content-between">
                             <div>
                                 <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <span class="badge ${trackBadgeClass}">${escapeHtml(app.track_name)}</span>
+                                    <div class="d-flex gap-1 align-items-center flex-wrap">
+                                        <span class="badge ${trackBadgeClass}">${escapeHtml(app.track_name)}</span>
+                                        ${cvBadge}
+                                    </div>
                                     <span class="badge ${badgeClass}">${escapeHtml(app.status_name)}</span>
                                 </div>
                                 <h6 class="fw-bold mb-1 text-dark">#${app.iD} ${escapeHtml(app.legal_name)}</h6>
                                 <p class="text-muted small mb-2"><i class="fa fa-envelope me-1"></i> ${escapeHtml(app.email)}</p>
                                 <p class="text-muted small mb-2"><i class="fa fa-briefcase me-1"></i> ${escapeHtml(app.primary_function)}</p>
+                                ${trackHighlight}
                                 <p class="text-muted small mb-2"><i class="fa fa-map-marker-alt me-1"></i> ${escapeHtml(app.city)}${app.province ? ', ' + escapeHtml(app.province) : ''}</p>
                             </div>
                             <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-2">

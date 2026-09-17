@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "com.aytronics.master"
+    namespace = "zw.co.tsigiro.mobile"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -11,7 +11,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.aytronics.master"
+        applicationId = "zw.co.tsigiro.mobile"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -20,9 +20,20 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("${rootDir}/tsigiro-release.jks")
+            storePassword = "TsigiroMobile2026!"
+            keyAlias = "tsigiro"
+            keyPassword = "TsigiroMobile2026!"
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

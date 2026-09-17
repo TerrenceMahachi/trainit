@@ -172,6 +172,7 @@ $brandHref = $navUser ? ($siteConfig->siteUrl . '/dashboard') : (defined('_WEBSI
                                 <?php $rId = (int)$navUser->role; ?>
                                 <?php if ($rId === 1): ?>
                                     <li class="list-group-item border-0"><a class="text-primary fw-bold" href="<?= $siteConfig->siteUrl ?>/dashboard"><i class="fa fa-tachometer-alt me-1"></i> Admin Command Center</a></li>
+                                    <li class="list-group-item border-0"><a class="text-warning fw-bold text-dark" href="<?= $siteConfig->siteUrl ?>/userprofiles"><i class="fa fa-user-check me-1 text-warning"></i> Account & Role Requests</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark fw-bold" href="<?= $siteConfig->siteUrl ?>/admin/staff"><i class="fa fa-id-badge me-1"></i> Staff Directory</a></li>
                                     <li class="list-group-item border-0"><a class="text-danger fw-bold" href="<?= $siteConfig->siteUrl ?>/admin/staff-approvals"><i class="fa fa-shield-alt me-1"></i> Approvals Queue</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/admin/clients"><i class="fa fa-building me-1"></i> Client Accounts</a></li>
@@ -180,6 +181,7 @@ $brandHref = $navUser ? ($siteConfig->siteUrl . '/dashboard') : (defined('_WEBSI
                                     <li class="list-group-item border-0"><a class="text-secondary" href="<?= $siteConfig->siteUrl ?>/staff/portal/payslips"><i class="fa fa-money-check-dollar me-1"></i> My Payslips</a></li>
                                 <?php elseif ($rId === 8): ?>
                                     <li class="list-group-item border-0"><a class="text-primary fw-bold" href="<?= $siteConfig->siteUrl ?>/dashboard"><i class="fa fa-gavel me-1"></i> Vetting Dashboard</a></li>
+                                    <li class="list-group-item border-0"><a class="text-warning fw-bold text-dark" href="<?= $siteConfig->siteUrl ?>/userprofiles"><i class="fa fa-user-check me-1 text-warning"></i> Account & Role Requests</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark fw-bold" href="<?= $siteConfig->siteUrl ?>/admin/roster"><i class="fa fa-clipboard-check me-1"></i> Talent Pipeline</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/admin/compliance"><i class="fa fa-shield-halved me-1 text-warning"></i> Compliance Radar</a></li>
                                     <li class="list-group-item border-0"><a class="text-dark" href="<?= $siteConfig->siteUrl ?>/admin/vacancies"><i class="fa fa-briefcase me-1"></i> Vacancies Console</a></li>

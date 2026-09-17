@@ -1,0 +1,30 @@
+<div class="view">
+    <div class="section-title">
+        <span>Roster Review Queue</span>
+        <span id="roster-queue-counter" class="badge badge-blue">0</span>
+    </div>
+
+    <!-- Queue summary -->
+    <div id="roster-queue-summary" class="badge-row" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;"></div>
+
+    <div class="search-box-wrap" style="margin-bottom: 12px;">
+        <input type="text" id="roster-search-input" class="form-input"
+               placeholder="Search by name or email..." style="border-radius: 20px; padding: 10px 16px;">
+    </div>
+
+    <div class="filter-pills-row" style="display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto;">
+        <button class="filter-pill active" data-status="queue">Awaiting Decision</button>
+        <button class="filter-pill" data-status="2">Submitted</button>
+        <button class="filter-pill" data-status="3">Shortlisted</button>
+        <button class="filter-pill" data-status="4">Interview</button>
+        <button class="filter-pill" data-status="5">On Roster</button>
+        <button class="filter-pill" data-status="8">Declined</button>
+        <button class="filter-pill" data-status="all">All</button>
+    </div>
+
+    <div id="roster-queue-container">
+        <div class="empty-state">
+            <p>Loading applications...</p>
+        </div>
+    </div>
+</div>

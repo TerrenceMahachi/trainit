@@ -11,11 +11,13 @@ global $router;
 /**
  * Mobile API Helper: Sends JSON response with appropriate headers and exits.
  */
-function sendMobileJson($data, $statusCode = 200) {
-    http_response_code($statusCode);
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-    exit;
+if (!function_exists('sendMobileJson')) {
+    function sendMobileJson($data, $statusCode = 200) {
+        http_response_code($statusCode);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 }
 
 /**
@@ -164,7 +166,8 @@ function enrichMobileUser($user) {
  * Resolve authenticated mobile user, checking session cookie first and falling back
  * to verified user_id parameter if needed for mobile client resilience.
  */
-function getMobileUser() {
+if (!function_exists('getMobileUser')) {
+    function getMobileUser() {
     $userId = null;
     if (Auth::check()) {
         $userId = Auth::id();
@@ -180,6 +183,7 @@ function getMobileUser() {
 
     $users = User::findByQuery("SELECT u.*, r.name AS role_name FROM user u LEFT JOIN user_role r ON u.role = r.iD WHERE u.iD = ?", [$userId]);
     return !empty($users) ? $users[0] : null;
+}
 }
 
 // --------------------------------------------------------------------------
@@ -404,6 +408,15 @@ $router->addRoute('GET', '/api/mobile/dashboard', function () {
     $userId = (int) $user->iD;
     $persona = $userData['persona'];
 
+    // Authoritative privilege check for the admin/reviewer dashboard. Keyed on
+    // the user's ROLE (1 admin, 6 service manager, 7 billing, 8 vetting), not on
+    // the display-derived persona: persona defaults to 'user' and can resolve to
+    // unexpected values on profile-state edge cases, and the admin dashboard
+    // branch used to be a catch-all `else`, so any such user was handed other
+    // applicants' names, emails and approve/decline controls. Role 2
+    // (candidate / general user) is never privileged here.
+    $isReviewer = in_array((int) $user->role, [1, 6, 7, 8], true);
+
     $stats = [];
     $recentItems = [];
     $context = [];
@@ -461,26 +474,39 @@ $router->addRoute('GET', '/api/mobile/dashboard', function () {
         $stmt->execute([$userId]);
         $recentItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    } elseif ($persona === 'candidate') {
-        // --- General Candidate / Opportunity Seeker ---
-        $stmt = $db->query("SELECT COUNT(*) FROM vacancy WHERE vacancystatus = 2");
-        $openVacancies = (int) $stmt->fetchColumn();
+    } elseif (!$isReviewer) {
+        // --- General Candidate / Opportunity Seeker / Role Applicant ---
+        // Anyone who is not a privileged reviewer lands here (candidate, general
+        // user, and any odd persona fallback), never in the admin branch below.
+        $appliedProfiles = array_values(array_filter($userData['profiles'] ?? [], function ($p) {
+            return ($p['type_code'] ?? '') !== 'general';
+        }));
 
-        $stmt = $db->prepare("SELECT COUNT(*) FROM rosterapplication WHERE email = ?");
-        $stmt->execute([$user->email]);
-        $myApps = (int) $stmt->fetchColumn();
+        $pendingCount = 0;
+        $approvedCount = 0;
+        foreach ($appliedProfiles as $ap) {
+            $isApproved = (int)($ap['can_access_portal'] ?? 0) === 1 || ($ap['status_code'] ?? '') === 'approved' || (int)($ap['profilestatus'] ?? 0) === 3;
+            if ($isApproved) {
+                $approvedCount++;
+            } elseif (($ap['status_code'] ?? '') === 'pending' || (int)($ap['profilestatus'] ?? 0) === 2) {
+                $pendingCount++;
+            }
+        }
 
+        $canApply = !empty($userData['profile_completion']['can_one_click_apply']);
         $stats = [
-            ['label' => 'Open Vacancies', 'value' => (string) $openVacancies, 'icon' => 'search', 'color' => '#3b82f6'],
-            ['label' => 'Applications', 'value' => (string) ($myApps ?: 1), 'icon' => 'file-text', 'color' => '#10b981'],
-            ['label' => 'Interview Status', 'value' => 'Shortlisted', 'icon' => 'user-check', 'color' => '#8b5cf6'],
+            ['label' => 'Active Requests', 'value' => (string) $pendingCount, 'icon' => 'clock', 'color' => '#f59e0b'],
+            ['label' => 'Approved Roles', 'value' => (string) $approvedCount, 'icon' => 'shield', 'color' => '#10b981'],
+            ['label' => 'Profile Dossier', 'value' => $canApply ? '1-Click Ready' : 'Incomplete', 'icon' => 'check-circle', 'color' => $canApply ? '#3b82f6' : '#94a3b8'],
         ];
 
-        $stmt = $db->query("SELECT iD, reference_number, title, remuneration_display, closing_date, is_featured FROM vacancy WHERE vacancystatus = 2 ORDER BY is_featured DESC, iD DESC LIMIT 5");
-        $recentItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $recentItems = $appliedProfiles;
 
     } else {
         // --- Staff / Admin / Service Manager / Billing / Vetting ---
+        $stmt = $db->query("SELECT COUNT(*) FROM userprofile WHERE profilestatus = 2");
+        $pendingProfileCount = (int) $stmt->fetchColumn();
+
         $stmt = $db->query("SELECT COUNT(*) FROM servicerequest WHERE status = 1");
         $triagePending = (int) $stmt->fetchColumn();
 
@@ -491,21 +517,53 @@ $router->addRoute('GET', '/api/mobile/dashboard', function () {
         $totalClients = (int) $stmt->fetchColumn();
 
         $stats = [
+            ['label' => 'Role Requests', 'value' => (string) $pendingProfileCount, 'icon' => 'user-check', 'color' => '#f59e0b', 'action' => 'role_requests'],
             ['label' => 'Triage Queue', 'value' => (string) $triagePending, 'icon' => 'inbox', 'color' => '#ef4444'],
-            ['label' => 'Active Service Tasks', 'value' => (string) $inProgress, 'icon' => 'activity', 'color' => '#3b82f6'],
-            ['label' => 'Corporate Clients', 'value' => (string) $totalClients, 'icon' => 'users', 'color' => '#10b981'],
+            ['label' => 'Active Tasks', 'value' => (string) $inProgress, 'icon' => 'activity', 'color' => '#3b82f6'],
         ];
+
+        // Fetch pending profile requests for admin review
+        $stmt = $db->query("
+            SELECT up.iD as profile_id, up.user as user_id, u.name as user_name, u.email as user_email,
+                   pt.code as type_code, pt.name as type_name, pt.icon as type_icon,
+                   ps.code as status_code, ps.name as status_name,
+                   up.display_title, up.request_notes, up.reg_date
+            FROM userprofile up
+            JOIN user u ON up.user = u.iD
+            JOIN profiletype pt ON up.profiletype = pt.iD
+            JOIN profilestatus ps ON up.profilestatus = ps.iD
+            WHERE up.profilestatus = 2
+            ORDER BY up.iD DESC
+            LIMIT 10
+        ");
+        $pendingRoleRequests = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Fetch applicant personal details & qualifications count for each pending request
+        foreach ($pendingRoleRequests as &$prr) {
+            $uId = (int) $prr['user_id'];
+            $pStmt = $db->prepare("SELECT iD, legal_name, mobile_number, city FROM rosterapplication WHERE user = ? ORDER BY iD DESC LIMIT 1");
+            $pStmt->execute([$uId]);
+            $ra = $pStmt->fetch(PDO::FETCH_ASSOC);
+            $prr['personal'] = $ra ?: [];
+            $prr['roster_app_id'] = $ra ? (int) $ra['iD'] : null;
+
+            $qStmt = $db->prepare("SELECT COUNT(*) FROM rosterqualification rq JOIN rosterapplication ra ON rq.rosterapplication = ra.iD WHERE ra.user = ? AND rq.status = 1");
+            $qStmt->execute([$uId]);
+            $prr['qualifications_count'] = (int) $qStmt->fetchColumn();
+        }
+        unset($prr);
 
         $stmt = $db->query("SELECT sr.iD, sr.request_number, sr.title, sr.status, srs.name AS status_name, pl.name AS priority_name, co.trading_name AS client_name, sr.desired_due_date, sr.reg_date FROM servicerequest sr LEFT JOIN servicerequeststatus srs ON sr.status = srs.iD LEFT JOIN prioritylevel pl ON sr.prioritylevel = pl.iD LEFT JOIN clientorganization co ON sr.clientorganization = co.iD ORDER BY sr.iD DESC LIMIT 5");
         $recentItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     sendMobileJson([
-        'status'       => 1,
-        'user'         => $userData,
-        'context'      => $context,
-        'stats'        => $stats,
-        'recent_items' => $recentItems,
+        'status'                => 1,
+        'user'                  => $userData,
+        'context'               => $context,
+        'stats'                 => $stats,
+        'recent_items'          => $recentItems,
+        'pending_role_requests' => $pendingRoleRequests ?? [],
     ]);
 });
 
@@ -873,6 +931,14 @@ $router->addRoute('POST', '/api/mobile/opportunities/apply', function () {
         'message'            => 'Express application submitted successfully',
         'application_number' => $appNum,
     ]);
+});
+
+$router->addRoute('POST', '/api/mobile/opportunities/apply/express', function () {
+    $res = (new \App\Controllers\RosterApplicationController())->handleExpressSubmit();
+    if (is_array($res)) {
+        sendMobileJson($res);
+    }
+    sendMobileJson(['status' => 1, 'message' => 'Application submitted successfully']);
 });
 
 // --------------------------------------------------------------------------
@@ -1261,14 +1327,16 @@ $handleRevokeProfile = function () {
     $userId = (int) $user->iD;
 
     $profileId = (int)($_POST['profile_id'] ?? 0);
-    $typeCode = trim($_POST['type_code'] ?? '');
+    $typeCode = strtolower(trim($_POST['type_code'] ?? ($_POST['track_code'] ?? '')));
+    $appId = (int)($_POST['application_id'] ?? 0);
     $reason = trim($_POST['reason'] ?? 'Application withdrawn by applicant');
 
-    if ($profileId <= 0 && empty($typeCode)) {
+    if ($profileId <= 0 && empty($typeCode) && $appId <= 0) {
         sendMobileJson(['status' => 0, 'message' => 'Profile or application identifier required.'], 400);
     }
 
-    // Locate target profile record
+    // Locate target profile record if available
+    $profile = null;
     if ($profileId > 0) {
         $stmt = $db->prepare("
             SELECT up.*, pt.name as type_name, pt.code as type_code, ps.code as status_code
@@ -1278,7 +1346,8 @@ $handleRevokeProfile = function () {
             WHERE up.iD = ? AND up.user = ?
         ");
         $stmt->execute([$profileId, $userId]);
-    } else {
+        $profile = $stmt->fetch(PDO::FETCH_ASSOC);
+    } elseif (!empty($typeCode)) {
         $stmt = $db->prepare("
             SELECT up.*, pt.name as type_name, pt.code as type_code, ps.code as status_code
             FROM userprofile up
@@ -1287,32 +1356,69 @@ $handleRevokeProfile = function () {
             WHERE up.user = ? AND pt.code = ?
         ");
         $stmt->execute([$userId, $typeCode]);
+        $profile = $stmt->fetch(PDO::FETCH_ASSOC);
     }
-    $profile = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$profile) {
+    // Also check for rosterapplication if appId given or typeCode is apprentice/associate
+    $rosterApp = null;
+    if ($appId > 0) {
+        $stmt = $db->prepare("SELECT ra.*, at.code as track_code, at.name as track_name FROM rosterapplication ra JOIN applicationtrack at ON ra.applicationtrack = at.iD WHERE ra.iD = ? AND ra.user = ?");
+        $stmt->execute([$appId, $userId]);
+        $rosterApp = $stmt->fetch(PDO::FETCH_ASSOC);
+    } elseif ($typeCode === 'apprentice' || $typeCode === 'associate') {
+        $trackId = ($typeCode === 'associate') ? 2 : 1;
+        $stmt = $db->prepare("SELECT ra.*, at.code as track_code, at.name as track_name FROM rosterapplication ra JOIN applicationtrack at ON ra.applicationtrack = at.iD WHERE ra.user = ? AND ra.applicationtrack = ? AND ra.applicationstatus != 5 ORDER BY ra.iD DESC LIMIT 1");
+        $stmt->execute([$userId, $trackId]);
+        $rosterApp = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    if (!$profile && !$rosterApp) {
         sendMobileJson(['status' => 0, 'message' => 'Application record not found.'], 404);
     }
 
-    $targetProfileId = (int) $profile['iD'];
-    $typeName = $profile['type_name'];
-    $profileStatus = (int) $profile['profilestatus'];
+    $typeName = $profile ? $profile['type_name'] : ($rosterApp ? $rosterApp['track_name'] : ucfirst($typeCode));
+    $profileStatus = $profile ? (int) $profile['profilestatus'] : 2;
 
     // Prevent revoking active/approved accounts directly from here
-    if ($profileStatus === 3) {
+    if ($profileStatus === 3 || ($rosterApp && (int)$rosterApp['applicationstatus'] === 5)) {
         sendMobileJson(['status' => 0, 'message' => 'Active approved accounts cannot be withdrawn directly. Please contact administration.'], 400);
     }
 
-    // Delete audit entries first to satisfy foreign key constraints
-    $db->prepare("DELETE FROM profilerequestaudit WHERE userprofile = ?")->execute([$targetProfileId]);
+    // 1. Delete userprofile & related audits if found
+    if ($profile) {
+        $targetProfileId = (int) $profile['iD'];
+        $db->prepare("DELETE FROM profilerequestaudit WHERE userprofile = ?")->execute([$targetProfileId]);
+        $db->prepare("DELETE FROM userprofile WHERE iD = ?")->execute([$targetProfileId]);
+    }
 
-    // If staff/client membership is pending, remove it as well
-    if ($profile['type_code'] === 'staff' || (int)$profile['profiletype'] === 4 || (int)$profile['profiletype'] === 5) {
+    // 2. If staff/client membership is pending, remove it as well
+    if ($typeCode === 'staff' || $typeCode === 'client' || ($profile && in_array((int)$profile['profiletype'], [4, 5]))) {
         $db->prepare("DELETE FROM clientmembership WHERE user = ? AND status = 2")->execute([$userId]);
     }
 
-    // Delete the application profile record
-    $db->prepare("DELETE FROM userprofile WHERE iD = ?")->execute([$targetProfileId]);
+    // 3. If Apprentice or Associate, thoroughly clean up roster application and all child tables
+    if ($typeCode === 'apprentice' || $typeCode === 'associate' || $rosterApp || ($profile && in_array((int)$profile['profiletype'], [2, 3]))) {
+        $trackId = ($typeCode === 'associate' || ($profile && (int)$profile['profiletype'] === 3)) ? 2 : 1;
+        
+        $rosterAppsQuery = $db->prepare("SELECT iD FROM rosterapplication WHERE user = ? AND (applicationtrack = ? OR iD = ?) AND applicationstatus != 5");
+        $rosterAppsQuery->execute([$userId, $trackId, $appId]);
+        $appRows = $rosterAppsQuery->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($appRows as $appRow) {
+            $rAppId = (int)$appRow['iD'];
+            $db->prepare("DELETE FROM rosterdocument WHERE rosterapplication = ?")->execute([$rAppId]);
+            $db->prepare("DELETE FROM rosterskill WHERE rosterapplication = ?")->execute([$rAppId]);
+            $db->prepare("DELETE FROM rosterqualification WHERE rosterapplication = ?")->execute([$rAppId]);
+            $db->prepare("DELETE FROM rosterworkhistory WHERE rosterapplication = ?")->execute([$rAppId]);
+            $db->prepare("DELETE FROM rosterreferee WHERE rosterapplication = ?")->execute([$rAppId]);
+            $db->prepare("DELETE FROM rosterjudgementresponse WHERE rosterapplication = ?")->execute([$rAppId]);
+            $db->prepare("DELETE FROM rosterassessment WHERE rosterapplication = ?")->execute([$rAppId]);
+            $db->prepare("DELETE FROM rosterstatusevent WHERE rosterapplication = ?")->execute([$rAppId]);
+            $db->prepare("DELETE FROM apprenticeprofile WHERE rosterapplication = ?")->execute([$rAppId]);
+            $db->prepare("DELETE FROM associateprofile WHERE rosterapplication = ?")->execute([$rAppId]);
+            $db->prepare("DELETE FROM rosterapplication WHERE iD = ?")->execute([$rAppId]);
+        }
+    }
 
     // In-app notification for applicant
     NotificationHelper::notify(
@@ -1337,6 +1443,7 @@ $handleRevokeProfile = function () {
 
 $router->addRoute('POST', '/api/mobile/user/revoke-profile', $handleRevokeProfile);
 $router->addRoute('POST', '/api/mobile/user/cancel-profile-request', $handleRevokeProfile);
+$router->addRoute('POST', '/api/mobile/roster/revoke-application', $handleRevokeProfile);
 
 // --------------------------------------------------------------------------
 // 14b. Update Basic User Profile (Name, Email)
@@ -1778,17 +1885,189 @@ $router->addRoute('GET', '/api/mobile/companies', function () {
 // --------------------------------------------------------------------------
 // 18. Profile Completion Status
 // --------------------------------------------------------------------------
-$router->addRoute('GET', '/api/mobile/user/profile-completion', function () {
-    $user = getMobileUser();
-    if (!$user) {
+// 19. Admin Profile Requests Ledger
+// --------------------------------------------------------------------------
+$router->addRoute('GET', '/api/mobile/admin/profile-requests', function () {
+    $admin = getMobileUser();
+    if (!$admin) {
         sendMobileJson(['status' => 0, 'message' => 'Unauthorized.'], 401);
     }
-    $userData = enrichMobileUser($user);
+    $role = (int) $admin->role;
+    if ($role !== 1 && $role !== 8 && $role !== 6) {
+        sendMobileJson(['status' => 0, 'message' => 'Forbidden. Admin privileges required.'], 403);
+    }
+
+    $db = (new Database())->getPDO();
+    $stmt = $db->query("
+        SELECT up.iD as profile_id, up.user as user_id, u.name as user_name, u.email as user_email,
+               pt.code as type_code, pt.name as type_name, pt.icon as type_icon,
+               ps.code as status_code, ps.name as status_name,
+               up.display_title, up.request_notes, up.reg_date
+        FROM userprofile up
+        JOIN user u ON up.user = u.iD
+        JOIN profiletype pt ON up.profiletype = pt.iD
+        JOIN profilestatus ps ON up.profilestatus = ps.iD
+        WHERE up.profilestatus = 2
+        ORDER BY up.iD DESC
+    ");
+    $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($requests as &$req) {
+        $uId = (int) $req['user_id'];
+        $pStmt = $db->prepare("SELECT legal_name, mobile_number, city, suburb FROM rosterapplication WHERE user = ? ORDER BY iD DESC LIMIT 1");
+        $pStmt->execute([$uId]);
+        $req['personal'] = $pStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        $qStmt = $db->prepare("
+            SELECT rq.title, rq.institution_name, rq.field_of_study, qt.name as type_name 
+            FROM rosterqualification rq 
+            JOIN rosterapplication ra ON rq.rosterapplication = ra.iD 
+            LEFT JOIN qualificationtype qt ON rq.qualificationtype = qt.iD 
+            WHERE ra.user = ? AND rq.status = 1 
+            ORDER BY rq.date_obtained DESC
+        ");
+        $qStmt->execute([$uId]);
+        $req['qualifications'] = $qStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
     sendMobileJson([
-        'status'             => 1,
-        'profile_completion' => $userData['profile_completion'],
+        'status'   => 1,
+        'requests' => $requests,
     ]);
 });
 
+// --------------------------------------------------------------------------
+// 20. Admin Review & Approve/Reject Profile Request
+// --------------------------------------------------------------------------
+$router->addRoute('POST', '/api/mobile/admin/review-profile', function () {
+    $admin = getMobileUser();
+    if (!$admin) {
+        sendMobileJson(['status' => 0, 'message' => 'Unauthorized.'], 401);
+    }
+    $role = (int) $admin->role;
+    if ($role !== 1 && $role !== 8 && $role !== 6) {
+        sendMobileJson(['status' => 0, 'message' => 'Forbidden. Admin privileges required.'], 403);
+    }
 
+    $db = (new Database())->getPDO();
+    $profileId = (int) ($_POST['profile_id'] ?? 0);
+    $action = trim($_POST['action'] ?? '');
+    $notes = trim($_POST['reviewer_notes'] ?? '');
 
+    $stmt = $db->prepare("SELECT * FROM userprofile WHERE iD = ?");
+    $stmt->execute([$profileId]);
+    $profile = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$profile) {
+        sendMobileJson(['status' => 0, 'message' => 'Profile request not found.'], 404);
+    }
+
+    $applicantUserId = (int) $profile['user'];
+    $typeId = (int) $profile['profiletype'];
+    $adminId = (int) $admin->iD;
+    $now = date('Y-m-d H:i:s');
+
+    if ($action === 'approve') {
+        $stmt = $db->prepare("UPDATE userprofile SET profilestatus = 3, reviewer_notes = ?, reviewed_by = ?, reviewed_at = ? WHERE iD = ?");
+        $stmt->execute([$notes, $adminId, $now, $profileId]);
+
+        // Sync user role if candidate
+        if ($typeId === 2) { // Apprentice
+            $db->prepare("UPDATE user SET role = 5 WHERE iD = ? AND role = 2")->execute([$applicantUserId]);
+        } elseif ($typeId === 3) { // Associate
+            $db->prepare("UPDATE user SET role = 4 WHERE iD = ? AND role = 2")->execute([$applicantUserId]);
+        } elseif ($typeId === 4 || $typeId === 5) { // Staff or Client
+            $db->prepare("UPDATE clientmembership SET status = 1 WHERE user = ? AND status = 2")->execute([$applicantUserId]);
+        }
+
+        // Audit log
+        $stmt = $db->prepare("INSERT INTO profilerequestaudit (userprofile, action, from_status, to_status, performed_by, notes, reg_by, reg_date, status) VALUES (?, 'request_approved', ?, 3, ?, ?, ?, CURRENT_TIMESTAMP, 1)");
+        $stmt->execute([$profileId, $profile['profilestatus'], $adminId, $notes ?: 'Approved via mobile command', $adminId]);
+
+        // Notification to applicant
+        NotificationHelper::notify(
+            $applicantUserId,
+            'Account Application Approved!',
+            "Your request for a {$profile['display_title']} account has been approved and activated.",
+            'dashboard/home',
+            'success',
+            'fa-check-circle'
+        );
+
+        sendMobileJson(['status' => 1, 'message' => 'Account request successfully approved!']);
+    } elseif ($action === 'reject') {
+        $stmt = $db->prepare("UPDATE userprofile SET profilestatus = 4, reviewer_notes = ?, reviewed_by = ?, reviewed_at = ? WHERE iD = ?");
+        $stmt->execute([$notes, $adminId, $now, $profileId]);
+
+        $stmt = $db->prepare("INSERT INTO profilerequestaudit (userprofile, action, from_status, to_status, performed_by, notes, reg_by, reg_date, status) VALUES (?, 'request_rejected', ?, 4, ?, ?, ?, CURRENT_TIMESTAMP, 1)");
+        $stmt->execute([$profileId, $profile['profilestatus'], $adminId, $notes ?: 'Declined by reviewer', $adminId]);
+
+        NotificationHelper::notify(
+            $applicantUserId,
+            'Account Request Update',
+            "Your request for a {$profile['display_title']} account has been declined. Notes: " . ($notes ?: 'Criteria not met'),
+            'profile/view',
+            'warning',
+            'fa-times-circle'
+        );
+
+        sendMobileJson(['status' => 1, 'message' => 'Account request declined.']);
+    } else {
+        sendMobileJson(['status' => 0, 'message' => 'Invalid action. Must be approve or reject.'], 400);
+    }
+});
+
+// --------------------------------------------------------------------------
+// OTA Auto-Update Check Endpoint
+// --------------------------------------------------------------------------
+$router->addRoute('GET', '/api/mobile/ota/check', function () {
+    global $siteConfig;
+    $configFile = dirname(__DIR__) . '/config/mobile_ota.json';
+    if (!file_exists($configFile)) {
+        sendMobileJson([
+            'status' => 1,
+            'update_available' => false,
+            'message' => 'No OTA updates configured.'
+        ]);
+    }
+
+    $config = json_decode(file_get_contents($configFile), true) ?: [];
+    $latestVersion = $config['bundle_version'] ?? '1.0.0';
+    $bundleHash = $config['bundle_hash'] ?? '';
+    $bundleUrl = $config['bundle_url'] ?? '/public/downloads/ota_bundle.zip';
+    $minApkVersion = (int)($config['min_apk_version'] ?? 1);
+    $releaseNotes = $config['release_notes'] ?? '';
+
+    $clientBundleVersion = trim($_GET['bundle_version'] ?? '0.0.0');
+    $clientApkVersion = (int)($_GET['apk_version'] ?? 1);
+
+    // Build absolute URL for bundle download
+    $host = $_SERVER['HTTP_HOST'] ?? 'portal.tsigiro.co.zw';
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
+    if (strpos($host, 'portal.tsigiro.co.zw') !== false || strpos($host, 'trainit.co.zw') !== false) {
+        $downloadBase = "https://$host";
+    } elseif (strpos($host, '10.0.2.2') !== false || strpos($host, 'localhost') !== false) {
+        $downloadBase = "$protocol://$host/trainit";
+    } else {
+        $downloadBase = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+    }
+    $fullDownloadUrl = rtrim($downloadBase, '/') . '/' . ltrim($bundleUrl, '/');
+
+    // Compare versions (supports semantic versioning e.g. 1.0.1 > 1.0.0 or string inequality)
+    $updateAvailable = version_compare($latestVersion, $clientBundleVersion, '>');
+
+    sendMobileJson([
+        'status' => 1,
+        'update_available' => $updateAvailable,
+        'latest_bundle_version' => $latestVersion,
+        'client_bundle_version' => $clientBundleVersion,
+        'bundle_url' => $fullDownloadUrl,
+        'bundle_hash' => $bundleHash,
+        'bundle_size' => $config['bundle_size_bytes'] ?? 0,
+        'release_notes' => $releaseNotes,
+        'min_apk_version' => $minApkVersion,
+        'apk_update_required' => ($minApkVersion > $clientApkVersion),
+        'apk_url' => rtrim($downloadBase, '/') . '/public/downloads/tsigiro-mobile.apk',
+        'updated_at' => $config['updated_at'] ?? ''
+    ]);
+});

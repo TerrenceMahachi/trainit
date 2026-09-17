@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Rosterapplication;
 use App\Models\Servicerequest;
 use App\Models\Clientorganization;
+use App\Models\ClientOnboardingRequest;
 
 /**
  * Central Mailer Service for Tsigiro.
@@ -878,6 +879,222 @@ class Mailer
     }
 
     /**
+     * Send confirmation to client contact that their onboarding request was received.
+     */
+    public static function sendClientOnboardingSubmitted(ClientOnboardingRequest $req): bool
+    {
+        global $siteConfig;
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
+
+        $subject = "Client Onboarding Request Received – {$req->company_name}";
+
+        $html = "
+            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 22px;'>Thank You, " . htmlspecialchars($req->contact_name) . "!</h2>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                We have received your request to onboard <strong>" . htmlspecialchars($req->company_name) . "</strong> onto the {$siteName} managed services platform.
+            </p>
+            <div style='background-color: #F8F5FC; border-left: 4px solid #2A114B; padding: 16px; border-radius: 6px; margin: 20px 0;'>
+                <p style='margin: 0 0 8px; font-weight: bold; color: #2A114B;'>Request Summary:</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Organization:</strong> " . htmlspecialchars($req->company_name) . "</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Primary Representative:</strong> " . htmlspecialchars($req->contact_name) . " (" . htmlspecialchars($req->contact_email) . ")</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Phone:</strong> " . htmlspecialchars($req->contact_phone) . "</p>
+                <p style='margin: 0; color: #4B3E5C;'><strong>Status:</strong> Under Review by Client Services</p>
+            </div>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Our client accounts team will review your organization details and verify corporate credentials within <strong>1 to 2 business days</strong>. You will receive an automated invitation to access your dedicated Client Portal workspace upon approval.
+            </p>
+        ";
+
+        return self::send(
+            to: $req->contact_email,
+            toName: $req->contact_name,
+            subject: $subject,
+            bodyHtml: $html,
+            fromEmail: self::HELLO,
+            fromName: "{$siteName} Client Accounts",
+            buttonText: "Visit Platform",
+            buttonUrl: "{$siteUrl}/home"
+        );
+    }
+
+    /**
+     * Send client organization approval and account provisioning email with credentials.
+     */
+    public static function sendClientOnboardingApproved(ClientOnboardingRequest $req, User $user, string $tempPass): bool
+    {
+        global $siteConfig;
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
+
+        $subject = "Your Client Account is Ready – " . htmlspecialchars($req->company_name);
+
+        $html = "
+            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 22px;'>Welcome to {$siteName}, " . htmlspecialchars($req->contact_name) . "!</h2>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Your organization onboarding request for <strong>" . htmlspecialchars($req->company_name) . "</strong> has been officially approved. Your dedicated Client Portal is now active.
+            </p>
+            <div style='background-color: #F8F5FC; border-left: 4px solid #10B981; padding: 16px; border-radius: 6px; margin: 20px 0;'>
+                <p style='margin: 0 0 8px; font-weight: bold; color: #10B981;'>Your Account Login Credentials:</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Portal Login URL:</strong> <a href='{$siteUrl}/login' style='color: #2A114B;'>{$siteUrl}/login</a></p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Username / Email:</strong> " . htmlspecialchars($user->email) . "</p>
+                <p style='margin: 0 0 8px; color: #4B3E5C;'><strong>Temporary Password:</strong> <code style='background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: bold;'>" . htmlspecialchars($tempPass) . "</code></p>
+                <p style='margin: 0; color: #64748b; font-size: 13px;'>You will be prompted to change your password upon your first sign in.</p>
+            </div>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Through your Client Portal, you can submit work requests, review retainer hours capacity, collaborate directly with assigned Associates and Apprentices, and view monthly billing statements.
+            </p>
+        ";
+
+        return self::send(
+            to: $req->contact_email,
+            toName: $req->contact_name,
+            subject: $subject,
+            bodyHtml: $html,
+            fromEmail: self::HELLO,
+            fromName: "{$siteName} Client Accounts",
+            buttonText: "Sign In to Client Portal",
+            buttonUrl: "{$siteUrl}/login"
+        );
+    }
+
+    /**
+     * Send client onboarding rejection notification.
+     */
+    public static function sendClientOnboardingRejected(ClientOnboardingRequest $req, string $reason): bool
+    {
+        global $siteConfig;
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
+
+        $subject = "Update on Client Onboarding Request – {$req->company_name}";
+
+        $html = "
+            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 22px;'>Hello " . htmlspecialchars($req->contact_name) . ",</h2>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Thank you for your interest in onboarding <strong>" . htmlspecialchars($req->company_name) . "</strong> onto {$siteName}.
+            </p>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                After review by our client relations team, we are currently unable to approve your onboarding request for the following reason:
+            </p>
+            <div style='background-color: #FFF5F5; border-left: 4px solid #EF4444; padding: 16px; border-radius: 6px; margin: 20px 0;'>
+                <p style='margin: 0; color: #991B1B; font-size: 14px;'>" . nl2br(htmlspecialchars($reason)) . "</p>
+            </div>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                If you believe this decision was made in error or would like to provide updated documentation, please contact our team directly at <a href='mailto:" . self::HELLO . "'>" . self::HELLO . "</a>.
+            </p>
+        ";
+
+        return self::send(
+            to: $req->contact_email,
+            toName: $req->contact_name,
+            subject: $subject,
+            bodyHtml: $html,
+            fromEmail: self::HELLO,
+            fromName: "{$siteName} Client Accounts"
+        );
+    }
+
+    /**
+     * Proactive Document Expiry Reminder Alert.
+     */
+    public static function sendDocumentExpiryAlert(
+        string $recipientEmail,
+        string $recipientName,
+        string $docTitle,
+        string $expiryDate,
+        int $daysLeft,
+        bool $isExpired
+    ): bool {
+        global $siteConfig;
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
+
+        $statusText = $isExpired ? "EXPIRED on {$expiryDate}" : "Expires in {$daysLeft} days ({$expiryDate})";
+        $subject = "Compliance Alert: Document '{$docTitle}' " . ($isExpired ? "Has Expired" : "Expiring Soon");
+
+        $html = "
+            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 22px;'>Compliance Notice: Document Action Required</h2>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Hello <strong>" . htmlspecialchars($recipientName) . "</strong>,
+            </p>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                This is an automated compliance reminder regarding your credential record on {$siteName}.
+            </p>
+            <div style='background-color: " . ($isExpired ? "#FFF5F5" : "#FFFBEB") . "; border-left: 4px solid " . ($isExpired ? "#EF4444" : "#F59E0B") . "; padding: 16px; border-radius: 6px; margin: 20px 0;'>
+                <p style='margin: 0 0 6px; font-weight: bold; color: " . ($isExpired ? "#991B1B" : "#92400E") . ";'>Document Details:</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Document:</strong> " . htmlspecialchars($docTitle) . "</p>
+                <p style='margin: 0 0 4px; color: #4B3E5C;'><strong>Expiry Date:</strong> " . htmlspecialchars($expiryDate) . "</p>
+                <p style='margin: 0; color: " . ($isExpired ? "#DC2626" : "#D97706") . "; font-weight: bold;'><strong>Status:</strong> {$statusText}</p>
+            </div>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Please upload an updated and verified copy of this credential in your staff portal to maintain active compliance and uninterrupted service delivery standing.
+            </p>
+        ";
+
+        return self::send(
+            to: $recipientEmail,
+            toName: $recipientName,
+            subject: $subject,
+            bodyHtml: $html,
+            fromEmail: self::ADMIN,
+            fromName: "{$siteName} Compliance Desk",
+            buttonText: "Upload Updated Credential",
+            buttonUrl: "{$siteUrl}/staff/portal"
+        );
+    }
+
+    /**
+     * Send Candidate Vacancy Alert Match Email.
+     */
+    public static function sendVacancyAlertMatch(
+        string $recipientEmail,
+        string $recipientName,
+        $vacancy
+    ): bool {
+        global $siteConfig;
+        $siteUrl = $siteConfig->siteUrl ?? 'https://portal.tsigiro.co.zw';
+        $siteName = $siteConfig->siteName ?? (defined('_SITE') ? _SITE : 'Tsigiro Portal');
+
+        $vacTitle = htmlspecialchars($vacancy->title);
+        $vacSlug  = urlencode($vacancy->slug);
+        $subject  = "New Opportunity Match: {$vacTitle} – {$siteName}";
+
+        $html = "
+            <h2 style='margin: 0 0 16px; color: #1C0D30; font-size: 22px;'>New Matching Opportunity!</h2>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                Hello <strong>" . htmlspecialchars($recipientName) . "</strong>,
+            </p>
+            <p style='margin: 0 0 16px; color: #4B3E5C; line-height: 1.6; font-size: 15px;'>
+                A new opening matching your saved job alert criteria has just been published on {$siteName}:
+            </p>
+            <div style='background-color: #F8F5FC; border-left: 4px solid #FFCC00; padding: 18px; border-radius: 6px; margin: 20px 0;'>
+                <h3 style='margin: 0 0 8px; color: #1C0D30; font-size: 18px;'>{$vacTitle}</h3>
+                <p style='margin: 0 0 8px; color: #4B3E5C; font-size: 14px;'><strong>Reference:</strong> " . htmlspecialchars($vacancy->reference_number) . "</p>
+                <p style='margin: 0 0 12px; color: #4B3E5C; line-height: 1.5; font-size: 14px;'>
+                    " . htmlspecialchars(mb_strimwidth($vacancy->summary ?? '', 0, 180, '...')) . "
+                </p>
+                <a href='{$siteUrl}/opportunities/vacancy/{$vacSlug}' style='display: inline-block; background-color: #2A114B; color: #ffffff; padding: 8px 18px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 13px;'>
+                    View &amp; Apply Now &rarr;
+                </a>
+            </div>
+            <p style='margin: 0; color: #64748b; font-size: 12px;'>
+                You received this alert because you subscribed to matching opportunity alerts on the {$siteName} talent portal.
+            </p>
+        ";
+
+        return self::send(
+            to: $recipientEmail,
+            toName: $recipientName,
+            subject: $subject,
+            bodyHtml: $html,
+            fromEmail: self::JOBS,
+            fromName: "{$siteName} Careers",
+            buttonText: "View Full Opportunity Brief",
+            buttonUrl: "{$siteUrl}/opportunities/vacancy/{$vacSlug}"
+        );
+    }
+
+    /**
      * Core Email Dispatcher with Master Tsigiro HTML Brand Template.
      */
     public static function send(
@@ -1007,7 +1224,8 @@ class Mailer
         $toStr = implode(', ', $toAddresses);
 
         // Always log outgoing email trace
-        $logFile = _BASE_PATH . '/storage/mail.log';
+        $baseDir = defined('_BASE_PATH') ? _BASE_PATH : dirname(__DIR__, 2);
+        $logFile = $baseDir . '/storage/mail.log';
         $logEntry = "[" . date('Y-m-d H:i:s') . "] TO: {$toStr} | FROM: {$fromEmail} | SUBJECT: {$subject}\n";
         @file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
 

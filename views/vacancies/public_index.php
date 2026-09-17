@@ -28,6 +28,17 @@ $selectedDept= $data['selectedDept'] ?? 0;
 
     <section class="py-5" style="background: #f8fafc;">
         <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div>
+                    <h4 class="fw-bold text-dark mb-0"><i class="fa fa-briefcase text-warning me-2"></i> Current Positions</h4>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-warning text-dark fw-bold rounded-pill shadow-sm px-4" data-bs-toggle="modal" data-bs-target="#jobAlertModal">
+                        <i class="fa fa-bell me-1"></i> Save Search &amp; Get Job Alerts
+                    </button>
+                </div>
+            </div>
+
             <!-- Search & Filters -->
             <div class="card border-0 shadow-sm rounded-4 mb-4 p-3 bg-white">
                 <form method="GET" action="<?= $siteConfig->siteUrl; ?>/opportunities/vacancies" class="row g-2 align-items-center">
@@ -125,3 +136,113 @@ $selectedDept= $data['selectedDept'] ?? 0;
         </div>
     </section>
 </main>
+
+<!-- Job Alert Subscription Modal -->
+<div class="modal fade" id="jobAlertModal" tabindex="-1" aria-labelledby="jobAlertModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold mb-1">
+                        <i class="fa fa-bell me-1"></i> Vacancy Match Alerts
+                    </span>
+                    <h5 class="modal-title fw-bold text-dark" id="jobAlertModalLabel">Save Search &amp; Never Miss a Role</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-3">
+                <p class="text-muted small mb-4">
+                    Receive instant notifications directly to your inbox and candidate portal when verified vacancies matching your skills and preferences are published.
+                </p>
+                <form id="jobAlertForm">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark">Target Keywords or Role Title</label>
+                        <input type="text" name="keywords" class="form-control rounded-3" value="<?= htmlspecialchars($search); ?>" placeholder="e.g. Finance Officer, Full Stack, Project Manager">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark">Department Preference</label>
+                        <select name="department" class="form-select rounded-3">
+                            <option value="">Any Department</option>
+                            <?php foreach ($departments as $d): ?>
+                                <option value="<?= $d->iD; ?>" <?= $selectedDept === (int)$d->iD ? 'selected' : ''; ?>>
+                                    <?= htmlspecialchars($d->name); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-dark">Your Name</label>
+                            <input type="text" name="name" class="form-control rounded-3" placeholder="Full name">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-bold text-dark">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control rounded-3" required placeholder="name@example.com">
+                        </div>
+                    </div>
+                    <div id="alertFeedback" class="alert d-none rounded-3 small"></div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" id="btnSubmitAlert" class="btn btn-warning text-dark fw-bold rounded-pill py-2">
+                            <i class="fa fa-bell me-1"></i> Subscribe to Job Alerts
+                        </button>
+                    </div>
+                    <div class="text-center mt-3">
+                        <span class="text-muted" style="font-size: 0.75rem;">
+                            <i class="fa fa-lock me-1"></i> 1-click unsubscribe at any time. We never spam.
+                        </span>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const alertForm = document.getElementById('jobAlertForm');
+    if (!alertForm) return;
+
+    alertForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSubmitAlert');
+        const fb = document.getElementById('alertFeedback');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa fa-spinner fa-spin me-1"></i> Saving...';
+        fb.className = 'alert d-none rounded-3 small';
+
+        const formData = new FormData(alertForm);
+
+        fetch('<?= $siteConfig->siteUrl; ?>/opportunities/alerts/subscribe', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa fa-bell me-1"></i> Subscribe to Job Alerts';
+            fb.classList.remove('d-none');
+            if (data.status === 1) {
+                fb.classList.add('alert-success');
+                fb.innerHTML = '<i class="fa fa-check-circle me-1"></i> ' + data.msg;
+                setTimeout(() => {
+                    const modalEl = document.getElementById('jobAlertModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                    alertForm.reset();
+                }, 2000);
+            } else {
+                fb.classList.add('alert-danger');
+                fb.innerHTML = '<i class="fa fa-triangle-exclamation me-1"></i> ' + (data.msg || 'Subscription failed.');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa fa-bell me-1"></i> Subscribe to Job Alerts';
+            fb.classList.remove('d-none');
+            fb.classList.add('alert-danger');
+            fb.innerHTML = 'Network error: ' + err;
+        });
+    });
+});
+</script>
+

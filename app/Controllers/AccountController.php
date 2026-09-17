@@ -126,6 +126,47 @@ class AccountController
         // Fingerprint the password tail so idle-resume works from first login.
         \App\Helpers\PasswordResume::enroll((int) $user->iD, $password);
 
+        // Auto-provision default General User profile (and specialized profile if role requires)
+        try {
+            $pdo = \App\Models\Database::sharedPdo();
+            $tableExists = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='userprofile'")->fetch();
+            if ($tableExists) {
+                $isStaff = in_array((int)$role, [1, 6, 7, 8], true);
+                $isClient = ((int)$role === 3);
+
+                // Always provision General User
+                $chkGen = $pdo->prepare("SELECT iD FROM userprofile WHERE user = ? AND profiletype = 1");
+                $chkGen->execute([$user->iD]);
+                if (!$chkGen->fetch()) {
+                    $ins = $pdo->prepare("INSERT INTO userprofile (user, profiletype, profilestatus, display_title, is_default, reg_by, reg_date, status) VALUES (?, 1, 3, 'General User', ?, ?, CURRENT_TIMESTAMP, 1)");
+                    $isDefault = ($isStaff || $isClient) ? 0 : 1;
+                    $ins->execute([$user->iD, $isDefault, $regBy]);
+                }
+
+                // If Staff, provision Staff Member profile
+                if ($isStaff) {
+                    $chkStaff = $pdo->prepare("SELECT iD FROM userprofile WHERE user = ? AND profiletype = 4");
+                    $chkStaff->execute([$user->iD]);
+                    if (!$chkStaff->fetch()) {
+                        $ins = $pdo->prepare("INSERT INTO userprofile (user, profiletype, profilestatus, display_title, is_default, reg_by, reg_date, status) VALUES (?, 4, 3, 'Staff Member', 1, ?, CURRENT_TIMESTAMP, 1)");
+                        $ins->execute([$user->iD, $regBy]);
+                    }
+                }
+
+                // If Client, provision Client Representative profile
+                if ($isClient) {
+                    $chkClient = $pdo->prepare("SELECT iD FROM userprofile WHERE user = ? AND profiletype = 5");
+                    $chkClient->execute([$user->iD]);
+                    if (!$chkClient->fetch()) {
+                        $ins = $pdo->prepare("INSERT INTO userprofile (user, profiletype, profilestatus, display_title, is_default, reg_by, reg_date, status) VALUES (?, 5, 3, 'Client Representative', 1, ?, CURRENT_TIMESTAMP, 1)");
+                        $ins->execute([$user->iD, $regBy]);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            error_log("Failed to auto-provision userprofile: " . $e->getMessage());
+        }
+
         return $user;
     }
 

@@ -1,0 +1,70 @@
+<div class="view">
+    <button type="button" id="btn-back-queue" class="btn-secondary" style="margin-bottom: 12px;">
+        ← Back to queue
+    </button>
+
+    <div id="review-loading" class="empty-state">
+        <p>Loading dossier...</p>
+    </div>
+
+    <div id="review-body" style="display: none;">
+        <!-- Applicant header -->
+        <div class="card" style="margin-bottom: 14px;">
+            <div class="item-header">
+                <span class="item-code" id="review-app-number"></span>
+                <span class="badge" id="review-status-badge"></span>
+            </div>
+            <div class="item-title" id="review-name" style="margin-top: 4px;"></div>
+            <p id="review-track" style="font-size: 0.82rem; color: #475569; margin: 4px 0 8px;"></p>
+            <div id="review-account-state"></div>
+        </div>
+
+        <!-- Automated red flags -->
+        <div id="review-flags-card" class="card" style="display:none; margin-bottom: 14px; border-left: 4px solid #f59e0b;">
+            <div class="section-title" style="font-size: 0.9rem;"><span>⚠️ Automated Red Flags</span></div>
+            <ul id="review-flags" style="margin: 6px 0 0 18px; font-size: 0.82rem; color: #92400e;"></ul>
+        </div>
+
+        <!-- Dossier sections -->
+        <div id="review-sections"></div>
+
+        <!-- Scoring -->
+        <div class="card" style="margin-bottom: 14px;">
+            <div class="section-title" style="font-size: 0.9rem;">
+                <span>Assessment (100 points)</span>
+                <span class="badge badge-blue" id="review-score-total">0.0</span>
+            </div>
+            <div id="review-score-inputs" style="display: grid; gap: 10px; margin-top: 10px;"></div>
+
+            <label style="display:block; font-size:0.78rem; color:#475569; margin: 12px 0 4px;">
+                Reviewer notes
+            </label>
+            <textarea id="review-notes" class="form-input" rows="3"
+                      placeholder="Interview notes, verification findings, decision rationale..."
+                      style="resize: none;"></textarea>
+        </div>
+
+        <!-- Decision actions -->
+        <div class="card" style="margin-bottom: 24px;">
+            <div class="section-title" style="font-size: 0.9rem;"><span>Decision</span></div>
+            <p style="font-size: 0.78rem; color: #64748b; margin: 4px 0 12px;">
+                Approving admits the candidate to the roster <strong>and activates their account</strong>.
+                Declining closes the application and their account request.
+            </p>
+            <div style="display: grid; gap: 8px;">
+                <button type="button" class="btn-secondary review-action" data-action="shortlist">
+                    Shortlist for verification
+                </button>
+                <button type="button" class="btn-secondary review-action" data-action="interview">
+                    Move to interview / verification
+                </button>
+                <button type="button" class="btn-primary review-action" data-action="approve">
+                    ✓ Approve &amp; activate account
+                </button>
+                <button type="button" class="btn-danger review-action" data-action="reject">
+                    Decline application
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -10,7 +10,20 @@
                     src="<?php echo $siteConfig->assetsUrl; ?>/img/logo-badge.svg?v=<?= _ASSET_VERSION ?>"
                     alt="<?= htmlspecialchars(_SITE) ?>" />
             </a>
-            <h2 class="h4 mb-4">Create your account</h2>
+            <h2 class="h4 mb-2 fw-bold text-dark">Create your account</h2>
+            <p class="text-muted small mb-3">Join the Tsigiro Portal workspace</p>
+
+            <!-- Segmented Auth Switcher -->
+            <div class="d-flex justify-content-center mb-4">
+                <div class="btn-group p-1 bg-light rounded-pill border" role="group" style="max-width: 290px; width: 100%;">
+                    <a href="<?php echo $siteConfig->siteUrl; ?>/login" class="btn btn-sm rounded-pill btn-light text-muted fw-semibold px-3">
+                        <i class="fa fa-sign-in-alt me-1"></i> Sign In
+                    </a>
+                    <a href="<?php echo $siteConfig->siteUrl; ?>/register" class="btn btn-sm rounded-pill btn-primary fw-bold shadow-sm px-3">
+                        <i class="fa fa-user-plus me-1"></i> Create Account
+                    </a>
+                </div>
+            </div>
 
             <form id="_form" class="text-start mt-0">
                 <div class="input-group mb-3 rounded-3 border p-1 px-3">
@@ -54,12 +67,17 @@
                 <a id="submit_btn" onclick="submit()" class="btn button1 btn-lg rounded-pill w-100 mx-auto">Create
                     Account</a>
                 <p id='msg' class="my-2 text-danger"></p>
-            </form>
 
-            <p class="mb-1 text-center mt-3">
-                <a class="d-block my-2 auth-link" href="<?php echo $siteConfig->siteUrl; ?>/login">I already have an
-                    account</a>
-            </p>
+                <div class="d-flex align-items-center my-3 text-muted">
+                    <hr class="flex-grow-1 my-0 border-secondary-subtle">
+                    <span class="px-2 small fw-bold text-uppercase text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">Already have an account?</span>
+                    <hr class="flex-grow-1 my-0 border-secondary-subtle">
+                </div>
+
+                <a href="<?php echo $siteConfig->siteUrl; ?>/login" class="btn btn-lg btn-outline-secondary rounded-pill w-100 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 mb-2">
+                    <i class="fa fa-sign-in-alt"></i> Sign In to Existing Account
+                </a>
+            </form>
         </div><!-- az-signin-header -->
 
     </div><!-- az-card-signin -->

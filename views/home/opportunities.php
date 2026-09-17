@@ -470,9 +470,12 @@ $publishedVacancies = $data['publishedVacancies'] ?? \App\Models\Vacancy::findBy
                     <?php endforeach; ?>
                 </div>
 
-                <div class="text-center mt-4">
+                <div class="text-center mt-4 d-flex justify-content-center gap-2 flex-wrap">
                     <a href="<?= $siteConfig->siteUrl; ?>/opportunities/vacancies" class="btn btn-outline-dark rounded-pill px-4 fw-semibold">
                         <i class="fa fa-list me-1"></i> View All Published Positions (<?= count($publishedVacancies); ?>)
+                    </a>
+                    <a href="<?= $siteConfig->siteUrl; ?>/opportunities/vacancies" class="btn btn-warning text-dark fw-bold rounded-pill px-4 shadow-sm">
+                        <i class="fa fa-bell me-1"></i> Get Vacancy Match Alerts
                     </a>
                 </div>
             <?php endif; ?>

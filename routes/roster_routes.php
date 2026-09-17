@@ -29,6 +29,24 @@ $router->addRoute('POST', '/opportunities/apply/express', function () {
     exit;
 });
 
+$router->addRoute('POST', '/opportunities/apply/revoke', function () {
+    $res = (new RosterApplicationController())->handleRevokeApplication();
+    if (is_array($res)) {
+        header('Content-Type: application/json');
+        echo json_encode($res);
+    }
+    exit;
+});
+
+$router->addRoute('POST', '/roster/application/revoke', function () {
+    $res = (new RosterApplicationController())->handleRevokeApplication();
+    if (is_array($res)) {
+        header('Content-Type: application/json');
+        echo json_encode($res);
+    }
+    exit;
+});
+
 // Stage 2: Credentials & Supporting Documents
 $router->addRoute('GET', '/roster/apply/credentials', function () {
     $appId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -224,6 +242,19 @@ $router->addRoute('POST', '/admin/roster/shortlist', function () {
     $result = (new RosterApplicationController())->handleShortlistCandidate();
     header('Content-Type: application/json');
     echo json_encode($result);
+    exit;
+});
+
+// Secure Candidate Document Streaming & Download
+$router->addRoute('GET', '/roster/document/view', function () {
+    $docId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    (new RosterApplicationController())->viewDocument($docId, false);
+    exit;
+});
+
+$router->addRoute('GET', '/roster/document/download', function () {
+    $docId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    (new RosterApplicationController())->viewDocument($docId, true);
     exit;
 });
 

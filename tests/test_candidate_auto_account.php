@@ -199,12 +199,15 @@ assert(strpos($multiDashboardHtml, 'Interview Scheduled') !== false, "Dashboard 
 echo "[4.2] PASS: Multi-tracking dashboard simultaneously displays Apprentice Profile and Vacancy Application with interview alert!\n";
 
 // Cleanup test records
+$db = new \App\Models\Database();
+$db->query("DELETE FROM user_notification WHERE user = ?", [$createdUser->iD]);
 $vacApp->delete();
 foreach ($createdLogins as $cl) $cl->delete();
+$db->query("DELETE FROM profilerequestaudit WHERE userprofile IN (SELECT iD FROM userprofile WHERE user = ?)", [$createdUser->iD]);
+$db->query("DELETE FROM userprofile WHERE user = ?", [$createdUser->iD]);
 $createdUser->delete();
 
 $multiVacApp->delete();
-$db = new \App\Models\Database();
 $rosterUserApps = Rosterapplication::findByQuery("SELECT * FROM rosterapplication WHERE user = ?", [$rosterUser->iD]);
 foreach ($rosterUserApps as $ra) {
     $db->query("DELETE FROM apprenticeprofile WHERE rosterapplication = ?", [$ra->iD]);
@@ -212,7 +215,10 @@ foreach ($rosterUserApps as $ra) {
     $db->query("DELETE FROM rosterstatusevent WHERE rosterapplication = ?", [$ra->iD]);
     $ra->delete();
 }
+$db->query("DELETE FROM user_notification WHERE user = ?", [$rosterUser->iD]);
 $db->query("DELETE FROM user_login WHERE user = ?", [$rosterUser->iD]);
+$db->query("DELETE FROM profilerequestaudit WHERE userprofile IN (SELECT iD FROM userprofile WHERE user = ?)", [$rosterUser->iD]);
+$db->query("DELETE FROM userprofile WHERE user = ?", [$rosterUser->iD]);
 $rosterUser->delete();
 
 echo "\n=== ALL 4 AUTOMATED TEST PHASES PASSED! Auto-account provisioning, auto-login, and candidate tracking dashboard are 100% verified. ===\n";

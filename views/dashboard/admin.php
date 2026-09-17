@@ -14,6 +14,18 @@ $onboardingCount = App\Models\Rosteronboarding::countAll();
 $totalUsers = App\Models\User::countAll();
 $staffCount = App\Models\Staffprofile::countAll();
 
+// Pending Account & Role Requests (userprofile table: Apprentice, Associate, Staff)
+$pendingProfileRequests = App\Models\Userprofile::findByQuery(
+    "SELECT up.*, u.name as user_name, u.email as user_email, pt.name as profile_type_name, pt.code as profile_type_code, pt.icon as profile_type_icon, ps.name as profile_status_name 
+     FROM userprofile up 
+     JOIN user u ON up.user = u.iD 
+     JOIN profiletype pt ON up.profiletype = pt.iD 
+     JOIN profilestatus ps ON up.profilestatus = ps.iD 
+     WHERE up.profilestatus = 2 
+     ORDER BY up.iD DESC"
+);
+$pendingProfilesCount = count($pendingProfileRequests);
+
 // Recent Applications
 $recentApplications = App\Models\Rosterapplication::findByQuery(
     "SELECT * FROM rosterapplication ORDER BY iD DESC LIMIT 6"
@@ -29,7 +41,22 @@ $recentApplications = App\Models\Rosterapplication::findByQuery(
                 <h1>Administrator Dashboard</h1>
                 <p class="portal-dashboard-intro">Overview of talent pipeline intake, vetting scoring, candidate onboarding, and system dictionary governance.</p>
             </div>
-            <div class="d-flex gap-2 align-items-center">
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+                <a href="<?= $siteConfig->siteUrl; ?>/userprofiles" class="btn btn-warning text-dark fw-bold shadow-sm px-3 py-2 position-relative">
+                    <i class="fa fa-user-check me-1"></i> Account Requests
+                    <?php if ($pendingProfilesCount > 0): ?>
+                        <span class="badge bg-danger text-white ms-1"><?= $pendingProfilesCount; ?></span>
+                    <?php endif; ?>
+                </a>
+                <a href="<?= $siteConfig->siteUrl; ?>/admin/analytics" class="btn btn-dark border border-secondary text-white fw-bold shadow-sm px-3 py-2">
+                    <i class="fa fa-chart-line me-1 text-warning"></i> Executive Analytics
+                </a>
+                <a href="<?= $siteConfig->siteUrl; ?>/admin/compliance" class="btn btn-purple text-white fw-bold shadow-sm px-3 py-2" style="background-color: #522B5B; border: 1px solid rgba(255,255,255,0.2);">
+                    <i class="fa fa-shield-halved me-1 text-warning"></i> Compliance Radar
+                </a>
+                <a href="<?= $siteConfig->siteUrl; ?>/admin/clients/onboarding" class="btn btn-info text-dark fw-bold shadow-sm px-3 py-2">
+                    <i class="fa fa-handshake me-1"></i> Client Intake
+                </a>
                 <a href="<?= $siteConfig->siteUrl; ?>/admin/staff" class="btn btn-warning text-dark fw-bold shadow-sm px-3 py-2">
                     <i class="fa fa-id-badge me-1"></i> Staff Directory
                 </a>
@@ -54,6 +81,95 @@ $recentApplications = App\Models\Rosterapplication::findByQuery(
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             <?php endif; ?>
+
+            <!-- Account & Role Requests Queue (Pending Approvals) -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; border-left: 6px solid #f59e0b !important;">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center bg-warning text-dark" style="width: 38px; height: 38px;">
+                            <i class="fa fa-user-clock"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0 text-dark">
+                                Account & Role Requests Queue
+                                <?php if ($pendingProfilesCount > 0): ?>
+                                    <span class="badge bg-danger ms-2"><?= $pendingProfilesCount ?> Pending Review</span>
+                                <?php else: ?>
+                                    <span class="badge bg-success ms-2">All Cleared</span>
+                                <?php endif; ?>
+                            </h5>
+                            <small class="text-muted">Review, vet, and approve Apprentice, Associate, and Staff account profile applications.</small>
+                        </div>
+                    </div>
+                    <a href="<?= $siteConfig->siteUrl; ?>/userprofiles" class="btn btn-sm btn-outline-warning text-dark fw-bold">
+                        View All Profiles <i class="fa fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#ID</th>
+                                <th>Applicant</th>
+                                <th>Requested Account</th>
+                                <th>Title / Specialty</th>
+                                <th>Submission Notes</th>
+                                <th>Status</th>
+                                <th>Date Requested</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($pendingProfileRequests)): ?>
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">
+                                        <i class="fa fa-check-circle fa-2x text-success mb-2 d-block"></i>
+                                        No pending account requests at this time. All submissions have been processed.
+                                    </td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($pendingProfileRequests as $req): ?>
+                                    <?php
+                                    $pCode = $req->profile_type_code ?? '';
+                                    $trackBadge = 'bg-primary';
+                                    if ($pCode === 'apprentice') $trackBadge = 'bg-success';
+                                    elseif ($pCode === 'associate') $trackBadge = 'bg-info text-white';
+                                    elseif ($pCode === 'staff') $trackBadge = 'bg-warning text-dark';
+                                    ?>
+                                    <tr>
+                                        <td class="fw-bold text-muted">#<?= $req->iD ?></td>
+                                        <td>
+                                            <div class="fw-bold text-dark"><?= htmlspecialchars($req->user_name) ?></div>
+                                            <small class="text-muted"><?= htmlspecialchars($req->user_email) ?></small>
+                                        </td>
+                                        <td>
+                                            <span class="badge <?= $trackBadge ?> px-2 py-1">
+                                                <i class="<?= htmlspecialchars($req->profile_type_icon ?? 'fa fa-user') ?> me-1"></i>
+                                                <?= htmlspecialchars($req->profile_type_name) ?>
+                                            </span>
+                                        </td>
+                                        <td class="fw-semibold text-dark"><?= htmlspecialchars($req->display_title ?: $req->profile_type_name) ?></td>
+                                        <td>
+                                            <div class="small text-muted" style="max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?= htmlspecialchars($req->request_notes ?? '') ?>">
+                                                <?= htmlspecialchars($req->request_notes ? $req->request_notes : '1-Click Profile Application') ?>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-warning text-dark"><i class="fa fa-clock me-1"></i> Pending Vetting</span>
+                                        </td>
+                                        <td><small class="text-muted"><?= date('d M Y, H:i', strtotime($req->reg_date)) ?></small></td>
+                                        <td class="text-end">
+                                            <a href="<?= $siteConfig->siteUrl ?>/view-userprofile/<?= $req->iD ?>" class="btn btn-sm btn-primary fw-bold shadow-sm px-3">
+                                                <i class="fa fa-gavel me-1"></i> Review & Approve
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             
             <!-- Staff & Operations Management Hub Banner -->
             <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; background: linear-gradient(135deg, #F8F5FC 0%, #FFFFFF 100%); border-left: 6px solid #2A114B !important;">

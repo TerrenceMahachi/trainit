@@ -14,6 +14,7 @@ $qualifications = $app->qualifications();
 $workHistories = $app->workHistories();
 $referees = $app->referees();
 $judgement = $app->judgementResponse();
+$documents = $app->documents();
 
 $currentStatusCode = $app->applicationstatus() ? $app->applicationstatus()->code : 'submitted';
 $currentStatusId = (int)$app->applicationstatus;
@@ -130,39 +131,190 @@ switch ($currentStatusCode) {
                 <!-- Left Column: Applicant Profile & Evidence -->
                 <div class="col-lg-7">
                     
-                    <!-- Candidate Details -->
+                    <!-- Submitted Application Form Details Card -->
                     <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
-                        <div class="card-header bg-white py-3 border-bottom">
-                            <h5 class="fw-bold mb-0 text-dark">Candidate Dossier</h5>
+                        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold mb-0 text-dark"><i class="fa fa-id-card text-primary me-2"></i> Submitted Application Form Details</h5>
+                            <span class="badge <?= ($track->code === 'apprentice') ? 'bg-success' : 'bg-primary'; ?> px-3 py-2 fs-6">
+                                <?= htmlspecialchars($track->name ?? 'Talent Intake'); ?>
+                            </span>
                         </div>
                         <div class="card-body p-4">
-                            <div class="row g-3">
+                            <!-- Primary Identification & Contact -->
+                            <div class="row g-3 mb-3">
                                 <div class="col-md-6">
-                                    <span class="text-muted small d-block">Contact Details</span>
-                                    <strong><?= htmlspecialchars($app->email); ?><br><?= htmlspecialchars($app->mobile_number); ?></strong>
+                                    <span class="text-muted small d-block">Full Legal Name</span>
+                                    <strong class="fs-6 text-dark"><?= htmlspecialchars($app->legal_name); ?></strong>
+                                    <?php if (!empty($app->preferred_name)): ?>
+                                        <span class="text-muted small">(Prefers: <?= htmlspecialchars($app->preferred_name); ?>)</span>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="col-md-6">
-                                    <span class="text-muted small d-block">Location & Right to Work</span>
-                                    <strong><?= htmlspecialchars($app->city); ?>, <?= htmlspecialchars($app->zimprovince()->name ?? ''); ?><br><?= htmlspecialchars($app->workrightstatus()->name ?? 'Citizen'); ?></strong>
+                                    <span class="text-muted small d-block">Practice Area / Primary Function</span>
+                                    <span class="badge bg-secondary fs-6"><i class="fa fa-briefcase me-1"></i> <?= htmlspecialchars($function->name ?? 'General Specialist'); ?></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <span class="text-muted small d-block">Email Address</span>
+                                    <a href="mailto:<?= htmlspecialchars($app->email); ?>" class="fw-bold text-decoration-none text-primary">
+                                        <i class="fa fa-envelope me-1"></i> <?= htmlspecialchars($app->email); ?>
+                                    </a>
+                                </div>
+                                <div class="col-md-6">
+                                    <span class="text-muted small d-block">Mobile / WhatsApp</span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <strong><i class="fa fa-phone me-1"></i> <?= htmlspecialchars($app->mobile_number); ?></strong>
+                                        <?php 
+                                            $cleanPhone = preg_replace('/[^0-9]/', '', $app->whatsapp_number ?: $app->mobile_number);
+                                            if ($cleanPhone): 
+                                        ?>
+                                            <a href="https://wa.me/<?= $cleanPhone; ?>" target="_blank" class="btn btn-sm btn-outline-success py-0 px-2 rounded-pill" title="Chat on WhatsApp">
+                                                <i class="fab fa-whatsapp"></i> Chat
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <span class="text-muted small d-block">Location</span>
+                                    <strong class="text-dark"><i class="fa fa-map-marker-alt text-danger me-1"></i> <?= htmlspecialchars($app->city ?: 'Harare'); ?><?= ($app->zimprovince() && $app->zimprovince()->name) ? ', ' . htmlspecialchars($app->zimprovince()->name) : ''; ?></strong>
+                                </div>
+                                <div class="col-md-6">
+                                    <span class="text-muted small d-block">Right to Work in Zimbabwe</span>
+                                    <strong class="text-dark"><i class="fa fa-passport text-info me-1"></i> <?= htmlspecialchars($app->workrightstatus()->name ?? 'Citizen / Full Work Rights'); ?></strong>
                                 </div>
                             </div>
 
                             <hr class="my-3">
 
-                            <?php if ($track->code === 'apprentice' && $app->apprenticeProfile()): ?>
+                            <!-- Track Specific Intake Fields -->
+                            <?php if ($track->code === 'apprentice'): ?>
                                 <?php $ap = $app->apprenticeProfile(); ?>
-                                <h6 class="fw-bold text-success mb-2"><i class="fa fa-university me-1"></i> Apprentice Academic Profile</h6>
-                                <p class="mb-1"><strong>Institution:</strong> <?= htmlspecialchars($ap->institution_name ?? 'N/A'); ?> (<?= htmlspecialchars($ap->degree_programme ?? ''); ?>)</p>
-                                <p class="mb-1"><strong>Status:</strong> <?= htmlspecialchars($ap->apprenticestatus()->name ?? ''); ?> | Level: <?= htmlspecialchars($ap->study_level ?? 'N/A'); ?></p>
-                                <p class="mb-1"><strong>WRL Attachment:</strong> <?= $ap->is_wrl_attachment ? 'Yes (' . $ap->wrl_duration_months . ' months, Start: ' . $ap->wrl_start_date . ')' : 'No'; ?></p>
-                                <p class="mb-0"><strong>Coordinator:</strong> <?= htmlspecialchars($ap->wrl_coordinator_name ?: 'None'); ?> (<?= htmlspecialchars($ap->wrl_coordinator_email ?: ''); ?>, <?= htmlspecialchars($ap->wrl_coordinator_phone ?: ''); ?>)</p>
-                            <?php elseif ($track->code === 'associate' && $app->associateProfile()): ?>
+                                <h6 class="fw-bold text-success mb-3"><i class="fa fa-university me-1"></i> Apprentice Academic & Attachment Intake Details</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <span class="text-muted small d-block">Tertiary Institution</span>
+                                        <strong><?= htmlspecialchars($ap ? ($ap->institution_name ?: 'Not specified') : 'Not specified'); ?></strong>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted small d-block">Degree / Diploma Programme</span>
+                                        <strong><?= htmlspecialchars($ap ? ($ap->degree_programme ?: 'Not specified') : 'Not specified'); ?></strong>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted small d-block">Current Study Stage / Level</span>
+                                        <span class="badge bg-light text-dark border"><?= htmlspecialchars($ap ? ($ap->study_level ?: 'WRL Attachment Student') : 'WRL Attachment Student'); ?></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted small d-block">Earliest Available Start Date</span>
+                                        <strong><i class="fa fa-calendar-alt text-primary me-1"></i> <?= htmlspecialchars($ap && $ap->wrl_start_date ? date('d M Y', strtotime($ap->wrl_start_date)) : 'Immediately / Flexible'); ?></strong>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted small d-block">Attachment Duration</span>
+                                        <strong><?= htmlspecialchars($ap ? ($ap->wrl_duration_months ? $ap->wrl_duration_months . ' Months' : '12 Months') : '12 Months'); ?></strong>
+                                    </div>
+                                    <?php if ($ap && !empty($ap->wrl_coordinator_name)): ?>
+                                        <div class="col-md-6">
+                                            <span class="text-muted small d-block">Faculty WRL Coordinator</span>
+                                            <strong><?= htmlspecialchars($ap->wrl_coordinator_name); ?></strong>
+                                            <?php if (!empty($ap->wrl_coordinator_email)): ?>
+                                                <br><small class="text-muted"><?= htmlspecialchars($ap->wrl_coordinator_email); ?> <?= htmlspecialchars($ap->wrl_coordinator_phone ?? ''); ?></small>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+
+                            <?php elseif ($track->code === 'associate'): ?>
                                 <?php $asp = $app->associateProfile(); ?>
-                                <h6 class="fw-bold text-primary mb-2"><i class="fa fa-award me-1"></i> Associate Seniority & Rate Card</h6>
-                                <p class="mb-1"><strong>Experience:</strong> <?= htmlspecialchars($asp->years_experience ?? ''); ?> (<?= htmlspecialchars($asp->employmentstatus()->name ?? ''); ?>)</p>
-                                <p class="mb-1"><strong>Day Rate:</strong> $<?= number_format((float)$asp->day_rate_expectation, 2); ?> USD | Capacity: <?= htmlspecialchars($asp->capacity_days_per_month ?? 'N/A'); ?></p>
-                                <p class="mb-1"><strong>ZIMRA ITF263:</strong> <?= $asp->has_tax_clearance_itf263 ? '<span class="badge bg-success">Yes (BP: ' . htmlspecialchars($asp->zimra_bp_number) . ')</span>' : '<span class="badge bg-warning text-dark">No</span>'; ?></p>
-                                <p class="mb-0"><strong>Conflict Disclosure:</strong> <?= htmlspecialchars($asp->conflict_of_interest ?: 'None declared'); ?></p>
+                                <h6 class="fw-bold text-primary mb-3"><i class="fa fa-award me-1"></i> Associate Seniority, Availability & Commercial Terms</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <span class="text-muted small d-block">Years of Specialist Experience</span>
+                                        <strong class="fs-6 text-dark"><i class="fa fa-clock text-warning me-1"></i> <?= htmlspecialchars($asp ? ($asp->years_experience ?: 'Not specified') : 'Not specified'); ?></strong>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted small d-block">Current Employment Status</span>
+                                        <strong><?= htmlspecialchars($asp && $asp->employmentstatus() ? $asp->employmentstatus()->name : 'Not specified'); ?></strong>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted small d-block">Indicative Day Rate Expectation</span>
+                                        <strong class="text-success fs-6">
+                                            <?= ($asp && $asp->day_rate_expectation) ? '$' . number_format((float)$asp->day_rate_expectation, 2) . ' USD / Day' : '<span class="text-muted fw-normal">Negotiable / Open</span>'; ?>
+                                        </strong>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted small d-block">Available Consulting Capacity</span>
+                                        <strong><i class="fa fa-business-time text-primary me-1"></i> <?= htmlspecialchars($asp ? ($asp->capacity_days_per_month ?: 'Flexible / Project-based') : 'Flexible'); ?></strong>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted small d-block">ZIMRA ITF263 Tax Clearance</span>
+                                        <?= ($asp && $asp->has_tax_clearance_itf263) ? '<span class="badge bg-success"><i class="fa fa-check-circle me-1"></i> Valid (BP: ' . htmlspecialchars($asp->zimra_bp_number) . ')</span>' : '<span class="badge bg-warning text-dark"><i class="fa fa-exclamation-circle me-1"></i> No / In Progress</span>'; ?>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted small d-block">Conflict of Interest Disclosures</span>
+                                        <span class="small text-dark"><?= htmlspecialchars($asp && $asp->conflict_of_interest ? $asp->conflict_of_interest : 'None declared'); ?></span>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (!empty($app->how_heard) || !empty($app->referred_by)): ?>
+                                <hr class="my-3">
+                                <div class="row g-2 small text-muted">
+                                    <?php if (!empty($app->how_heard)): ?>
+                                        <div class="col-md-6">Source: <strong><?= htmlspecialchars($app->how_heard); ?></strong></div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($app->referred_by)): ?>
+                                        <div class="col-md-6">Referred by: <strong><?= htmlspecialchars($app->referred_by); ?></strong></div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Submitted Documents & CV / Resume Card -->
+                    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+                        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold mb-0 text-dark"><i class="fa fa-file-pdf text-danger me-2"></i> Submitted Documents &amp; CV / Resume</h5>
+                            <span class="badge bg-dark rounded-pill"><?= count($documents); ?> File<?= count($documents) === 1 ? '' : 's'; ?></span>
+                        </div>
+                        <div class="card-body p-4">
+                            <?php if (empty($documents)): ?>
+                                <div class="p-3 bg-light rounded text-center text-muted">
+                                    <i class="fa fa-file-excel fa-2x mb-2 d-block text-secondary"></i>
+                                    <p class="mb-0 small">No documents or CV uploaded with this application.</p>
+                                </div>
+                            <?php else: ?>
+                                <div class="list-group list-group-flush">
+                                    <?php foreach ($documents as $doc): ?>
+                                        <?php 
+                                            $dt = $doc->documenttype();
+                                            $docName = $dt ? $dt->name : 'Document';
+                                            $isCv = $dt && $dt->code === 'CV_RESUME';
+                                        ?>
+                                        <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                            <div class="d-flex align-items-start gap-3">
+                                                <div class="rounded-circle p-2 <?= $isCv ? 'bg-danger bg-opacity-10 text-danger' : 'bg-primary bg-opacity-10 text-primary'; ?>">
+                                                    <i class="fa <?= $isCv ? 'fa-file-pdf' : 'fa-file-alt'; ?> fa-lg"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <strong class="text-dark"><?= htmlspecialchars($doc->original_name ?: basename($doc->file_path)); ?></strong>
+                                                        <span class="badge <?= $isCv ? 'bg-danger' : 'bg-secondary'; ?> small"><?= htmlspecialchars($docName); ?></span>
+                                                    </div>
+                                                    <small class="text-muted">
+                                                        <?= $doc->file_size_kb ? number_format($doc->file_size_kb) . ' KB' : 'Document'; ?> &bull; 
+                                                        Uploaded on <?= date('d M Y, H:i', strtotime($doc->reg_date)); ?>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <a href="<?= $siteConfig->siteUrl; ?>/roster/document/view?id=<?= $doc->iD; ?>" target="_blank" class="btn btn-sm btn-outline-primary fw-semibold rounded-pill px-3">
+                                                    <i class="fa fa-eye me-1"></i> Preview / View
+                                                </a>
+                                                <a href="<?= $siteConfig->siteUrl; ?>/roster/document/download?id=<?= $doc->iD; ?>" class="btn btn-sm btn-light border fw-semibold rounded-pill px-3">
+                                                    <i class="fa fa-download me-1"></i> Download
+                                                </a>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>

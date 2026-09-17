@@ -1,0 +1,39 @@
+<div class="view">
+    <div style="margin-bottom: 12px;">
+        <a href="#" id="btn-cancel-new-req" class="section-link">← Cancel & Back</a>
+    </div>
+
+    <div class="card">
+        <h3 class="card-title" style="margin-bottom: 4px;">Submit Work Request</h3>
+        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 16px;">Create a new service brief to be triaged under your monthly retainer.</p>
+
+        <form id="new-request-form">
+            <div class="form-group">
+                <label class="form-label" for="req-title">Request Title</label>
+                <input type="text" id="req-title" class="form-input" placeholder="e.g. Kubernetes Ingress Failover & SSL Rotation" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="req-priority">SLA Priority Level</label>
+                <select id="req-priority" class="form-input" style="background: #ffffff;">
+                    <option value="2" selected>High Priority (8-hour SLA)</option>
+                    <option value="1">Urgent / Critical (4-hour SLA)</option>
+                    <option value="3">Medium / Standard (24-hour SLA)</option>
+                    <option value="4">Low / Routine (48-hour SLA)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="req-due">Target Completion Date</label>
+                <input type="date" id="req-due" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="req-desc">Detailed Work Brief & Acceptance Scope</label>
+                <textarea id="req-desc" class="form-input" rows="5" placeholder="Specify requirements, deliverables, credentials or repository branches..." style="resize: none;" required></textarea>
+            </div>
+
+            <button type="submit" id="btn-submit-work-req" class="btn-primary">Submit Request & Dispatch</button>
+        </form>
+    </div>
+</div>

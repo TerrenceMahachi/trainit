@@ -1,27 +1,72 @@
-<nav class="navbar glass">
-    <h3>Dashboard</h3>
-    <button id="logout-btn" class="btn-icon">Logout</button>
-</nav>
-<div class="dashboard-content">
-    <div class="welcome-card glass">
-        <h4>Hello, <span>{{name}}</span></h4>
-        <p>Role: <span>{{role_name}}</span></p>
-    </div>
-
-    <div class="stats-grid mt-4">
-        <div class="stat-card glass">
-            <h5>Total Users</h5>
-            <h2 id="total-users">--</h2>
+<div class="view">
+    <!-- Hero Profile Summary -->
+    <div class="hero-card">
+        <div class="hero-greeting">Active Workspace</div>
+        <h2 id="dash-user-name" class="hero-name">Loading...</h2>
+        <div class="hero-badge-group">
+            <span id="dash-role-badge" class="hero-badge">Role</span>
+            <span id="dash-context-badge" class="hero-badge" style="background: rgba(59, 130, 246, 0.1); color: #1e40af; border: 1px solid rgba(59, 130, 246, 0.2); display: none;"></span>
         </div>
     </div>
 
-    <div class="data-section glass mt-4">
-        <div class="d-flex justify-between align-center mb-3">
-            <h4>Recent Users</h4>
-            <button id="load-users-btn" class="btn-secondary btn-sm">Refresh</button>
+    <!-- Tsigiro Talent Roster Intake CTA Banner -->
+    <div id="dash-roster-cta" class="card" style="background: linear-gradient(135deg, #090b0b 0%, #10241e 100%); color: #ffffff; border: 1px solid rgba(21, 155, 117, 0.4); margin-bottom: 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(50, 201, 154, 0.15); color: var(--primary-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+            </div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 0.88rem; font-weight: 800; color: #ffffff;">Join Tsigiro Roster</span>
+                    <span class="badge badge-green" style="font-size: 0.62rem; padding: 2px 6px;">Apprentice & Associate</span>
+                </div>
+                <p style="font-size: 0.72rem; color: #94a3b8; margin: 0; margin-top: 2px;">Apply for vetted industrial placement or specialist consulting</p>
+            </div>
         </div>
-        <div id="users-list" class="list-container">
-            <!-- Users will be populated dynamically -->
+        <div style="color: var(--primary-light);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </div>
     </div>
+
+    <!-- Role Request Section Header (Visible for General Users) -->
+    <div id="dash-roles-header" class="section-title" style="display: none; margin-bottom: 8px; font-size: 0.82rem; letter-spacing: 0.4px;">
+        <span>Request Account Profile</span>
+        <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 500;">Tap to apply or switch</span>
+    </div>
+
+    <!-- Live Statistics / Role Request Action Grid -->
+    <div id="dash-stats-grid" class="stats-grid">
+        <div class="stat-box"><div class="stat-value">--</div><div class="stat-label">Loading</div></div>
+        <div class="stat-box"><div class="stat-value">--</div><div class="stat-label">Loading</div></div>
+        <div class="stat-box"><div class="stat-value">--</div><div class="stat-label">Loading</div></div>
+    </div>
+
+    <!-- Admin Role Approvals Queue Section (Visible for Admin / Staff when pending requests exist) -->
+    <div id="dash-admin-approvals-section" style="display: none; margin-bottom: 20px;">
+        <div id="dash-admin-approvals-header" class="section-title" style="cursor: pointer;" title="Open Roster Review Queue">
+            <span style="display: flex; align-items: center; gap: 6px;">
+                <span>Account Requests Queue</span>
+                <span id="dash-admin-approvals-count" class="badge badge-yellow" style="font-size: 0.68rem; font-weight: 700;">0</span>
+            </span>
+            <span style="font-size: 0.72rem; color: var(--primary); font-weight: 600; display: flex; align-items: center; gap: 4px;">Tap to Review &amp; Approve →</span>
+        </div>
+        <div id="dash-admin-approvals-container"></div>
+    </div>
+
+    <!-- Contextual Activity Section -->
+    <div class="section-title">
+        <span id="dash-section-title">Recent Activity</span>
+        <a href="#" id="dash-view-all-link" class="section-link">View All →</a>
+    </div>
+
+    <div id="dash-items-container">
+        <div class="empty-state">
+            <p>Loading dashboard data...</p>
+        </div>
+    </div>
+
+    <!-- Floating Action Button (+ New Request for clients) -->
+    <button type="button" id="dash-fab-new" class="fab-btn" style="display: none;" title="Create Work Request">
+        +
+    </button>
 </div>

@@ -1,0 +1,95 @@
+<div class="view">
+    <div style="margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+        <a href="#" id="btn-roster-back-home" class="section-link" style="display: flex; align-items: center; gap: 4px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>Back</span>
+        </a>
+        <span class="badge badge-green" style="font-size: 0.7rem; font-weight: 700;">Tsigiro Talent Pipeline</span>
+    </div>
+
+    <!-- Hero Announcement -->
+    <div class="card" style="background: linear-gradient(135deg, #090b0b 0%, #111d19 100%); color: #ffffff; border: 1px solid rgba(21, 155, 117, 0.4); margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+            <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: rgba(50, 201, 154, 0.15); border-radius: 8px; color: var(--primary-light);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+            </span>
+            <div>
+                <h3 style="font-size: 1.05rem; font-weight: 800; color: #ffffff; margin: 0;">Join the Tsigiro Roster</h3>
+                <p style="font-size: 0.74rem; color: #94a3b8; margin: 0;">Vetted deployment for high-impact technical engagements</p>
+            </div>
+        </div>
+        <p style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.4; margin-top: 6px;">
+            Apply to join our vetted network of engineers, consultants, and apprentices. Select the track that matches your experience level.
+        </p>
+    </div>
+
+    <!-- Track 1: Apprentice Intake -->
+    <div class="card roster-track-card" id="card-track-apprentice" style="border: 2px solid var(--border); border-radius: 14px; margin-bottom: 14px; cursor: pointer; transition: all 0.2s ease;">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(59, 130, 246, 0.12); color: #2563eb; display: flex; align-items: center; justify-content: center;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                </div>
+                <div>
+                    <h4 style="font-size: 0.98rem; font-weight: 700; color: var(--text-main); margin: 0;">Apprentice Roster</h4>
+                    <span style="font-size: 0.72rem; color: #2563eb; font-weight: 600;">Track 1: Attachment & Early Career</span>
+                </div>
+            </div>
+            <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #2563eb; font-size: 0.68rem;">Entry / Student</span>
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">
+            For university or polytechnic students seeking industrial attachment, recent graduates, and early-career technicians looking for mentored placement.
+        </p>
+        <div style="background: #f8fafc; border-radius: 8px; padding: 10px; margin-bottom: 12px; font-size: 0.74rem; color: #475569;">
+            <div style="font-weight: 700; margin-bottom: 4px; color: var(--text-main);">Requirements:</div>
+            <ul style="padding-left: 16px; margin: 0; line-height: 1.5;">
+                <li>CV / Resume & National ID</li>
+                <li>Attachment confirmation or Academic Transcript</li>
+                <li>Basic technical competency self-assessment</li>
+            </ul>
+        </div>
+        <button type="button" class="btn-primary btn-apply-track" data-track-id="1" data-track-code="apprentice" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; background: #2563eb;">
+            <span>Apply as Apprentice</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+    </div>
+
+    <!-- Track 2: Associate Intake -->
+    <div class="card roster-track-card" id="card-track-associate" style="border: 2px solid var(--border); border-radius: 14px; margin-bottom: 16px; cursor: pointer; transition: all 0.2s ease;">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--primary-soft); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                </div>
+                <div>
+                    <h4 style="font-size: 0.98rem; font-weight: 700; color: var(--text-main); margin: 0;">Associate Consultant</h4>
+                    <span style="font-size: 0.72rem; color: var(--primary); font-weight: 600;">Track 2: Experienced Specialist</span>
+                </div>
+            </div>
+            <span class="badge badge-green" style="font-size: 0.68rem;">Experienced</span>
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">
+            For experienced software engineers, DevOps specialists, cyber analysts, and technical leads deployed on enterprise client projects and retained SLAs.
+        </p>
+        <div style="background: #f8fafc; border-radius: 8px; padding: 10px; margin-bottom: 12px; font-size: 0.74rem; color: #475569;">
+            <div style="font-weight: 700; margin-bottom: 4px; color: var(--text-main);">Requirements:</div>
+            <ul style="padding-left: 16px; margin: 0; line-height: 1.5;">
+                <li>CV / Resume & Certified Credentials</li>
+                <li>Skills matrix rating (Levels 1–5)</li>
+                <li>Verified work history & professional referees</li>
+            </ul>
+        </div>
+        <button type="button" class="btn-primary btn-apply-track" data-track-id="2" data-track-code="associate" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>Apply as Associate</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+    </div>
+
+    <!-- Existing Applications Section -->
+    <div id="roster-existing-section" style="display: none; margin-top: 20px;">
+        <div class="section-title">
+            <span>My Submitted & Draft Applications</span>
+        </div>
+        <div id="roster-existing-container"></div>
+    </div>
+</div>

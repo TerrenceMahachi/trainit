@@ -1,20 +1,20 @@
-
 @extends('layouts.main')
 
 <?php
 use App\Models\User;
+use App\Models\Profiletype;
+use App\Models\Profilestatus;
+use App\Models\User;
 
-include('header.php');
+include __DIR__ . '/header.php';
 ?>
 
 <div>
-    <!-- Hero Section -->
-
-
+    <!-- Page header -->
     <section class="hero-section">
         <div class="container text-start">
-            <h3><?= $page_name ?>s</h3>
-            <nav aria-label="breadcrumb border rounded-2">
+            <h3>New <?= $page_name ?></h3>
+            <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="<?= $siteConfig->siteUrl ?>/dashboard">Home</a></li>
                     <li class="breadcrumb-item"><a class="text-capitalize"
@@ -25,56 +25,84 @@ include('header.php');
         </div>
     </section>
 
-    <!-- Search Section -->
-    <section class="py-5 ">
-        <div class="container rounded-3 p-4 border">
+    <!-- Create form -->
+    <section class="py-4">
+        <div class="container rounded-4 p-4 bg-white shadow-sm">
 
-            <form class="form  py-5 m-3 " id="create_item_form">
-                
+            <form class="form py-3 m-md-3" id="create_item_form">
+
                 <div class="row">
-                   
                     
-                <div class="form-group col-md-6 mb-4">
-                    <label class="mb-3"> name: </label>
-                    <input type="text" name="name" class="form-control form-control-lg" />
-                </div>
-                <div class="form-group mb-4 col-md-6">
+                <div class="form-group mb-4 col-md-12">
                     <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> User: </label>
                     <select class="form-select form-select-lg f-sel" name="user" required>
                         <option value="">Select User</option>
                         <?php foreach (User::all() as $selector): ?>
-                            <option value="<?= $selector->iD; ?>"><?= $selector->name; ?></option>
+                            <option value="<?= $selector->iD; ?>"><?= htmlspecialchars($selector->name ?? ''); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
-
+                <div class="form-group mb-4 col-md-12">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> Profiletype: </label>
+                    <select class="form-select form-select-lg f-sel" name="profiletype" required>
+                        <option value="">Select Profiletype</option>
+                        <?php foreach (Profiletype::all() as $selector): ?>
+                            <option value="<?= $selector->iD; ?>"><?= htmlspecialchars($selector->name ?? ''); ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
-
+                <div class="form-group mb-4 col-md-12">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> Profilestatus: </label>
+                    <select class="form-select form-select-lg f-sel" name="profilestatus" required>
+                        <option value="">Select Profilestatus</option>
+                        <?php foreach (Profilestatus::all() as $selector): ?>
+                            <option value="<?= $selector->iD; ?>"><?= htmlspecialchars($selector->name ?? ''); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group col-md-12 mb-4">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> display_title: </label>
+                    <input type="text" name="display_title" class="form-control form-control-lg" />
+                </div>
+                <div class="form-group col-md-12 mb-4">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> is_default: </label>
+                    <input type="text" name="is_default" class="form-control form-control-lg" />
+                </div>
+                <div class="form-group col-md-12 mb-4">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> request_notes: </label>
+                    <input type="text" name="request_notes" class="form-control form-control-lg" />
+                </div>
+                <div class="form-group col-md-12 mb-4">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> reviewer_notes: </label>
+                    <input type="text" name="reviewer_notes" class="form-control form-control-lg" />
+                </div>
+                <div class="form-group mb-4 col-md-12">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> Reviewed_by: </label>
+                    <select class="form-select form-select-lg f-sel" name="reviewed_by" required>
+                        <option value="">Select Reviewed_by</option>
+                        <?php foreach (User::all() as $selector): ?>
+                            <option value="<?= $selector->iD; ?>"><?= htmlspecialchars($selector->name ?? ''); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group col-md-12 mb-4">
+                    <label class="text-muted fw-lighter fs-6 mb-3 text-muted"> reviewed_at: </label>
+                    <input type="datetime-local" name="reviewed_at" class="form-control form-control-lg" />
+                </div>
+                </div>
 
                 <div class="mt-2" id="form_result"></div>
 
-                <br>
-
                 <input type="hidden" name="Method" value="add_item">
-                <div class="d-flex justify-content-between">
-                    <button type="button" id="btn_create_item" class="btn submit-btn btn-lg ">Submit Record</button>
-                    <a class="d-block my-3 text-start  text-black"
-                        href="<?php echo $siteConfig->siteUrl; ?>/<?= $page ?>"> <i
-                            class="fa fa-arrow-left me-2"></i> Back to <?= $page_name ?>s</a>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center">
+                    <button type="button" id="btn_create_item" class="btn submit-btn btn-lg">Submit Record</button>
+                    <a class="d-block my-3 text-start auth-link" href="<?php echo $siteConfig->siteUrl; ?>/<?= $page ?>">
+                        <i class="fa fa-arrow-left me-2"></i> Back to <?= $page_name ?>s</a>
                 </div>
-                <p class="mb-1 text-center">
-
-                </p>
 
             </form>
 
-
         </div>
-
-
     </section>
-    <!-- Search Section -->
-  
-
 </div>
-

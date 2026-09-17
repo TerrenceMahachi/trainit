@@ -2,35 +2,287 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master App</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Tsigiro Mobile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div id="debug-log" style="position: fixed; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.85); color: #ff5555; font-family: monospace; font-size: 11px; padding: 10px; max-height: 150px; overflow-y: auto; z-index: 10000; border-top: 2px solid red; display: none;">
-        <strong>JS Errors:</strong><br>
+    <!-- Top App Header -->
+    <header id="app-header" class="app-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <button type="button" id="btn-sidebar-toggle" class="btn-hamburger" title="Open Navigation Menu" style="display: none;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <div class="header-brand">
+                <img src="img/logo-badge.svg" alt="Tsigiro" class="brand-logo-mini" style="width: 32px; height: 32px; border-radius: 8px; object-fit: contain; flex-shrink: 0; background: #090b0b; padding: 2px;">
+                <div class="header-titles">
+                    <span class="brand-name">TSIGIRO</span>
+                    <span class="header-subtitle" id="header-subtitle">Workforce & Service Portal</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions" style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" id="btn-notifications-bell" class="icon-btn-header" title="Notifications" style="display: none;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <span id="notifications-badge" class="badge-dot-header" style="display: none;"></span>
+            </button>
+            <span id="role-pill" class="role-pill">Guest</span>
+        </div>
+    </header>
+
+    <!-- Off-canvas Sidebar Drawer & Backdrop -->
+    <div id="sidebar-backdrop" class="sidebar-backdrop" style="display: none;"></div>
+    <aside id="sidebar-drawer" class="sidebar-drawer" aria-hidden="true">
+        <div class="sidebar-header">
+            <div class="sidebar-user-card">
+                <div class="sidebar-avatar" id="sidebar-avatar">U</div>
+                <div class="sidebar-user-info">
+                    <span class="sidebar-user-name" id="sidebar-user-name">User</span>
+                    <span class="sidebar-user-email" id="sidebar-user-email">user@example.com</span>
+                    <div class="sidebar-badge-row">
+                        <span class="sidebar-role-badge" id="sidebar-role-badge">General User</span>
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="btn-sidebar-close" class="btn-sidebar-close" title="Close Menu">✕</button>
+        </div>
+
+        <div class="sidebar-body">
+            <!-- Persona / Account Switcher -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-header">
+                    <span class="sidebar-section-title">ACTIVE PROFILES</span>
+                    <button type="button" id="btn-open-request-profile" class="btn-link-action">+ Request</button>
+                </div>
+                <div id="sidebar-profiles-list" class="sidebar-profiles-list">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- Dynamic Role Navigation -->
+            <div class="sidebar-section">
+                <span class="sidebar-section-title" id="sidebar-nav-role-title">ROLE NAVIGATION</span>
+                <nav id="sidebar-role-nav" class="sidebar-nav-list">
+                    <!-- Populated dynamically based on active persona -->
+                </nav>
+            </div>
+
+            <!-- Credentials & Dossier -->
+            <div class="sidebar-section">
+                <span class="sidebar-section-title">CREDENTIALS PROFILE</span>
+                <nav class="sidebar-nav-list">
+                    <a href="#" class="sidebar-nav-item" id="sidebar-nav-personal" data-sidebar-nav="profile/personal">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span>Personal Details</span>
+                    </a>
+                    <a href="#" class="sidebar-nav-item" id="sidebar-nav-quals" data-sidebar-nav="profile/qualifications">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                        <span>Qualifications Profile</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- General Preferences & Actions -->
+            <div class="sidebar-section">
+                <span class="sidebar-section-title">SETTINGS &amp; SESSION</span>
+                <nav class="sidebar-nav-list">
+                    <a href="#" class="sidebar-nav-item" id="sidebar-nav-profile" data-sidebar-nav="profile/view">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        <span>Account &amp; Security</span>
+                    </a>
+                    <a href="#" class="sidebar-nav-item" id="sidebar-nav-notifications">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                        <span>Notification Center</span>
+                    </a>
+                    <a href="#" class="sidebar-nav-item text-primary" id="btn-sidebar-update">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>Check for Updates</span>
+                    </a>
+                    <a href="#" class="sidebar-nav-item text-danger" id="btn-sidebar-logout">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        <span>Sign Out</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <span class="sidebar-version" id="sidebar-version-label">Tsigiro Mobile v1.0.0</span>
+            <span class="sidebar-copyright">© 2026 Tsigiro Systems</span>
+        </div>
+    </aside>
+
+    <!-- OTA Update Notification Banner -->
+    <div id="ota-update-banner" style="display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 99999; background: #090b0b; border-bottom: 2px solid #32c99a; color: white; padding: 12px 16px; box-shadow: 0 6px 16px rgba(0,0,0,0.4); align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(50, 201, 154, 0.15); display: flex; align-items: center; justify-content: center; color: #32c99a; flex-shrink: 0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </div>
+            <div>
+                <div style="font-weight: 700; font-size: 0.88rem;" id="ota-banner-title">Update Ready!</div>
+                <div style="font-size: 0.72rem; color: #94a3b8;" id="ota-banner-subtitle">New features installed. Tap to apply.</div>
+            </div>
+        </div>
+        <button type="button" id="btn-ota-reload" style="background: #159b75; color: #ffffff; border: none; font-weight: 700; font-size: 0.82rem; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            Reload
+        </button>
     </div>
-    <script>
-        window.onerror = function(message, source, lineno, colno, error) {
-            const debugLog = document.getElementById('debug-log');
-            if (debugLog) {
-                debugLog.style.display = 'block';
-                debugLog.innerHTML += `[${lineno}:${colno}] ${message}<br>`;
-            }
-            return false;
-        };
-        // Also catch unhandled promise rejections
-        window.onunhandledrejection = function(event) {
-            const debugLog = document.getElementById('debug-log');
-            if (debugLog) {
-                debugLog.style.display = 'block';
-                debugLog.innerHTML += `[Promise] ${event.reason}<br>`;
-            }
-        };
-    </script>
-    <div id="mainContent"></div>
-    
+
+    <!-- Offline Status & Reconnect Banner -->
+    <div id="offline-banner" class="offline-banner" style="display: none;">
+        <div class="offline-banner-content">
+            <svg class="offline-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+                <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+                <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+                <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+                <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+                <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                <line x1="12" y1="20" x2="12.01" y2="20"></line>
+            </svg>
+            <span class="offline-banner-text">Offline Mode — Showing cached records</span>
+        </div>
+        <button type="button" id="btn-reconnect" class="btn-reconnect" title="Retry network connection">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            <span>Retry</span>
+        </button>
+    </div>
+
+    <!-- Main Dynamic View Container -->
+    <main id="mainContent" class="main-content"></main>
+
+    <!-- Bottom Navigation Bar (Hidden on Auth views) -->
+    <nav id="bottom-nav" class="bottom-nav" style="display: none;">
+        <button class="nav-item active" data-nav="dashboard/home">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span>Home</span>
+        </button>
+        <button class="nav-item" data-nav="requests/list">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+            <span id="nav-requests-label">Requests</span>
+        </button>
+        <button class="nav-item" data-nav="profile/view">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span>Profile</span>
+        </button>
+    </nav>
+
+    <!-- Global Floating Action Button (+ New Request) -->
+    <button type="button" id="global-fab-btn" class="fab-btn" style="display: none;" title="Create Work Request">
+        +
+    </button>
+
+    <!-- Notification Center Modal Sheet -->
+    <div id="modal-notifications" class="modal-backdrop" style="display: none;">
+        <div class="modal-sheet" style="max-height: 80vh; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                <div>
+                    <h3 style="font-size: 1.05rem; font-weight: 700; margin: 0;">Notification Center</h3>
+                    <span id="notif-unread-subtitle" style="font-size: 0.72rem; color: var(--text-muted);">0 unread alerts</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button type="button" id="btn-mark-all-read" class="section-link" style="font-size: 0.72rem; font-weight: 600; cursor: pointer; background: none; border: none; padding: 0;">Mark all read</button>
+                    <button type="button" id="btn-close-notifications" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted); padding: 8px 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;">✕</button>
+                </div>
+            </div>
+
+            <!-- Filter Pills -->
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <button type="button" class="filter-pill active" id="notif-filter-all">All</button>
+                <button type="button" class="filter-pill" id="notif-filter-unread">Unread</button>
+            </div>
+
+            <!-- Notifications Stream Container -->
+            <div id="notifications-list-container" style="overflow-y: auto; flex: 1; padding-right: 2px;">
+                <div class="empty-state">
+                    <p>Loading alerts...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Specialized Profile Modal Sheet -->
+    <div id="modal-request-profile" class="modal-backdrop" style="display: none;">
+        <div class="modal-sheet" style="max-height: 85vh; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                <div>
+                    <h3 style="font-size: 1.1rem; font-weight: 700; margin: 0;">Add Specialized Profile</h3>
+                    <span style="font-size: 0.72rem; color: var(--text-muted);">Request an Apprentice, Associate, Staff, or Client account</span>
+                </div>
+                <button type="button" id="btn-close-request-profile" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted); padding: 8px 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;">✕</button>
+            </div>
+
+            <form id="form-request-profile" style="overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; padding-right: 2px;">
+                <div>
+                    <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px;">SELECT ACCOUNT TYPE *</label>
+                    <div id="request-profile-types-container" class="profile-types-selector">
+                        <div class="empty-state" style="padding: 12px;"><p>Loading profile options...</p></div>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="req-display-title" style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.5px;">DISPLAY TITLE (OPTIONAL)</label>
+                    <input type="text" id="req-display-title" class="form-input" placeholder="e.g. Electrical Apprentice, Senior Cloud Consultant" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.85rem; background: var(--card-bg); color: var(--text-main);">
+                </div>
+
+                <div>
+                    <label for="req-notes" style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.5px;">MOTIVATION / QUALIFICATIONS *</label>
+                    <textarea id="req-notes" rows="3" class="form-input" placeholder="Describe your university program, work experience, company role, or reason for requesting this account..." required style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.85rem; background: var(--card-bg); color: var(--text-main); resize: vertical;"></textarea>
+                </div>
+
+                <div style="margin-top: 4px;">
+                    <button type="submit" id="btn-submit-profile-request" class="btn-primary" style="width: 100%; padding: 13px; font-weight: 700; border-radius: 10px; cursor: pointer;">
+                        Submit Request for Review
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dynamic Role Category Modal (Application Form, Request Status, or Active Profile) -->
+    <div id="modal-role-category" class="modal-backdrop" style="display: none;">
+        <div class="modal-sheet" style="max-height: 88vh; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                <div>
+                    <h3 id="role-modal-title" style="font-size: 1.05rem; font-weight: 700; margin: 0;">Manage Profile</h3>
+                    <span id="role-modal-subtitle" style="font-size: 0.72rem; color: var(--text-muted);">Application & Account Status</span>
+                </div>
+                <button type="button" id="btn-close-role-modal" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted); padding: 8px 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;">✕</button>
+            </div>
+
+            <!-- Dynamic Content Area -->
+            <div id="role-modal-body" style="overflow-y: auto; flex: 1; padding-right: 2px;">
+                <div class="empty-state" style="padding: 24px;"><p>Loading...</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Review Profile Modal Sheet -->
+    <div id="modal-admin-review" class="modal-backdrop" style="display: none;">
+        <div class="modal-sheet" style="max-height: 90vh; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
+                <div>
+                    <h3 id="admin-review-title" style="font-size: 1.05rem; font-weight: 700; margin: 0; color: var(--text-main);">Review Account Request</h3>
+                    <span id="admin-review-subtitle" style="font-size: 0.72rem; color: var(--text-muted);">Vetting & Credentials Clearance</span>
+                </div>
+                <button type="button" id="admin-review-close-btn" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted); padding: 8px 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;">✕</button>
+            </div>
+            <div id="admin-review-body" style="overflow-y: auto; flex: 1; padding-right: 2px;"></div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast" class="toast"></div>
+
     <script src="js/app.js"></script>
 </body>
 </html>

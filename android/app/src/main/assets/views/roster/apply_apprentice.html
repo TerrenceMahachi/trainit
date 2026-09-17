@@ -1,0 +1,206 @@
+<div class="view" style="padding-bottom: 30px;">
+    <!-- Top Nav Header -->
+    <div style="margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
+        <a href="#" id="btn-back-apprentice" class="section-link" style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: #059669; font-size: 0.85rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <span>Back</span>
+        </a>
+        <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #047857; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 700; font-size: 0.72rem; padding: 4px 10px; border-radius: 20px;">
+            🎓 Apprentice Talent Track
+        </span>
+    </div>
+
+    <!-- Track Welcome Card (Emerald Theme) -->
+    <div class="card" style="background: linear-gradient(135deg, #065f46 0%, #047857 100%); color: #ffffff; border: none; box-shadow: 0 4px 14px rgba(6, 95, 70, 0.25); margin-bottom: 16px; padding: 20px 18px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+            <span style="background: #ffffff; color: #065f46; font-weight: 800; font-size: 0.68rem; padding: 3px 9px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.5px;">
+                Single-Page Initial Application
+            </span>
+            <span style="font-size: 0.72rem; color: rgba(255,255,255,0.85); display: inline-flex; align-items: center; gap: 4px;">
+                ⏱️ ~2 minutes to apply
+            </span>
+        </div>
+        <h1 style="font-size: 1.25rem; font-weight: 800; margin: 0 0 6px 0; color: #ffffff;">Apprentice Talent Application</h1>
+        <p style="font-size: 0.78rem; line-height: 1.45; color: rgba(255,255,255,0.9); margin: 0;">
+            Apply for mentored client placement and industrial attachment. Fill in your basic details and upload your CV below. If shortlisted, you will receive an invitation email to complete your credentials and references.
+        </p>
+    </div>
+
+    <!-- Alert Box -->
+    <div id="express-alert" style="display: none; padding: 12px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 0.8rem; font-weight: 600;"></div>
+
+    <!-- Application Status & Pending Review Container (Shown when application is already submitted) -->
+    <div id="express-apprentice-status-view" style="display: none;"></div>
+
+    <!-- Application Form -->
+    <form id="express-apprentice-form" style="display: none;">
+        <input type="hidden" name="track_code" value="apprentice">
+        <input type="hidden" name="format" value="json">
+
+        <!-- Section 1: Contact & Identity -->
+        <div class="card" style="margin-bottom: 14px; padding: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border);">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: #059669; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">1</div>
+                <h3 style="margin: 0; font-size: 0.92rem; font-weight: 800; color: var(--text-main);">Contact & Identity</h3>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" style="font-weight: 700; font-size: 0.78rem; margin-bottom: 4px;" for="field-appr-legal-name">Full Legal Name <span style="color: #ef4444;">*</span></label>
+                <input type="text" name="legal_name" id="field-appr-legal-name" class="form-input" placeholder="e.g. Tinashe Brian Moyo" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" style="font-weight: 700; font-size: 0.78rem; margin-bottom: 4px;" for="field-appr-preferred-name">Preferred Name / Call Name</label>
+                <input type="text" name="preferred_name" id="field-appr-preferred-name" class="form-input" placeholder="e.g. Tinashe">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" style="font-weight: 700; font-size: 0.78rem; margin-bottom: 4px;" for="field-appr-email">Email Address <span style="color: #ef4444;">*</span></label>
+                <input type="email" name="email" id="field-appr-email" class="form-input" placeholder="tinashe@example.ac.zw" required>
+                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 3px;">Used for shortlist invitation and portal notifications.</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" style="font-weight: 700; font-size: 0.78rem; margin-bottom: 4px;" for="field-appr-mobile">Mobile / WhatsApp Number <span style="color: #ef4444;">*</span></label>
+                <input type="tel" name="mobile_number" id="field-appr-mobile" class="form-input" placeholder="+263 77 123 4567" required>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" style="font-weight: 700; font-size: 0.78rem; margin-bottom: 4px;" for="field-appr-city">City / Town <span style="color: #ef4444;">*</span></label>
+                    <input type="text" name="city" id="field-appr-city" class="form-input" placeholder="e.g. Harare" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" style="font-weight: 700; font-size: 0.78rem; margin-bottom: 4px;" for="field-appr-province">Province <span style="color: #ef4444;">*</span></label>
+                    <select name="zimprovince" id="field-appr-province" class="form-input" style="background: #ffffff;" required>
+                        <option value="">-- Select Province --</option>
+                        <option value="1">Harare</option>
+                        <option value="2">Bulawayo</option>
+                        <option value="3">Manicaland</option>
+                        <option value="4">Mashonaland Central</option>
+                        <option value="5">Mashonaland East</option>
+                        <option value="6">Mashonaland West</option>
+                        <option value="7">Masvingo</option>
+                        <option value="8">Matabeleland North</option>
+                        <option value="9">Matabeleland South</option>
+                        <option value="10">Midlands</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Discipline & Academic Standing -->
+        <div class="card" style="margin-bottom: 14px; padding: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border);">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: #059669; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">2</div>
+                <h3 style="margin: 0; font-size: 0.92rem; font-weight: 800; color: var(--text-main);">Discipline & Academic Standing</h3>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" style="font-weight: 700; font-size: 0.78rem; margin-bottom: 4px;" for="field-appr-function">Primary Practice Area / Discipline <span style="color: #ef4444;">*</span></label>
+                <select name="primaryfunction" id="field-appr-function" class="form-input" style="background: #ffffff;" required>
+                    <option value="">-- Select Practice Area --</option>
+                    <option value="1">Finance &amp; Accounting</option>
+                    <option value="2">Human Resources &amp; Payroll</option>
+                    <option value="3">Grants &amp; Donor Compliance</option>
+                    <option value="4">MEAL</option>
+                    <option value="5">Procurement &amp; Logistics</option>
+                    <option value="6">Internal Audit &amp; Risk</option>
+                    <option value="7">ICT / Systems Administration</option>
+                    <option value="8">Data, Reporting &amp; Business Intelligence</option>
+                    <option value="9">Software Development</option>
+                    <option value="10">Communications &amp; Digital</option>
+                    <option value="11">Administration &amp; Executive Support</option>
+                    <option value="12">Programme / Project Support</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" style="font-weight: 700; font-size: 0.78rem; margin-bottom: 4px;" for="field-appr-institution">Tertiary Institution Name <span style="color: #ef4444;">*</span></label>
+                <input type="text" name="institution_name" id="field-appr-institution" class="form-input" placeholder="e.g. University of Zimbabwe / NUST / HIT" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" style="font-weight: 700; font-size: 0.78rem; margin-bottom: 4px;" for="field-appr-degree">Degree / Diploma Programme <span style="color: #ef4444;">*</span></label>
+                <input type="text" name="degree_programme" id="field-appr-degree" class="form-input" placeholder="e.g. BSc Honours Computer Science" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label class="form-label" style="font-weight: 700; font-size: 0.78rem; margin-bottom: 4px;" for="field-appr-study-level">Current Study / Career Stage <span style="color: #ef4444;">*</span></label>
+                <select name="study_level" id="field-appr-study-level" class="form-input" style="background: #ffffff;" required>
+                    <option value="">-- Select Study Level --</option>
+                    <option value="Seeking Attachment (Year 3/Part 3)">Seeking WRL Industrial Attachment (Year 3 / Part 3)</option>
+                    <option value="Currently on Attachment">Currently on Attachment (Seeking Extension / Host Change)</option>
+                    <option value="Final Year Student">Final Year Student (Graduating within 6 months)</option>
+                    <option value="Recent Graduate">Recent Graduate (Graduated within past 24 months)</option>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" style="font-weight: 700; font-size: 0.78rem; margin-bottom: 4px;" for="field-appr-start-date">Earliest Start Date <span style="color: #ef4444;">*</span></label>
+                    <input type="date" name="wrl_start_date" id="field-appr-start-date" class="form-input" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" style="font-weight: 700; font-size: 0.78rem; margin-bottom: 4px;" for="field-appr-duration">Available Duration <span style="color: #ef4444;">*</span></label>
+                    <select name="wrl_duration_months" id="field-appr-duration" class="form-input" style="background: #ffffff;" required>
+                        <option value="12">12 Months (Standard Attachment)</option>
+                        <option value="6">6 Months</option>
+                        <option value="3">3 Months (Short Internship)</option>
+                        <option value="24">24 Months (Graduate Trainee)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: CV / Resume Upload -->
+        <div class="card" style="margin-bottom: 14px; padding: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border);">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: #059669; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800;">3</div>
+                <h3 style="margin: 0; font-size: 0.92rem; font-weight: 800; color: var(--text-main);">Curriculum Vitae / Resume</h3>
+            </div>
+
+            <div style="background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px 16px; text-align: center; cursor: pointer;" id="cv-upload-zone">
+                <input type="file" name="cv_doc" id="field-appr-cv" accept=".pdf,.docx,.doc" style="display: none;" required>
+                <div style="font-size: 2rem; margin-bottom: 6px;">📄</div>
+                <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); margin-bottom: 4px;" id="cv-label-text">
+                    Tap to Choose CV / Resume
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-muted);">
+                    PDF or Word (.docx, .doc) up to 5MB
+                </div>
+                <div id="cv-file-badge" style="display: none; margin-top: 10px; background: rgba(5, 150, 105, 0.1); color: #047857; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(5, 150, 105, 0.2);"></div>
+            </div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 6px;">
+                Include your academic coursework, projects, and software/technical proficiencies.
+            </div>
+        </div>
+
+        <!-- Verification Notice -->
+        <div style="background: rgba(37, 99, 235, 0.06); border: 1px solid rgba(37, 99, 235, 0.2); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; display: flex; gap: 8px;">
+            <div style="font-size: 1rem; color: #2563eb;">ℹ️</div>
+            <div style="font-size: 0.74rem; color: #1e3a8a; line-height: 1.45;">
+                <strong>Note on Verification:</strong> Transcripts, institutional recommendation letters, and referee contacts are requested <em>only after shortlisting</em> via an email invitation link.
+            </div>
+        </div>
+
+        <!-- Consent Declaration -->
+        <div style="display: flex; gap: 10px; align-items: flex-start; margin-bottom: 16px; padding: 0 4px;">
+            <input type="checkbox" name="consent_declaration" id="field-appr-consent" required checked style="width: 18px; height: 18px; margin-top: 2px; accent-color: #059669;">
+            <label for="field-appr-consent" style="font-size: 0.75rem; color: var(--text-main); line-height: 1.4;">
+                I confirm that the academic and personal details provided are accurate and reflect my bona fide status as an emerging practitioner.
+            </label>
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; gap: 10px;">
+            <button type="button" id="btn-cancel-apprentice" style="flex: 1; padding: 13px 14px; font-size: 0.85rem; font-weight: 700; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-muted); cursor: pointer;">
+                Cancel
+            </button>
+            <button type="submit" id="btn-submit-apprentice" class="btn-primary" style="flex: 2; padding: 13px 18px; font-size: 0.88rem; font-weight: 800; border-radius: 10px; background: linear-gradient(135deg, #065f46 0%, #047857 100%); color: #ffffff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(6, 95, 70, 0.25);">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                <span id="btn-submit-appr-text">Submit Application &amp; CV</span>
+            </button>
+        </div>
+    </form>
+</div>

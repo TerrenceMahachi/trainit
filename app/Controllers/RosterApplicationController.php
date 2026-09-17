@@ -285,6 +285,24 @@ class RosterApplicationController
         $application = null;
         if ($appId) {
             $application = $this->getAuthorizedApplication($appId);
+        } elseif (Auth::check()) {
+            // Check for existing submitted or active application for current user
+            $trackId = (int)$trackObj->iD;
+            $apps = Rosterapplication::findByQuery(
+                "SELECT * FROM rosterapplication WHERE user = ? AND applicationtrack = ? AND applicationstatus NOT IN (8, 9) ORDER BY iD DESC LIMIT 1",
+                [Auth::id(), $trackId]
+            );
+            if (!empty($apps)) {
+                $application = $apps[0];
+            }
+        }
+
+        $documents = [];
+        if ($application) {
+            $documents = Rosterdocument::findByQuery(
+                "SELECT * FROM rosterdocument WHERE rosterapplication = ? ORDER BY iD ASC",
+                [$application->iD]
+            );
         }
 
         $provinces = Zimprovince::findByQuery("SELECT * FROM zimprovince ORDER BY sort_order ASC");
@@ -296,6 +314,7 @@ class RosterApplicationController
             'title' => 'Express Apply: ' . $trackObj->name . ' Roster',
             'track' => $trackObj,
             'application' => $application,
+            'documents' => $documents,
             'user' => Auth::check() ? (new AccountController())->getUser(Auth::id()) : null,
             'provinces' => $provinces,
             'serviceFunctions' => $serviceFunctions,
@@ -305,6 +324,78 @@ class RosterApplicationController
 
         $viewName = $trackCode === 'associate' ? 'roster.apply_express_associate' : 'roster.apply_express_apprentice';
         return view($viewName, compact('data'));
+    }
+
+    /**
+     * Handle candidate revocation/withdrawal of their roster application.
+     */
+    public function handleRevokeApplication(): array
+    {
+        if (!Auth::check()) {
+            return ['status' => 0, 'message' => 'Unauthorized. Please log in.'];
+        }
+
+        $userId = Auth::id();
+        $appId = (int)($_POST['application_id'] ?? 0);
+        $trackCode = strtolower(trim($_POST['track_code'] ?? ''));
+
+        $db = (new \App\Models\Database())->getPDO();
+
+        $app = null;
+        if ($appId > 0) {
+            $stmt = $db->prepare("SELECT ra.*, at.code as track_code, at.name as track_name FROM rosterapplication ra JOIN applicationtrack at ON ra.applicationtrack = at.iD WHERE ra.iD = ? AND ra.user = ?");
+            $stmt->execute([$appId, $userId]);
+            $app = $stmt->fetch(\PDO::FETCH_ASSOC);
+        } elseif (!empty($trackCode)) {
+            $trackId = ($trackCode === 'associate') ? 2 : 1;
+            $stmt = $db->prepare("SELECT ra.*, at.code as track_code, at.name as track_name FROM rosterapplication ra JOIN applicationtrack at ON ra.applicationtrack = at.iD WHERE ra.user = ? AND ra.applicationtrack = ? AND ra.applicationstatus NOT IN (8, 9) ORDER BY ra.iD DESC LIMIT 1");
+            $stmt->execute([$userId, $trackId]);
+            $app = $stmt->fetch(\PDO::FETCH_ASSOC);
+        }
+
+        if (!$app) {
+            // Also check userprofile if rosterapplication was already cleared
+            $stmt = $db->prepare("SELECT up.* FROM userprofile up JOIN profiletype pt ON up.profiletype = pt.iD WHERE up.user = ? AND pt.code = ?");
+            $stmt->execute([$userId, $trackCode]);
+            $prof = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($prof) {
+                $db->prepare("DELETE FROM profilerequestaudit WHERE userprofile = ?")->execute([$prof['iD']]);
+                $db->prepare("DELETE FROM userprofile WHERE iD = ?")->execute([$prof['iD']]);
+                return ['status' => 1, 'message' => 'Application withdrawn successfully.'];
+            }
+            return ['status' => 0, 'message' => 'Application record not found.'];
+        }
+
+        $targetAppId = (int)$app['iD'];
+        $trackName = $app['track_name'] ?? 'Application';
+
+        // Clean up child tables
+        $db->prepare("DELETE FROM rosterdocument WHERE rosterapplication = ?")->execute([$targetAppId]);
+        $db->prepare("DELETE FROM rosterskill WHERE rosterapplication = ?")->execute([$targetAppId]);
+        $db->prepare("DELETE FROM rosterqualification WHERE rosterapplication = ?")->execute([$targetAppId]);
+        $db->prepare("DELETE FROM rosterworkhistory WHERE rosterapplication = ?")->execute([$targetAppId]);
+        $db->prepare("DELETE FROM rosterreferee WHERE rosterapplication = ?")->execute([$targetAppId]);
+        $db->prepare("DELETE FROM rosterjudgementresponse WHERE rosterapplication = ?")->execute([$targetAppId]);
+        $db->prepare("DELETE FROM rosterassessment WHERE rosterapplication = ?")->execute([$targetAppId]);
+        $db->prepare("DELETE FROM rosterstatusevent WHERE rosterapplication = ?")->execute([$targetAppId]);
+        $db->prepare("DELETE FROM apprenticeprofile WHERE rosterapplication = ?")->execute([$targetAppId]);
+        $db->prepare("DELETE FROM associateprofile WHERE rosterapplication = ?")->execute([$targetAppId]);
+        $db->prepare("DELETE FROM rosterapplication WHERE iD = ?")->execute([$targetAppId]);
+
+        // Also remove userprofile record and linked audits
+        $profileType = ($app['track_code'] === 'associate') ? 3 : 2;
+        $profStmt = $db->prepare("SELECT iD FROM userprofile WHERE user = ? AND profiletype = ?");
+        $profStmt->execute([$userId, $profileType]);
+        $profIds = $profStmt->fetchAll(\PDO::FETCH_COLUMN);
+        foreach ($profIds as $pid) {
+            $db->prepare("DELETE FROM profilerequestaudit WHERE userprofile = ?")->execute([$pid]);
+            $db->prepare("DELETE FROM userprofile WHERE iD = ?")->execute([$pid]);
+        }
+
+        return [
+            'status' => 1,
+            'message' => "Your application for {$trackName} has been withdrawn and removed."
+        ];
     }
 
     /**
@@ -330,6 +421,9 @@ class RosterApplicationController
 
             // 1. Authenticate or Provision User
             $userId = Auth::id();
+            if (!$userId && !empty($_POST['user_id'])) {
+                $userId = (int)$_POST['user_id'];
+            }
             $tempPass = null;
             if (!$userId) {
                 $existingUsers = User::findByQuery("SELECT * FROM user WHERE email = ? LIMIT 1", [$email]);
@@ -368,7 +462,7 @@ class RosterApplicationController
                             $chkTrack->execute([$userId, $trackTypeId]);
                             if (!$chkTrack->fetch()) {
                                 $title = ($trackTypeId === 2) ? 'Apprentice' : 'Associate Consultant';
-                                $insTrack = $pdo->prepare("INSERT INTO userprofile (user, profiletype, profilestatus, display_title, is_default, reg_by, reg_date, status) VALUES (?, ?, 3, ?, 1, 1, CURRENT_TIMESTAMP, 1)");
+                                $insTrack = $pdo->prepare("INSERT INTO userprofile (user, profiletype, profilestatus, display_title, is_default, reg_by, reg_date, status) VALUES (?, ?, 2, ?, 1, 1, CURRENT_TIMESTAMP, 1)");
                                 $insTrack->execute([$userId, $trackTypeId, $title]);
                             }
                         }
@@ -450,6 +544,27 @@ class RosterApplicationController
                 $this->saveRosterDocument($appId, 'CV_RESUME', $_FILES['cv_doc'], 'cv_' . $appId);
             }
 
+            // Sync userprofile for candidate to Under Review (profilestatus = 2)
+            try {
+                $trackTypeId = ($trackCode === 'apprentice') ? 2 : (($trackCode === 'associate') ? 3 : null);
+                if ($userId && $trackTypeId) {
+                    $pdo = \App\Models\Database::sharedPdo();
+                    $chkTrack = $pdo->prepare("SELECT iD FROM userprofile WHERE user = ? AND profiletype = ?");
+                    $chkTrack->execute([$userId, $trackTypeId]);
+                    $existingProf = $chkTrack->fetch(\PDO::FETCH_ASSOC);
+                    $title = ($trackTypeId === 2) ? 'Apprentice' : 'Associate Consultant';
+                    if ($existingProf) {
+                        $updProf = $pdo->prepare("UPDATE userprofile SET profilestatus = 2, request_notes = 'Application submitted and under review.', status = 1 WHERE iD = ?");
+                        $updProf->execute([$existingProf['iD']]);
+                    } else {
+                        $insTrack = $pdo->prepare("INSERT INTO userprofile (user, profiletype, profilestatus, display_title, request_notes, is_default, reg_by, reg_date, status) VALUES (?, ?, 2, ?, 'Application submitted and under review.', 0, ?, CURRENT_TIMESTAMP, 1)");
+                        $insTrack->execute([$userId, $trackTypeId, $title, $userId]);
+                    }
+                }
+            } catch (\Throwable $e) {
+                error_log("Failed to sync userprofile in handleExpressSubmit: " . $e->getMessage());
+            }
+
             // 5. Log Status Event
             $this->logStatusEvent($appId, 2, 'Initial one-page application and CV submitted via Opportunities page. Awaiting review.');
 
@@ -476,16 +591,31 @@ class RosterApplicationController
 
             $redirectUrl = $siteConfig->siteUrl . '/roster/application/status?id=' . $appId;
 
-            // Handle AJAX vs standard POST
-            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                return ['status' => 1, 'redirect' => $redirectUrl, 'msg' => 'Application submitted successfully!'];
+            // Handle AJAX / JSON vs standard POST
+            $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+                   || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+                   || (!empty($_POST['format']) && $_POST['format'] === 'json');
+
+            if ($isAjax) {
+                return [
+                    'status' => 1,
+                    'redirect' => $redirectUrl,
+                    'application_id' => $appId,
+                    'track_code' => $trackCode,
+                    'message' => 'Application submitted successfully! Our team will review your profile.',
+                    'msg' => 'Application submitted successfully! Our team will review your profile.'
+                ];
             }
 
             header("Location: " . $redirectUrl);
             exit;
         } catch (Exception $e) {
-            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-                return ['status' => 0, 'msg' => $e->getMessage()];
+            $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+                   || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+                   || (!empty($_POST['format']) && $_POST['format'] === 'json');
+
+            if ($isAjax) {
+                return ['status' => 0, 'message' => $e->getMessage(), 'msg' => $e->getMessage()];
             }
             $_SESSION['flash_error'] = $e->getMessage();
             header("Location: " . ($siteConfig->siteUrl . "/opportunities/apply/" . ($trackCode ?? 'apprentice')));
@@ -1619,19 +1749,43 @@ class RosterApplicationController
             $assessment = $app->assessment();
             $docs = $app->documents();
             $hasCv = false;
+            $cvDocId = 0;
             $cvPath = '';
             foreach ($docs as $doc) {
                 $dt = $doc->documenttype();
                 if ($dt && $dt->code === 'CV_RESUME') {
                     $hasCv = true;
+                    $cvDocId = (int)$doc->iD;
                     $cvPath = $doc->file_path;
                     break;
+                }
+            }
+            if (!$hasCv && !empty($docs)) {
+                // If no document marked specifically CV_RESUME, take first document as primary
+                $hasCv = true;
+                $cvDocId = (int)$docs[0]->iD;
+                $cvPath = $docs[0]->file_path;
+            }
+
+            $trackSummary = '';
+            if ($tr && $tr->code === 'apprentice') {
+                $ap = $app->apprenticeProfile();
+                if ($ap) {
+                    $trackSummary = ($ap->institution_name ?: '') . ($ap->degree_programme ? ' &bull; ' . $ap->degree_programme : '');
+                }
+            } elseif ($tr && $tr->code === 'associate') {
+                $asp = $app->associateProfile();
+                if ($asp) {
+                    $exp = $asp->years_experience ? $asp->years_experience . ' exp' : '';
+                    $rate = $asp->day_rate_expectation ? '$' . number_format((float)$asp->day_rate_expectation, 0) . '/day' : '';
+                    $trackSummary = implode(' &bull; ', array_filter([$exp, $rate]));
                 }
             }
 
             $records[] = [
                 'iD' => $app->iD,
                 'legal_name' => $app->legal_name,
+                'preferred_name' => $app->preferred_name,
                 'email' => $app->email,
                 'mobile_number' => $app->mobile_number,
                 'track_name' => $tr ? $tr->name : 'N/A',
@@ -1645,7 +1799,9 @@ class RosterApplicationController
                 'total_score' => $assessment ? (float)$assessment->total_score : null,
                 'gate_passed' => $assessment ? (bool)$assessment->eligibility_gate_passed : false,
                 'has_cv' => $hasCv,
+                'cv_doc_id' => $cvDocId,
                 'cv_path' => $cvPath,
+                'track_summary' => $trackSummary,
                 'doc_count' => count($docs),
                 'reg_date' => date('d M Y', strtotime($app->reg_date)),
             ];
@@ -1743,6 +1899,18 @@ class RosterApplicationController
             $statusObj = $app->applicationstatus();
             $statusName = $statusObj ? $statusObj->name : "Status #$newStatusId";
             $this->logStatusEvent($appId, $newStatusId, "Status updated to {$statusName} by reviewer");
+
+            // Carry the decision through to the account itself: "On Roster"
+            // grants the apprentice/associate profile (and the matching role),
+            // "Ineligible" declines it. Without this the application could be
+            // approved while the applicant's profile stayed pending forever.
+            \App\Helpers\AccountElevation::applyApplicationStatus(
+                (int) $app->user,
+                $app->applicationtrack,
+                $newStatusId,
+                (int) (Auth::id() ?: 0) ?: null,
+                trim($_POST['interview_notes'] ?? '') ?: "Decision recorded by reviewer: {$statusName}."
+            );
         }
 
         // Send Review Decision or Shortlist notification to Candidate
@@ -1795,4 +1963,87 @@ class RosterApplicationController
             'msg' => 'Assessment and scoring recorded successfully!'
         ];
     }
+
+    /**
+     * Securely stream or download an uploaded applicant document.
+     * Route: GET /roster/document/view?id=:id or GET /roster/document/download?id=:id
+     */
+    public function viewDocument(int $docId, bool $download = false): void
+    {
+        if ($docId <= 0) {
+            http_response_code(400);
+            echo "Invalid document ID requested.";
+            exit;
+        }
+
+        $doc = (new Rosterdocument())->find($docId);
+        if (!$doc) {
+            http_response_code(404);
+            echo "Document not found.";
+            exit;
+        }
+
+        $app = $doc->rosterapplication();
+        if (!$app) {
+            http_response_code(404);
+            echo "Associated application not found.";
+            exit;
+        }
+
+        // Authorization check: User must be Admin, Vetting Officer, Service Manager, or the applicant themselves
+        if (!Auth::check()) {
+            http_response_code(403);
+            echo "Unauthorized access. Please log in.";
+            exit;
+        }
+
+        $isReviewer = Auth::isAdmin() || Auth::isVettingOfficer() || Auth::isServiceManager();
+        $isOwner = (int)$app->user === (int)Auth::id();
+
+        if (!$isReviewer && !$isOwner) {
+            http_response_code(403);
+            echo "Access denied to this document.";
+            exit;
+        }
+
+        $filename = basename($doc->file_path);
+        $fullPath = _BASE_PATH . '/storage/roster_uploads/' . $filename;
+
+        if (!file_exists($fullPath)) {
+            http_response_code(404);
+            echo "Document file does not exist on disk.";
+            exit;
+        }
+
+        $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+        $mimeTypes = [
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'txt' => 'text/plain',
+        ];
+
+        $mimeType = $mimeTypes[$ext] ?? 'application/octet-stream';
+        $originalName = !empty($doc->original_name) ? $doc->original_name : $filename;
+
+        // Clean output buffers
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: ' . $mimeType);
+        header('Content-Length: ' . filesize($fullPath));
+        header('Cache-Control: private, max-age=0, must-revalidate');
+        header('Pragma: public');
+
+        $disposition = $download ? 'attachment' : 'inline';
+        header('Content-Disposition: ' . $disposition . '; filename="' . rawurlencode($originalName) . '"');
+
+        readfile($fullPath);
+        exit;
+    }
 }
+

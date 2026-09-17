@@ -5,22 +5,31 @@ namespace App\Models;
 use App\Models\Model;
 
 
-class UserProfile extends Model
+class Userprofile extends Model
 {
-    protected $table = 'userProfile';
+    protected $table = 'userprofile';
 
     protected function getTableCreationQuery()
     {
         return "
-            CREATE TABLE `userProfile` (
+            CREATE TABLE IF NOT EXISTS `userprofile` (
                 `iD` INTEGER PRIMARY KEY AUTOINCREMENT,
-                `name` TEXT NOT NULL,
                 `user` INTEGER NOT NULL,
+                `profiletype` INTEGER NOT NULL,
+                `profilestatus` INTEGER NOT NULL,
+                `display_title` TEXT DEFAULT NULL,
+                `is_default` BOOLEAN NOT NULL DEFAULT 0,
+                `request_notes` TEXT DEFAULT NULL,
+                `reviewer_notes` TEXT DEFAULT NULL,
+                `reviewed_by` INTEGER DEFAULT NULL,
+                `reviewed_at` DATETIME DEFAULT NULL,
                 `reg_by` INTEGER NOT NULL DEFAULT '1',
                 `reg_date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                `status` INTEGER NOT NULL DEFAULT 1
-                 
-                 ,FOREIGN KEY(`user`) REFERENCES `user`(iD)
+                `status` INTEGER NOT NULL DEFAULT 1,
+                FOREIGN KEY(`user`) REFERENCES `user`(`iD`),
+                FOREIGN KEY(`profiletype`) REFERENCES `profiletype`(`iD`),
+                FOREIGN KEY(`profilestatus`) REFERENCES `profilestatus`(`iD`),
+                FOREIGN KEY(`reviewed_by`) REFERENCES `user`(`iD`)
             );
         ";
     }
@@ -32,6 +41,18 @@ class UserProfile extends Model
     public function user()
 {
     return $this->belongsTo(User::class, 'user');
+}
+public function profiletype()
+{
+    return $this->belongsTo(Profiletype::class, 'profiletype');
+}
+public function profilestatus()
+{
+    return $this->belongsTo(Profilestatus::class, 'profilestatus');
+}
+public function reviewed_by()
+{
+    return $this->belongsTo(User::class, 'reviewed_by');
 }
 
     public function status()

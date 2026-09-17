@@ -308,15 +308,84 @@ $step4Done = in_array($statusCode, ['on_roster', 'deployed']);
                 <?php endif; ?>
 
                 <!-- Actions Strip -->
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <a href="<?= $siteConfig->siteUrl; ?>/dashboard" class="btn btn-outline-primary rounded-pill px-4">
-                        <i class="fa fa-gauge me-1"></i> Go to Dashboard
-                    </a>
-                    <a href="<?= $siteConfig->siteUrl; ?>/opportunities" class="btn btn-outline-secondary rounded-pill px-4">
-                        <i class="fa fa-briefcase me-1"></i> View More Opportunities
-                    </a>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 pt-3 border-top">
+                    <?php if (!in_array($statusCode, ['on_roster', 'deployed', 'rejected', 'withdrawn'])): ?>
+                        <button type="button" class="btn btn-outline-danger rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#revokeStatusModal">
+                            <i class="fa fa-trash-can me-1"></i> Revoke / Withdraw Application
+                        </button>
+                    <?php else: ?>
+                        <div></div>
+                    <?php endif; ?>
+                    <div class="d-flex gap-2">
+                        <a href="<?= $siteConfig->siteUrl; ?>/dashboard" class="btn btn-outline-primary rounded-pill px-4">
+                            <i class="fa fa-gauge me-1"></i> Go to Dashboard
+                        </a>
+                        <a href="<?= $siteConfig->siteUrl; ?>/opportunities" class="btn btn-primary rounded-pill px-4">
+                            <i class="fa fa-briefcase me-1"></i> View More Opportunities
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Revoke Confirmation Modal -->
+                <div class="modal fade" id="revokeStatusModal" tabindex="-1" aria-labelledby="revokeStatusModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content rounded-4 border-0 shadow">
+                            <div class="modal-header border-0 pb-0">
+                                <h5 class="modal-title fw-bold text-danger" id="revokeStatusModalLabel">
+                                    <i class="fa fa-triangle-exclamation me-2"></i> Withdraw Application?
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body py-4">
+                                <p class="text-muted mb-0">
+                                    Are you sure you want to withdraw your <strong><?= htmlspecialchars($track ? $track->name : 'Roster'); ?> Application</strong>? This will remove your application from our review queue. You will be able to submit a fresh application at any time.
+                                </p>
+                            </div>
+                            <div class="modal-footer border-0 pt-0">
+                                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Keep Application</button>
+                                <button type="button" id="btn_confirm_revoke_status" class="btn btn-danger rounded-pill px-4 fw-bold">
+                                    <i class="fa fa-trash-can me-1"></i> Yes, Withdraw
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </main>
+
+<script>
+(function() {
+    const btnRevoke = document.getElementById('btn_confirm_revoke_status');
+    if (btnRevoke) {
+        btnRevoke.addEventListener('click', async function() {
+            btnRevoke.disabled = true;
+            btnRevoke.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Withdrawing...';
+            try {
+                const formData = new FormData();
+                formData.append('application_id', '<?= $appId; ?>');
+                formData.append('track_code', '<?= $trackCode; ?>');
+
+                const res = await fetch('<?= $siteConfig->siteUrl; ?>/opportunities/apply/revoke', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.status === 1) {
+                    window.location.href = '<?= $siteConfig->siteUrl; ?>/opportunities';
+                } else {
+                    alert(data.message || 'Error withdrawing application.');
+                    btnRevoke.disabled = false;
+                    btnRevoke.innerHTML = '<i class="fa fa-trash-can me-1"></i> Yes, Withdraw';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to withdraw application. Please try again.');
+                btnRevoke.disabled = false;
+                btnRevoke.innerHTML = '<i class="fa fa-trash-can me-1"></i> Yes, Withdraw';
+            }
+        });
+    }
+})();
+</script>

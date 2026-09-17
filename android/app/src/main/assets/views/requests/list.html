@@ -1,0 +1,29 @@
+<div class="view">
+    <div class="section-title">
+        <span id="requests-list-title">Service Requests</span>
+        <span id="requests-list-counter" class="badge badge-blue">0</span>
+    </div>
+
+    <!-- Live Search Input -->
+    <div class="search-box-wrap" style="margin-bottom: 12px;">
+        <input type="text" id="requests-search-input" class="form-input" placeholder="Search by title, ticket code, or client..." style="border-radius: 20px; padding: 10px 16px;">
+    </div>
+
+    <!-- Status Filter Pills -->
+    <div id="filter-pills-container" class="filter-pills-row" style="display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto;">
+        <button class="filter-pill active" data-status="all">All Items</button>
+        <button class="filter-pill" data-status="active">Active</button>
+        <button class="filter-pill" data-status="closed">Resolved / Closed</button>
+    </div>
+
+    <div id="requests-ledger-container">
+        <div class="empty-state">
+            <p>Loading records...</p>
+        </div>
+    </div>
+
+    <!-- Floating Action Button (+ New Request for clients) -->
+    <button type="button" id="fab-new-request" class="fab-btn" style="display: none;" title="Create Work Request">
+        +
+    </button>
+</div>

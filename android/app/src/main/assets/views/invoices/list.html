@@ -1,0 +1,28 @@
+<div class="view">
+    <div style="margin-bottom: 12px;">
+        <a href="#" id="btn-back-invoices" class="section-link">← Back to Workspace</a>
+    </div>
+
+    <!-- Total Balance Banner -->
+    <div class="hero-card" style="padding: 18px; margin-bottom: 14px; background: #ffffff; border: 1px solid var(--border);">
+        <div class="hero-greeting" style="color: var(--text-muted);">Billing Ledger</div>
+        <h2 id="invoices-total-banner" class="hero-name" style="font-size: 1.4rem; color: var(--text-main);">Corporate Invoices</h2>
+        <div class="hero-badge-group">
+            <span class="hero-badge" style="background: rgba(16, 185, 129, 0.12); color: #0e7256; border: 1px solid rgba(16, 185, 129, 0.25);">ZIMRA 15% VAT Compliant</span>
+            <span class="hero-badge" style="background: rgba(59, 130, 246, 0.1); color: #1e40af; border: 1px solid rgba(59, 130, 246, 0.2);">USD Currency</span>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-pills-row" style="display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto;">
+        <button class="filter-pill active" data-filter="all">All Statements</button>
+        <button class="filter-pill" data-filter="due">Pending / Due</button>
+        <button class="filter-pill" data-filter="paid">Settled</button>
+    </div>
+
+    <div id="invoices-container">
+        <div class="empty-state">
+            <p>Loading statements...</p>
+        </div>
+    </div>
+</div>

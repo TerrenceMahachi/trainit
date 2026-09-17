@@ -30,9 +30,9 @@ define('_ENV', $isProduction ? 'production' : 'development');
 // (used as ?v= on asset URLs instead of a random value that defeats caching).
 define('_ASSET_VERSION', '20260909.2');
 
-// Accounts are issued after Tsigiro approves a recruitment or client
-// onboarding submission. The portal itself is not a public registration form.
-define('_ALLOW_PUBLIC_REGISTRATION', false);
+// Public self-registration and multi-profile onboarding are active.
+// Registered users start as General User and can request specialized accounts.
+define('_ALLOW_PUBLIC_REGISTRATION', true);
 define('_DEFAULT_EMAIL', 'support@tsigiro.co.zw');
 define('_ENABLE_DEMO_MODULES', false);
 define('_ENABLE_MOBILE_DOWNLOADS', false);

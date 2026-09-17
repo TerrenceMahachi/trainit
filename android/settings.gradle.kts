@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "master"
+rootProject.name = "tsigiro-mobile"
 include(":app")

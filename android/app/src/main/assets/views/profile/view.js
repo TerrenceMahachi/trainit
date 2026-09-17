@@ -12,8 +12,6 @@ window.init = function() {
     const logoutBtn = document.getElementById('btn-logout');
     const shortcutsCard = document.getElementById('profile-shortcuts-card');
     const profileInvoicesBtn = document.getElementById('btn-profile-invoices');
-    const darkToggleBtn = document.getElementById('btn-toggle-darkmode');
-    const darkLabel = document.getElementById('darkmode-label');
 
     const persona = user.persona || '';
 
@@ -98,7 +96,7 @@ window.init = function() {
                     : (isActive ? `<span class="profile-status-pill success" style="background:#dcfce7;color:#15803d;">Active Profile</span>` : `<span class="profile-status-pill secondary">Approved</span>`);
 
                 return `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 8px; border: 1.5px solid ${isActive ? 'var(--primary)' : 'var(--border)'}; background: ${isActive ? 'rgba(50, 201, 154, 0.12)' : 'var(--card-bg, #111a17)'};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 8px; border: 1.5px solid ${isActive ? 'var(--primary)' : 'var(--border)'}; background: ${isActive ? 'rgba(50, 201, 154, 0.12)' : '#ffffff'};">
                         <div>
                             <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main);">${escapeHtml(title)}</div>
                             <div style="font-size: 0.72rem; color: var(--text-muted);">${p.type_description || 'Specialized role'}</div>
@@ -142,23 +140,9 @@ window.init = function() {
         }
     }
 
-    // Dark Mode Toggle
-    function updateDarkLabel() {
-        const isDark = document.body.classList.contains('dark-mode');
-        if (darkLabel) {
-            darkLabel.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
-        }
-    }
-    updateDarkLabel();
-
-    if (darkToggleBtn) {
-        darkToggleBtn.addEventListener('click', () => {
-            const isDark = document.body.classList.toggle('dark-mode');
-            localStorage.setItem('tsigiro_theme', isDark ? 'dark' : 'light');
-            updateDarkLabel();
-            window.showToast(isDark ? 'Dark theme enabled' : 'Light theme enabled', 'info');
-        });
-    }
+    // Enforce light mode strictly across app
+    localStorage.removeItem('tsigiro_theme');
+    document.body.classList.remove('dark-mode');
 
     // Password Visibility Toggles
     document.querySelectorAll('.btn-toggle-password').forEach(btn => {

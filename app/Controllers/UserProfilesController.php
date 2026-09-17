@@ -1,10 +1,10 @@
 <?php
 namespace App\Controllers;
 
-use App\Models\UserProfile;
+use App\Models\Userprofile;
 use App\Models\Database;
 
-class UserProfilesController
+class UserprofilesController
 {
     public function index()
     {
@@ -15,18 +15,30 @@ if (isset($_POST['user']) && $_POST['user'] != '') {
     if ($search != '') {  $search .= ' AND '; }
     $search .= ' user=' . $_POST['user'];
 }
+if (isset($_POST['profiletype']) && $_POST['profiletype'] != '') {
+    if ($search != '') {  $search .= ' AND '; }
+    $search .= ' profiletype=' . $_POST['profiletype'];
+}
+if (isset($_POST['profilestatus']) && $_POST['profilestatus'] != '') {
+    if ($search != '') {  $search .= ' AND '; }
+    $search .= ' profilestatus=' . $_POST['profilestatus'];
+}
+if (isset($_POST['reviewed_by']) && $_POST['reviewed_by'] != '') {
+    if ($search != '') {  $search .= ' AND '; }
+    $search .= ' reviewed_by=' . $_POST['reviewed_by'];
+}
 
         if (isset($_POST['search'])) {
             $searchTerm = $_POST['search'];
             $escapedTerm = (new Database)->escape("%$searchTerm%");
             if ($search != "") {  $search .= " AND ";  }
-            $search .= "(`name` LIKE $escapedTerm)";
+            $search .= "(`display_title` LIKE $escapedTerm OR `is_default` LIKE $escapedTerm OR `request_notes` LIKE $escapedTerm OR `reviewer_notes` LIKE $escapedTerm OR `reviewed_at` LIKE $escapedTerm)";
         }
         $selected_page = isset($_POST['page']) ? $_POST['page'] : 1;
 
         $page_size = (isset($_POST['page_size']) && $_POST['page_size'] != "") ? $_POST['page_size'] : 10;
         $order_by = (isset($_POST['order_by']) && $_POST['order_by'] != "") ? $_POST['order_by'] : 'reg_date DESC';
-        $pagination_data = UserProfile::page($selected_page, $page_size, $search, $order_by);
+        $pagination_data = Userprofile::page($selected_page, $page_size, $search, $order_by);
         $data = [
             "order_by" => $order_by,
             "status" => "success",
@@ -47,28 +59,49 @@ if (isset($_POST['user']) && $_POST['user'] != '') {
         $_error = false;
         $_result = "";
         
-        $name = $_POST["name"];
         $user = $_POST["user"];
+        $profiletype = $_POST["profiletype"];
+        $profilestatus = $_POST["profilestatus"];
+        $display_title = $_POST["display_title"];
+        $is_default = $_POST["is_default"];
+        $request_notes = $_POST["request_notes"];
+        $reviewer_notes = $_POST["reviewer_notes"];
+        $reviewed_by = $_POST["reviewed_by"];
+        $reviewed_at = $_POST["reviewed_at"];
         
        
         
-        if ($name == "" && (!$_error)) {  $_result .= "<br>Error: name cannot be blank"; $_error = true; }
         if ($user == "" && (!$_error)) {  $_result .= "<br>Error: Please provide a valid value for fk_user "; $_error = true; }
+        if ($profiletype == "" && (!$_error)) {  $_result .= "<br>Error: Please provide a valid value for fk_profiletype "; $_error = true; }
+        if ($profilestatus == "" && (!$_error)) {  $_result .= "<br>Error: Please provide a valid value for fk_profilestatus "; $_error = true; }
+        if ($display_title == "" && (!$_error)) {  $_result .= "<br>Error: display_title cannot be blank"; $_error = true; }
+        if ($is_default == "" && (!$_error)) {  $_result .= "<br>Error: is_default cannot be blank"; $_error = true; }
+        if ($request_notes == "" && (!$_error)) {  $_result .= "<br>Error: request_notes cannot be blank"; $_error = true; }
+        if ($reviewer_notes == "" && (!$_error)) {  $_result .= "<br>Error: reviewer_notes cannot be blank"; $_error = true; }
+        if ($reviewed_by == "" && (!$_error)) {  $_result .= "<br>Error: Please provide a valid value for fk_reviewed_by "; $_error = true; }
+        if ($reviewed_at == "" && (!$_error)) {  $_result .= "<br>Error: reviewed_at cannot be blank"; $_error = true; }
 
         if (!$_error) {
             $sql = "SELECT * FROM userprofile WHERE name=?";
-            $records = UserProfile::findByQuery($sql, [$name]);
+            $records = Userprofile::findByQuery($sql, [$name]);
             if (count($records) > 0) {
                 $_error = true;
                 $_result .= "Error: Record name already used, try a different name";
             }
         }
          if (!$_error) {
-            $record = new UserProfile();
+            $record = new Userprofile();
             $record->reg_by = $_COOKIE['user'];
             
-            $record->name = $name;
             $record->user = $user;
+            $record->profiletype = $profiletype;
+            $record->profilestatus = $profilestatus;
+            $record->display_title = $display_title;
+            $record->is_default = $is_default;
+            $record->request_notes = $request_notes;
+            $record->reviewer_notes = $reviewer_notes;
+            $record->reviewed_by = $reviewed_by;
+            $record->reviewed_at = $reviewed_at;
             $record->save();
             $_result = "Record $name added successfully.";
         }/* */
@@ -80,27 +113,48 @@ if (isset($_POST['user']) && $_POST['user'] != '') {
         $_result = "";
         $status = $_POST["status"];
         
-        $name = $_POST["name"];
         $user = $_POST["user"];
+        $profiletype = $_POST["profiletype"];
+        $profilestatus = $_POST["profilestatus"];
+        $display_title = $_POST["display_title"];
+        $is_default = $_POST["is_default"];
+        $request_notes = $_POST["request_notes"];
+        $reviewer_notes = $_POST["reviewer_notes"];
+        $reviewed_by = $_POST["reviewed_by"];
+        $reviewed_at = $_POST["reviewed_at"];
 
 
 
         
-        if ($name == "" && (!$_error)) {  $_result .= "<br>Error: name cannot be blank"; $_error = true; }
         if ($user == "" && (!$_error)) {  $_result .= "<br>Error: Please provide a valid value for fk_user "; $_error = true; }
+        if ($profiletype == "" && (!$_error)) {  $_result .= "<br>Error: Please provide a valid value for fk_profiletype "; $_error = true; }
+        if ($profilestatus == "" && (!$_error)) {  $_result .= "<br>Error: Please provide a valid value for fk_profilestatus "; $_error = true; }
+        if ($display_title == "" && (!$_error)) {  $_result .= "<br>Error: display_title cannot be blank"; $_error = true; }
+        if ($is_default == "" && (!$_error)) {  $_result .= "<br>Error: is_default cannot be blank"; $_error = true; }
+        if ($request_notes == "" && (!$_error)) {  $_result .= "<br>Error: request_notes cannot be blank"; $_error = true; }
+        if ($reviewer_notes == "" && (!$_error)) {  $_result .= "<br>Error: reviewer_notes cannot be blank"; $_error = true; }
+        if ($reviewed_by == "" && (!$_error)) {  $_result .= "<br>Error: Please provide a valid value for fk_reviewed_by "; $_error = true; }
+        if ($reviewed_at == "" && (!$_error)) {  $_result .= "<br>Error: reviewed_at cannot be blank"; $_error = true; }
         if (!$_error) {
             $sql = "SELECT * FROM userprofile WHERE name=? AND iD!=?";
-            $records = UserProfile::findByQuery($sql, [$name, $recordiD]);
+            $records = Userprofile::findByQuery($sql, [$name, $recordiD]);
             if (count($records) > 0) {
                 $_error = true;
                 $_result .= "Error: Record name already used, try a different name";
             }
         }
          if (!$_error) {
-            $record = UserProfile::where('iD', $recordiD)[0];
+            $record = Userprofile::where('iD', $recordiD)[0];
             
-            $record->name = $name;
             $record->user = $user;
+            $record->profiletype = $profiletype;
+            $record->profilestatus = $profilestatus;
+            $record->display_title = $display_title;
+            $record->is_default = $is_default;
+            $record->request_notes = $request_notes;
+            $record->reviewer_notes = $reviewer_notes;
+            $record->reviewed_by = $reviewed_by;
+            $record->reviewed_at = $reviewed_at;
             $record->status = $status;
             $_result = $record->update();
 

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 640" role="img" aria-labelledby="title desc">
+  <title id="title">Trainit emblem</title>
+  <desc id="desc">Trainit geometric plum emblem with an open-book chevron and lower ring.</desc>
+  <g fill="#2A114B">
+    <path d="M192 40 348 140 348 434 192 333 36 434 36 140 192 40ZM192 102 79 175 79 356 170 297 170 149 192 102ZM214 149 214 297 305 356 305 175 214 102 214 149Z"/>
+    <path d="M192 472A84 84 0 1 1 192 640A84 84 0 0 1 192 472ZM192 516A40 40 0 1 0 192 596A40 40 0 0 0 192 516Z"/>
+  </g>
+</svg>

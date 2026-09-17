@@ -98,12 +98,14 @@ return [
     ],
 
     // Administrator Only Links (Role 1)
+    ['label' => 'Account Requests', 'url' => '/userprofiles', 'roles' => ['admin', 'vetting']],
     ['label' => 'Staff Directory', 'url' => '/admin/staff', 'roles' => ['admin']],
     [
         'label' => 'Admin',
         'roles' => ['admin'],
         'match' => '/admin',
         'children' => [
+            ['label' => 'Account & Role Requests Queue', 'url' => '/userprofiles'],
             ['label' => 'Executive Analytics & Reports', 'url' => '/admin/analytics'],
             ['label' => 'Talent Vetting Pipeline', 'url' => '/admin/roster'],
             ['label' => 'Compliance Radar & Expiry Tracker', 'url' => '/admin/compliance'],
@@ -119,7 +121,6 @@ return [
             ['label' => 'Staff Payroll & Payslips', 'url' => '/admin/payroll'],
             ['label' => 'Register Staff Member', 'url' => '/admin/staff/create'],
             ['label' => 'User Accounts', 'url' => '/users'],
-            ['label' => 'System Dictionaries', 'url' => '/userprofiles'],
         ],
     ],
 ];
