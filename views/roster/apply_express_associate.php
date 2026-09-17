@@ -33,17 +33,24 @@ $provinceObj = $application ? $application->zimprovince() : null;
                         <i class="fa fa-user-tie me-1"></i> Associate Specialist Network
                     </span>
                 </div>
-                <?php if (!$isSubmitted): ?>
-                <!-- Autosave / Restore Status Indicator -->
-                <div id="storage_status_badge" style="display: none;">
-                    <span class="badge bg-light text-primary border px-2 py-1 small">
-                        <i class="fa fa-cloud-arrow-down me-1"></i> Form draft restored
-                    </span>
-                    <button type="button" id="btn_clear_draft" class="btn btn-link btn-sm text-danger p-0 ms-2 text-decoration-none small">
-                        <i class="fa fa-trash-can"></i> Clear
-                    </button>
+                <div class="d-flex align-items-center gap-2">
+                    <?php if (!$user && !$isSubmitted): ?>
+                        <span class="small text-muted me-2 d-none d-sm-inline">
+                            Already registered? <a href="<?= $siteConfig->siteUrl; ?>/login" class="text-primary fw-semibold">Sign in here</a>
+                        </span>
+                    <?php endif; ?>
+                    <?php if (!$isSubmitted): ?>
+                    <!-- Autosave / Restore Status Indicator -->
+                    <div id="storage_status_badge" style="display: none;">
+                        <span class="badge bg-light text-primary border px-2 py-1 small">
+                            <i class="fa fa-cloud-arrow-down me-1"></i> Form draft restored
+                        </span>
+                        <button type="button" id="btn_clear_draft" class="btn btn-link btn-sm text-danger p-0 ms-2 text-decoration-none small">
+                            <i class="fa fa-trash-can"></i> Clear
+                        </button>
+                    </div>
+                    <?php endif; ?>
                 </div>
-                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -269,16 +276,59 @@ $provinceObj = $application ? $application->zimprovince() : null;
                                                placeholder="e.g. Harare, Bulawayo, Diaspora">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label fw-semibold">Province / Location <span class="text-danger">*</span></label>
-                                        <select name="zimprovince" id="field_zimprovince" class="form-select" required>
-                                            <option value="">-- Select Province --</option>
-                                            <?php foreach ($provinces as $prov): ?>
-                                                <option value="<?= $prov->iD; ?>">
-                                                    <?= htmlspecialchars($prov->name); ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
+                                         <label class="form-label fw-semibold">Province / Location <span class="text-danger">*</span></label>
+                                         <select name="zimprovince" id="field_zimprovince" class="form-select" required>
+                                             <option value="">-- Select Province --</option>
+                                             <?php foreach ($provinces as $prov): ?>
+                                                 <option value="<?= $prov->iD; ?>">
+                                                     <?= htmlspecialchars($prov->name); ?>
+                                                 </option>
+                                             <?php endforeach; ?>
+                                         </select>
+                                     </div>
+                                     <?php if ($user): ?>
+                                         <div class="col-12 mt-2">
+                                             <div class="alert alert-info py-2 px-3 small mb-0 rounded-3 d-flex align-items-center gap-2">
+                                                 <i class="fa fa-user-check text-primary fs-5"></i>
+                                                 <div>
+                                                     Signed in as <strong><?= htmlspecialchars($user->name); ?></strong> (<?= htmlspecialchars($user->email); ?>). You can manage your applications anytime via your consultant dashboard.
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     <?php else: ?>
+                                         <!-- Sign-In Account Credentials -->
+                                         <div class="col-12 mt-3">
+                                             <div class="p-3 rounded-3 bg-light border border-primary-subtle">
+                                                 <div class="d-flex align-items-center justify-content-between mb-2">
+                                                     <span class="fw-semibold text-dark"><i class="fa fa-lock text-primary me-2"></i>Create Portal Account Sign-In Details</span>
+                                                     <span class="badge bg-primary text-white">Direct Access</span>
+                                                 </div>
+                                                 <p class="small text-muted mb-3">Set a password for your consultant account so you can log in anytime to monitor your application progress, complete your Verified Talent Dossier, and manage your advisory profile.</p>
+                                                 <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-semibold">Create Password <span class="text-danger">*</span></label>
+                                                        <div class="input-group">
+                                                            <input type="password" name="password" id="field_password" class="form-control" required minlength="6" placeholder="Min 6 characters">
+                                                            <button class="btn btn-outline-secondary toggle-password-btn" type="button" data-target="field_password" title="Show / Hide Password">
+                                                                <i class="fa fa-eye"></i>
+                                                            </button>
+                                                        </div>
+                                                        <div class="form-text">Minimum 6 characters.</div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+                                                        <div class="input-group">
+                                                            <input type="password" name="password_confirmation" id="field_password_confirmation" class="form-control" required minlength="6" placeholder="Re-enter password">
+                                                            <button class="btn btn-outline-secondary toggle-password-btn" type="button" data-target="field_password_confirmation" title="Show / Hide Password">
+                                                                <i class="fa fa-eye"></i>
+                                                            </button>
+                                                        </div>
+                                                        <div id="password_match_feedback" class="form-text text-muted">Must match password above.</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
@@ -497,12 +547,71 @@ $provinceObj = $application ? $application->zimprovince() : null;
             });
         }
 
-        // Clear storage on successful submission
-        form.addEventListener('submit', function() {
+        // Clear storage and validate passwords on submission
+        form.addEventListener('submit', function(e) {
+            const passInput = document.getElementById('field_password');
+            const confirmInput = document.getElementById('field_password_confirmation');
+            if (passInput && confirmInput) {
+                if (passInput.value.length < 6) {
+                    alert('Please choose a password with at least 6 characters.');
+                    passInput.focus();
+                    e.preventDefault();
+                    return false;
+                }
+                if (passInput.value !== confirmInput.value) {
+                    alert('Passwords do not match. Please verify your password confirmation.');
+                    confirmInput.focus();
+                    e.preventDefault();
+                    return false;
+                }
+            }
             try {
                 localStorage.removeItem(STORAGE_KEY);
             } catch (e) {}
         });
+
+        // Password visibility toggles
+        document.querySelectorAll('.toggle-password-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const targetInput = document.getElementById(targetId);
+                const icon = this.querySelector('i');
+                if (targetInput) {
+                    if (targetInput.type === 'password') {
+                        targetInput.type = 'text';
+                        if (icon) {
+                            icon.classList.remove('fa-eye');
+                            icon.classList.add('fa-eye-slash');
+                        }
+                    } else {
+                        targetInput.type = 'password';
+                        if (icon) {
+                            icon.classList.remove('fa-eye-slash');
+                            icon.classList.add('fa-eye');
+                        }
+                    }
+                }
+            });
+        });
+
+        // Real-time password match feedback
+        const passField = document.getElementById('field_password');
+        const confirmField = document.getElementById('field_password_confirmation');
+        const matchFeedback = document.getElementById('password_match_feedback');
+
+        function checkPasswordMatch() {
+            if (!passField || !confirmField || !matchFeedback) return;
+            if (confirmField.value.length === 0) {
+                matchFeedback.textContent = 'Must match password above.';
+                matchFeedback.className = 'form-text text-muted';
+            } else if (passField.value === confirmField.value) {
+                matchFeedback.innerHTML = '<span class="text-primary fw-semibold"><i class="fa fa-check me-1"></i> Passwords match</span>';
+            } else {
+                matchFeedback.innerHTML = '<span class="text-danger fw-semibold"><i class="fa fa-xmark me-1"></i> Passwords do not match</span>';
+            }
+        }
+        if (passField) passField.addEventListener('input', checkPasswordMatch);
+        if (confirmField) confirmField.addEventListener('input', checkPasswordMatch);
     }
 })();
 </script>

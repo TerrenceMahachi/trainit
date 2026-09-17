@@ -425,11 +425,44 @@ class RosterApplicationController
                 $userId = (int)$_POST['user_id'];
             }
             $tempPass = null;
+            $password = trim($_POST['password'] ?? '');
+            $passwordConfirmation = trim($_POST['password_confirmation'] ?? '');
+
             if (!$userId) {
+                // If candidate provided a password, validate format and confirmation
+                if ($password !== '') {
+                    if (strlen($password) < 6) {
+                        throw new Exception('Password must be at least 6 characters long.');
+                    }
+                    if ($passwordConfirmation !== '' && $password !== $passwordConfirmation) {
+                        throw new Exception('Passwords do not match. Please verify your password confirmation.');
+                    }
+                }
+
                 $existingUsers = User::findByQuery("SELECT * FROM user WHERE email = ? LIMIT 1", [$email]);
                 if (!empty($existingUsers)) {
                     $user = $existingUsers[0];
                     $userId = (int)$user->iD;
+
+                    $logins = $user->login();
+                    if (empty($logins)) {
+                        $login = new Login();
+                        $login->user = $userId;
+                        $login->password = password_hash($password !== '' ? $password : bin2hex(random_bytes(6)), PASSWORD_BCRYPT);
+                        $login->status = 1;
+                        $login->reg_by = $userId;
+                        $login->save();
+                        if ($password !== '') {
+                            \App\Helpers\PasswordResume::enroll((int)$userId, $password);
+                        }
+                    } else {
+                        $userLogin = $logins[0];
+                        if ($password !== '') {
+                            if (!password_verify($password, $userLogin->password)) {
+                                throw new Exception('An account with this email address already exists. Please enter your correct account password, or sign in before applying.');
+                            }
+                        }
+                    }
                 } else {
                     $user = new User();
                     $user->name = $legalName;
@@ -439,12 +472,23 @@ class RosterApplicationController
                     $user->save();
                     $userId = (int)$user->iD;
 
-                    $tempPass = bin2hex(random_bytes(6));
+                    if ($password === '') {
+                        $tempPass = bin2hex(random_bytes(6));
+                        $hashedPassword = password_hash($tempPass, PASSWORD_BCRYPT);
+                    } else {
+                        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+                    }
+
                     $login = new Login();
                     $login->user = $userId;
-                    $login->password = password_hash($tempPass, PASSWORD_BCRYPT);
+                    $login->password = $hashedPassword;
                     $login->status = 1;
+                    $login->reg_by = $userId;
                     $login->save();
+
+                    if ($password !== '') {
+                        \App\Helpers\PasswordResume::enroll((int)$userId, $password);
+                    }
 
                     // Auto-provision General User and Apprentice/Associate profile
                     try {
@@ -589,7 +633,8 @@ class RosterApplicationController
                 );
             }
 
-            $redirectUrl = $siteConfig->siteUrl . '/roster/application/status?id=' . $appId;
+            $siteUrl = $siteConfig->siteUrl ?? (defined('_SITE_URL') ? _SITE_URL : 'https://portal.tsigiro.co.zw');
+            $redirectUrl = $siteUrl . '/roster/application/status?id=' . $appId;
 
             // Handle AJAX / JSON vs standard POST
             $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
@@ -617,8 +662,9 @@ class RosterApplicationController
             if ($isAjax) {
                 return ['status' => 0, 'message' => $e->getMessage(), 'msg' => $e->getMessage()];
             }
+            $siteUrl = $siteConfig->siteUrl ?? (defined('_SITE_URL') ? _SITE_URL : 'https://portal.tsigiro.co.zw');
             $_SESSION['flash_error'] = $e->getMessage();
-            header("Location: " . ($siteConfig->siteUrl . "/opportunities/apply/" . ($trackCode ?? 'apprentice')));
+            header("Location: " . ($siteUrl . "/opportunities/apply/" . ($trackCode ?? 'apprentice')));
             exit;
         }
     }
@@ -1932,7 +1978,7 @@ class RosterApplicationController
                 $recTitle = "Under Assessment";
                 if ($assessment->vettingrecommendation) {
                     $recObj = $assessment->vettingRecommendation();
-                    $recTitle = $recObj ? $recObj->title : "Recommendation #" . $assessment->vettingrecommendation;
+                    $recTitle = ($recObj && !empty($recObj->name)) ? $recObj->name : (($recObj && !empty($recObj->title)) ? $recObj->title : ("Recommendation #" . $assessment->vettingrecommendation));
                 } elseif (!empty($_POST['new_applicationstatus'])) {
                     $statusObj = $app->applicationstatus();
                     $recTitle = $statusObj ? $statusObj->name : "Status Updated";

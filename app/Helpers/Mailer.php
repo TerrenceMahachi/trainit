@@ -218,7 +218,28 @@ class Mailer
                     </tr>
                 </table>
                 <p style='margin: 12px 0 0; color: #C4B5FD; font-size: 12px;'>
-                    <em>You can change your password in your account profile once logged in.</em>
+                    <em>Login at <a href='{$siteUrl}/login' style='color: #FFCC00; text-decoration: underline;'>{$siteUrl}/login</a> to view your application status. You can change your password in your account profile once logged in.</em>
+                </p>
+            </div>";
+        } else {
+            $candidateHtml .= "
+            <div style='background-color: #2A114B; color: #ffffff; border-radius: 8px; padding: 20px; margin: 22px 0;'>
+                <h3 style='margin: 0 0 10px; color: #FFCC00; font-size: 16px;'>Your Candidate Portal Account Details</h3>
+                <p style='margin: 0 0 12px; color: #E9D5FF; font-size: 14px; line-height: 1.5;'>
+                    You can log in at any time to monitor your application progress, complete stages of the Verified Talent Dossier, and manage your talent profile:
+                </p>
+                <table style='width: 100%; border-collapse: collapse; font-size: 14px; color: #ffffff;'>
+                    <tr>
+                        <td style='padding: 6px 0; color: #E9D5FF; width: 40%;'><strong>Portal Username / Email:</strong></td>
+                        <td style='padding: 6px 0; font-family: monospace; font-weight: bold; color: #ffffff;'>" . htmlspecialchars($candidate->email) . "</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 6px 0; color: #E9D5FF;'><strong>Sign-in Password:</strong></td>
+                        <td style='padding: 6px 0; font-family: monospace; font-weight: bold; color: #FFCC00; font-size: 14px;'><em>The password you provided during application</em></td>
+                    </tr>
+                </table>
+                <p style='margin: 12px 0 0; color: #C4B5FD; font-size: 12px;'>
+                    <em>Login at <a href='{$siteUrl}/login' style='color: #FFCC00; text-decoration: underline;'>{$siteUrl}/login</a> to track your application and submit required documents.</em>
                 </p>
             </div>";
         }

@@ -38,6 +38,29 @@ if (Auth::check()) {
 
     <section class="portal-dashboard-body">
         <div class="container">
+            <?php if (!Auth::check()): ?>
+            <div class="row justify-content-center mb-4">
+                <div class="col-md-12 col-lg-10">
+                    <div class="card border-0 shadow-sm bg-white" style="border-radius: 12px; border-left: 4px solid #7c3aed !important;">
+                        <div class="card-body p-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="badge bg-light text-primary p-2 rounded-circle fs-5" style="width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center;">
+                                    <i class="fa fa-user-check"></i>
+                                </span>
+                                <div>
+                                    <div class="fw-semibold text-dark">Already have a Tsigiro account?</div>
+                                    <div class="small text-muted">Sign in to auto-fill your contact details and link new applications to your existing profile.</div>
+                                </div>
+                            </div>
+                            <a href="<?= $siteConfig->siteUrl; ?>/login" class="btn btn-outline-primary btn-sm px-3 py-2 fw-semibold">
+                                <i class="fa fa-arrow-right-to-bracket me-1"></i> Sign In to Account
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <div class="row g-4 justify-content-center">
                 <!-- Apprentice Track -->
                 <div class="col-md-6 col-lg-5">

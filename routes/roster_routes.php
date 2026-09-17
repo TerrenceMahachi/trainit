@@ -8,6 +8,13 @@ use App\Helpers\Auth;
 global $router;
 
 // 1. Simplified Public Express Intake (Zero friction, initiated on Opportunities page)
+$router->addRoute('GET', '/opportunities/apply', function () {
+    global $siteConfig;
+    $data = ['title' => 'Apply: Choose Application Track'];
+    echo view('roster.choose_track', compact('data'));
+    exit;
+});
+
 $router->addRoute('GET', '/opportunities/apply/apprentice', function () {
     $appId = isset($_GET['id']) ? (int)$_GET['id'] : null;
     echo (new RosterApplicationController())->showExpressForm('apprentice', $appId);
