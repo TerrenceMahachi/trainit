@@ -67,8 +67,22 @@ function enrichMobileUser($user) {
     if ($activeProfile) {
         $typeCode = $activeProfile['type_code'];
         if ($typeCode === 'staff') {
-            $persona = ($role === 1) ? 'admin' : 'staff';
-            $roleName = $activeProfile['display_title'] ?: ($role === 1 ? 'Administrator' : 'Staff Member');
+            if ($role === 1) {
+                $persona = 'admin';
+                $roleName = $activeProfile['display_title'] ?: 'Administrator';
+            } elseif ($role === 8) {
+                $persona = 'vetting';
+                $roleName = $activeProfile['display_title'] ?: 'Vetting Officer';
+            } elseif ($role === 6) {
+                $persona = 'manager';
+                $roleName = $activeProfile['display_title'] ?: 'Service Manager';
+            } elseif ($role === 7) {
+                $persona = 'finance';
+                $roleName = $activeProfile['display_title'] ?: 'Billing Officer';
+            } else {
+                $persona = 'staff';
+                $roleName = $activeProfile['display_title'] ?: 'Staff Member';
+            }
         } elseif ($typeCode === 'client') {
             $persona = 'client';
             $roleName = $activeProfile['display_title'] ?: 'Client Representative';
@@ -79,8 +93,22 @@ function enrichMobileUser($user) {
             $persona = 'apprentice';
             $roleName = $activeProfile['display_title'] ?: 'Apprentice Engineer';
         } elseif ($typeCode === 'general') {
-            $persona = ($role === 1) ? 'admin' : 'candidate';
-            $roleName = ($role === 1) ? 'Administrator' : 'General User';
+            if ($role === 1) {
+                $persona = 'admin';
+                $roleName = 'Administrator';
+            } elseif ($role === 8) {
+                $persona = 'vetting';
+                $roleName = 'Vetting Officer';
+            } elseif ($role === 6) {
+                $persona = 'manager';
+                $roleName = 'Service Manager';
+            } elseif ($role === 7) {
+                $persona = 'finance';
+                $roleName = 'Billing Officer';
+            } else {
+                $persona = 'candidate';
+                $roleName = ($role === 1) ? 'Administrator' : 'General User';
+            }
         }
     } else {
         // Fallback for legacy role numbers if userprofile not yet initialized
@@ -185,6 +213,133 @@ if (!function_exists('getMobileUser')) {
     return !empty($users) ? $users[0] : null;
 }
 }
+
+// --------------------------------------------------------------------------
+// 0. Dynamic Navigation Architecture (Synchronized with config/nav.php)
+// --------------------------------------------------------------------------
+$handleMobileNavigation = function () {
+    global $siteConfig;
+    $user = getMobileUser();
+    $userData = $user ? enrichMobileUser($user) : null;
+
+    $userRoleTags = ['guest'];
+    if ($user) {
+        $roleId = (int) $user->role;
+        $userRoleTags = ['authenticated'];
+
+        if ($roleId === 1) {
+            $userRoleTags[] = 'admin';
+            $userRoleTags[] = 'staff';
+        } elseif ($roleId === 8) {
+            $userRoleTags[] = 'vetting';
+            $userRoleTags[] = 'staff';
+        } elseif ($roleId === 6) {
+            $userRoleTags[] = 'manager';
+            $userRoleTags[] = 'staff';
+        } elseif ($roleId === 7) {
+            $userRoleTags[] = 'finance';
+            $userRoleTags[] = 'staff';
+        } elseif ($roleId === 3) {
+            $userRoleTags[] = 'client';
+        } else {
+            // Roles 2, 4, 5 (General User, Associate, Apprentice)
+            $userRoleTags[] = 'user';
+            $userRoleTags[] = 'candidate';
+        }
+
+        if (!empty($userData['active_profile']['type_code'])) {
+            $userRoleTags[] = $userData['active_profile']['type_code'];
+        }
+        $userRoleTags[] = 'role_' . $roleId;
+        $userRoleTags[] = (string) $roleId;
+    }
+
+    $navConfigFile = _BASE_PATH . '/config/nav.php';
+    $navItems = file_exists($navConfigFile) ? require $navConfigFile : [];
+
+    $navVisible = function ($item) use ($userRoleTags) {
+        if (empty($item['roles'])) {
+            return true;
+        }
+        $allowed = (array) $item['roles'];
+        return !empty(array_intersect($userRoleTags, $allowed));
+    };
+
+    // Mapping of portal URLs or patterns to local mobile view routes if implemented
+    $routeMapping = [
+        '/home'                => 'dashboard/home',
+        '/dashboard'           => 'dashboard/home',
+        '/client/portal'       => 'dashboard/home',
+        '/client/requests'     => 'requests/list',
+        '/client/requests/new' => 'requests/new',
+        '/client/invoices'     => 'invoices/list',
+        '/admin/roster'        => 'admin/roster-queue',
+        '/admin/requests'      => 'requests/list',
+        '/opportunities'       => 'requests/list',
+        '/notifications'       => 'notifications',
+        '/edit-profile'        => 'profile/view',
+        '/profile'             => 'profile/view',
+        '/login'               => 'auth/login',
+        '/register'            => 'auth/login',
+    ];
+
+    $formatUrl = function ($url) use ($siteConfig) {
+        if (!$url || $url === '#') return '#';
+        if (strpos($url, '://') !== false || strpos($url, '//') === 0) return $url;
+        return ($siteConfig->siteUrl ?? '') . $url;
+    };
+
+    $processItem = function ($item) use (&$processItem, $navVisible, $routeMapping, $formatUrl) {
+        if (!$navVisible($item)) {
+            return null;
+        }
+
+        $processed = [
+            'label' => $item['label'] ?? '',
+            'url'   => !empty($item['url']) ? $formatUrl($item['url']) : '',
+            'path'  => $item['url'] ?? '',
+            'icon'  => $item['icon'] ?? '',
+            'route' => !empty($item['url']) && isset($routeMapping[$item['url']]) ? $routeMapping[$item['url']] : null,
+        ];
+
+        if (!empty($item['children'])) {
+            $children = [];
+            foreach ($item['children'] as $child) {
+                $childProcessed = $processItem($child);
+                if ($childProcessed) {
+                    $children[] = $childProcessed;
+                }
+            }
+            if (!empty($children)) {
+                $processed['children'] = $children;
+            } elseif (empty($item['url'])) {
+                return null;
+            }
+        }
+
+        return $processed;
+    };
+
+    $filteredNav = [];
+    foreach ($navItems as $item) {
+        $p = $processItem($item);
+        if ($p) {
+            $filteredNav[] = $p;
+        }
+    }
+
+    sendMobileJson([
+        'status'     => 1,
+        'user_id'    => $user ? (int) $user->iD : null,
+        'persona'    => $userData ? $userData['persona'] : 'guest',
+        'role_name'  => $userData ? $userData['role_name'] : 'Guest Visitor',
+        'role_tags'  => $userRoleTags,
+        'nav_items'  => $filteredNav,
+    ]);
+};
+
+$router->addRoute('GET', '/api/mobile/navigation', $handleMobileNavigation);
+$router->addRoute('POST', '/api/mobile/navigation', $handleMobileNavigation);
 
 // --------------------------------------------------------------------------
 // 1. Mobile Authentication & Quick Role Login

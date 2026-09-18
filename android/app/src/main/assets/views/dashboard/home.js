@@ -520,6 +520,9 @@ function openAdminReviewModal(req) {
     const allowed = u && (reviewerPersonas.includes(u.persona)
         || (u.role != null && reviewerRoles.includes(parseInt(u.role, 10))));
     if (!allowed) {
+        if (typeof window.closeAdminReviewModal === 'function') {
+            window.closeAdminReviewModal();
+        }
         if (window.showToast) window.showToast('You do not have permission to review account requests.', 'warning');
         return;
     }
@@ -551,10 +554,25 @@ function openAdminReviewModal(req) {
     // Ensure close and backdrop listeners
     const closeBtn = modal.querySelector('#admin-review-close-btn');
     if (closeBtn) {
-        closeBtn.onclick = () => { modal.style.display = 'none'; };
+        const doClose = (e) => {
+            if (e) e.stopPropagation();
+            if (typeof window.closeAdminReviewModal === 'function') {
+                window.closeAdminReviewModal();
+            } else {
+                modal.style.display = 'none';
+            }
+        };
+        closeBtn.onclick = doClose;
+        closeBtn.ontouchend = doClose;
     }
     modal.onclick = (e) => {
-        if (e.target === modal) modal.style.display = 'none';
+        if (e.target === modal) {
+            if (typeof window.closeAdminReviewModal === 'function') {
+                window.closeAdminReviewModal();
+            } else {
+                modal.style.display = 'none';
+            }
+        }
     };
 
     const bodyEl = modal.querySelector('#admin-review-body');
@@ -605,19 +623,37 @@ function openAdminReviewModal(req) {
             <button type="button" id="admin-btn-approve-req" style="flex: 1; padding: 12px; font-size: 0.86rem; font-weight: 700; border-radius: 10px; border: none; background: #10b981; color: #ffffff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
                 ✓ Approve Account
             </button>
-            <button type="button" id="admin-btn-reject-req" style="flex: 1; padding: 12px; font-size: 0.86rem; font-weight: 700; border-radius: 10px; border: 1px solid #ef4444; background: #ffffff; color: #ef4444; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <button type="button" id="admin-btn-reject-req" style="flex: 1; padding: 12px; font-size: 0.86rem; font-weight: 700; border-radius: 10px; border: 1.5px solid #ef4444; background: #ffffff; color: #ef4444; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
                 ✕ Decline
             </button>
         </div>
+        <button type="button" id="admin-btn-dismiss-req" style="width: 100%; margin-top: 10px; padding: 11px; font-size: 0.82rem; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-muted); cursor: pointer;">
+            Dismiss / Close
+        </button>
     `;
 
     modal.style.display = 'flex';
+
+    const dismissBtn = modal.querySelector('#admin-btn-dismiss-req');
+    if (dismissBtn) {
+        dismissBtn.onclick = () => {
+            if (typeof window.closeAdminReviewModal === 'function') {
+                window.closeAdminReviewModal();
+            } else {
+                modal.style.display = 'none';
+            }
+        };
+    }
 
     if (req.roster_app_id) {
         const dossierBtn = modal.querySelector('#admin-btn-view-dossier');
         if (dossierBtn) {
             dossierBtn.onclick = () => {
-                modal.style.display = 'none';
+                if (typeof window.closeAdminReviewModal === 'function') {
+                    window.closeAdminReviewModal();
+                } else {
+                    modal.style.display = 'none';
+                }
                 window.navigateTo('admin/roster-review', { id: req.roster_app_id });
             };
         }
@@ -668,8 +704,12 @@ async function submitReviewAction(profileId, action) {
         const data = await res.json();
         if (data.status === 1) {
             window.showToast(data.message || (action === 'approve' ? 'Account approved!' : 'Account declined.'), 'success');
-            const modal = document.getElementById('modal-admin-review');
-            if (modal) modal.style.display = 'none';
+            if (typeof window.closeAdminReviewModal === 'function') {
+                window.closeAdminReviewModal();
+            } else {
+                const modal = document.getElementById('modal-admin-review');
+                if (modal) modal.style.display = 'none';
+            }
             // Reload dashboard
             if (typeof window.init === 'function') {
                 window.init(user);

@@ -267,6 +267,9 @@ function updateAppHeader(user) {
 
 // Sidebar Drawer Control
 window.openSidebar = function() {
+    if (typeof window.closeAllModals === 'function') {
+        window.closeAllModals();
+    }
     const drawer = document.getElementById('sidebar-drawer');
     const backdrop = document.getElementById('sidebar-backdrop');
     if (!drawer || !backdrop) return;
@@ -685,6 +688,42 @@ window.openRoleCategoryModal = async function(roleCode) {
 window.closeRoleCategoryModal = function() {
     const modal = document.getElementById('modal-role-category');
     if (modal) modal.style.display = 'none';
+};
+
+window.closeAdminReviewModal = function() {
+    const modal = document.getElementById('modal-admin-review');
+    if (modal) {
+        modal.style.display = 'none';
+        const body = modal.querySelector('#admin-review-body');
+        if (body) body.innerHTML = '';
+    }
+};
+
+window.closeAllModals = function() {
+    try {
+        const modalBackdrops = document.querySelectorAll('.modal-backdrop, .modal-overlay');
+        modalBackdrops.forEach(m => {
+            m.style.display = 'none';
+        });
+
+        const adminModal = document.getElementById('modal-admin-review');
+        if (adminModal) {
+            adminModal.style.display = 'none';
+            const body = adminModal.querySelector('#admin-review-body');
+            if (body) body.innerHTML = '';
+        }
+
+        const roleModal = document.getElementById('modal-role-category');
+        if (roleModal) roleModal.style.display = 'none';
+
+        const reqModal = document.getElementById('modal-request-profile');
+        if (reqModal) reqModal.style.display = 'none';
+
+        const notifModal = document.getElementById('modal-notifications');
+        if (notifModal) notifModal.style.display = 'none';
+    } catch (e) {
+        console.warn('Error in closeAllModals:', e);
+    }
 };
 
 function renderProfileRequiredState(container, config, user) {
@@ -1371,6 +1410,9 @@ window.logoutUser = async function() {
     } catch (e) {
         console.warn('Logout failed:', e);
     } finally {
+        if (typeof window.closeAllModals === 'function') {
+            window.closeAllModals();
+        }
         window.closeSidebar();
         window.clearUser();
         window.navigateTo('auth/login');
@@ -1380,6 +1422,13 @@ window.logoutUser = async function() {
 
 // Router Navigation
 window.navigateTo = function(routeKey, data = null) {
+    if (typeof window.closeAllModals === 'function') {
+        window.closeAllModals();
+    }
+    if (typeof window.closeSidebar === 'function') {
+        window.closeSidebar();
+    }
+
     const viewPath = window.routeMap[routeKey];
     if (!viewPath) {
         console.error(`Route not found: ${routeKey}`);
@@ -1890,12 +1939,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeAdminReviewBtn = document.getElementById('admin-review-close-btn');
     const modalAdminReview = document.getElementById('modal-admin-review');
     if (closeAdminReviewBtn && modalAdminReview) {
-        closeAdminReviewBtn.addEventListener('click', () => {
-            modalAdminReview.style.display = 'none';
-        });
+        const dismissReviewModal = (e) => {
+            if (e) e.stopPropagation();
+            if (typeof window.closeAdminReviewModal === 'function') {
+                window.closeAdminReviewModal();
+            } else {
+                modalAdminReview.style.display = 'none';
+            }
+        };
+        closeAdminReviewBtn.addEventListener('click', dismissReviewModal);
+        closeAdminReviewBtn.addEventListener('touchend', dismissReviewModal);
         modalAdminReview.addEventListener('click', (e) => {
             if (e.target === modalAdminReview) {
-                modalAdminReview.style.display = 'none';
+                dismissReviewModal(e);
             }
         });
     }
@@ -2027,6 +2083,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Ensure all modals start in closed state
+    if (typeof window.closeAllModals === 'function') {
+        window.closeAllModals();
+    }
+
+    // Dismiss modals on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && typeof window.closeAllModals === 'function') {
+            window.closeAllModals();
+        }
+    });
 
     const user = window.getUser();
     updateAppHeader(user);

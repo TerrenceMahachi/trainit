@@ -1,4 +1,7 @@
 window.init = function() {
+    if (typeof window.closeAllModals === 'function') {
+        window.closeAllModals();
+    }
     const loginForm = document.getElementById('mobile-login-form');
     const registerForm = document.getElementById('mobile-register-form');
     const submitBtn = document.getElementById('btn-submit-login');

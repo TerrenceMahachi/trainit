@@ -1,9 +1,9 @@
 {
-    "bundle_version": "1.0.9",
-    "bundle_hash": "3c46bed14da4635986e1e8d193702c572346462943fefb95f8b4d9a5fe788fe3",
+    "bundle_version": "1.0.10",
+    "bundle_hash": "f80f34959e38834f8daa2c35e386b314cf0a55f9aa77d340040314a380b02214",
     "bundle_url": "/public/downloads/ota_bundle.zip",
     "min_apk_version": 1,
-    "release_notes": "Add candidate account creation credentials to mobile apprentice and associate application forms",
-    "updated_at": "2026-09-18 09:35:13",
-    "bundle_size_bytes": 530754
+    "release_notes": "Fix admin review sheet lingering across view transitions and auth pages",
+    "updated_at": "2026-09-18 10:52:05",
+    "bundle_size_bytes": 531662
 }
