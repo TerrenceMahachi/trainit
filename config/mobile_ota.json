@@ -1,9 +1,9 @@
 {
-    "bundle_version": "1.0.8",
-    "bundle_hash": "6fc76e0f41b6cd38fa74b471fd3c668e29dfe260cb252e465b2fdf8a172a5103",
+    "bundle_version": "1.0.9",
+    "bundle_hash": "3c46bed14da4635986e1e8d193702c572346462943fefb95f8b4d9a5fe788fe3",
     "bundle_url": "/public/downloads/ota_bundle.zip",
     "min_apk_version": 1,
-    "release_notes": "Fix admin application items click, review bottom-sheet overlay, and queue navigation",
-    "updated_at": "2026-09-17 12:51:48",
-    "bundle_size_bytes": 529081
+    "release_notes": "Add candidate account creation credentials to mobile apprentice and associate application forms",
+    "updated_at": "2026-09-18 09:35:13",
+    "bundle_size_bytes": 530754
 }
