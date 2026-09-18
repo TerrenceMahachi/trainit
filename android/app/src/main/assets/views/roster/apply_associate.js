@@ -413,6 +413,23 @@ window.init = async function(data) {
                 return;
             }
 
+            if (!user || !user.id) {
+                const pInput = document.getElementById('field-assoc-password');
+                const pcInput = document.getElementById('field-assoc-password-confirmation');
+                if (pInput && pcInput) {
+                    if (pInput.value.length < 6) {
+                        alert('Password must be at least 6 characters.');
+                        pInput.focus();
+                        return;
+                    }
+                    if (pInput.value !== pcInput.value) {
+                        alert('Passwords do not match. Please verify your password confirmation.');
+                        pcInput.focus();
+                        return;
+                    }
+                }
+            }
+
             btnSubmit.disabled = true;
             btnSubmit.style.opacity = '0.7';
             if (submitText) submitText.textContent = 'Submitting Specialist Dossier & CV...';
