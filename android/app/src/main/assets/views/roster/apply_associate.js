@@ -279,6 +279,36 @@ window.init = async function(data) {
             emailInput.readOnly = true;
         }
 
+        // Guest vs Authenticated Password Section
+        const guestPassSection = document.getElementById('section-assoc-guest-password');
+        const passInput = document.getElementById('field-assoc-password');
+        const passConfirmInput = document.getElementById('field-assoc-password-confirmation');
+        const passFeedback = document.getElementById('assoc-password-feedback');
+
+        if (user && user.id) {
+            if (guestPassSection) guestPassSection.style.display = 'none';
+            if (passInput) passInput.removeAttribute('required');
+            if (passConfirmInput) passConfirmInput.removeAttribute('required');
+        } else {
+            if (guestPassSection) guestPassSection.style.display = 'block';
+            if (passInput) passInput.setAttribute('required', 'required');
+            if (passConfirmInput) passConfirmInput.setAttribute('required', 'required');
+
+            function checkPassMatch() {
+                if (!passInput || !passConfirmInput || !passFeedback) return;
+                if (!passConfirmInput.value) {
+                    passFeedback.textContent = 'Must match password above.';
+                    passFeedback.style.color = '#4b5563';
+                } else if (passInput.value === passConfirmInput.value) {
+                    passFeedback.innerHTML = '<span style="color: #2563eb; font-weight: 700;">✓ Passwords match</span>';
+                } else {
+                    passFeedback.innerHTML = '<span style="color: #ef4444; font-weight: 700;">✗ Passwords do not match</span>';
+                }
+            }
+            if (passInput) passInput.addEventListener('input', checkPassMatch);
+            if (passConfirmInput) passConfirmInput.addEventListener('input', checkPassMatch);
+        }
+
         // Load Dropdown Options (Provinces, Functions, Employment Statuses)
         (async () => {
             try {

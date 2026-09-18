@@ -582,6 +582,215 @@ tr:first-child { padding-top: 15px; }
     justify-content: center;
     padding: 3rem 1.25rem;
 }
+
+/* ==========================================================================
+   Modern Auth Screen Styles (login, register, reset, set-password)
+   ========================================================================== */
+.az-card-signin-modern {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 42px 38px;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    width: 100%;
+    border: 1px solid rgba(226, 232, 240, 0.85);
+    position: relative;
+    overflow: hidden;
+}
+
+.account-logo-badge {
+    height: 56px;
+    width: 56px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 16px;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.15));
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.account-logo-badge:hover {
+    transform: scale(1.05);
+}
+
+.auth-heading {
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.025em;
+    margin-bottom: 4px;
+}
+
+.auth-subheading {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 24px;
+}
+
+.auth-field {
+    margin-bottom: 1.15rem;
+}
+
+.auth-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 6px;
+}
+
+.auth-input-container {
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0 14px;
+    transition: all 0.2s ease;
+}
+
+.auth-input-container:focus-within {
+    background: #ffffff;
+    border-color: #2A114B;
+    box-shadow: 0 0 0 3.5px rgba(42, 17, 75, 0.08);
+}
+
+.auth-input-container .form-control {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #0f172a !important;
+    padding: 12px 10px 12px 2px !important;
+    font-size: 0.9375rem !important;
+    line-height: 1.5 !important;
+    height: auto !important;
+}
+
+.auth-input-container .form-control::placeholder {
+    color: #94a3b8 !important;
+    font-size: 0.875rem;
+}
+
+.auth-input-container .auth-icon-btn {
+    color: #94a3b8;
+    background: none;
+    border: none;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.auth-input-container:focus-within .auth-icon-btn {
+    color: #475569;
+}
+
+.auth-input-container .auth-icon-btn:hover {
+    color: #2A114B;
+}
+
+.auth-link-forgot {
+    font-size: 0.8125rem;
+    color: #64748b;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s ease;
+}
+.auth-link-forgot:hover {
+    color: #2A114B;
+    text-decoration: underline;
+}
+
+.btn-auth-submit {
+    width: 100%;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #1C0D30 0%, #2A114B 50%, #3D1B6B 100%);
+    color: #ffffff !important;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    letter-spacing: 0.01em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(42, 17, 75, 0.28);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    margin-top: 8px;
+    text-decoration: none;
+}
+.btn-auth-submit:hover:not(:disabled) {
+    background: linear-gradient(135deg, #241140 0%, #35165f 50%, #4a2182 100%);
+    box-shadow: 0 6px 20px rgba(42, 17, 75, 0.38);
+    transform: translateY(-1px);
+    color: #ffffff !important;
+}
+.btn-auth-submit:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(42, 17, 75, 0.25);
+}
+.btn-auth-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 22px 0;
+}
+.auth-divider-line {
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+}
+.auth-divider-text {
+    padding: 0 14px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: 0.06em;
+}
+
+.btn-auth-register {
+    width: 100%;
+    padding: 11px 20px;
+    background: #ffffff;
+    color: #1e293b !important;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.btn-auth-register:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #2A114B !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.auth-bottom-links {
+    margin-top: 22px;
+    text-align: center;
+}
+.auth-bottom-links a {
+    font-size: 0.8125rem;
+    color: #64748b;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.auth-bottom-links a:hover {
+    color: #2A114B;
+    text-decoration: underline;
+}
 .az-card-signin {
     background: var(--surface);
     width: 100%;

@@ -285,6 +285,36 @@ window.init = async function(data) {
             emailInput.readOnly = true;
         }
 
+        // Guest vs Authenticated Password Section
+        const guestPassSection = document.getElementById('section-appr-guest-password');
+        const passInput = document.getElementById('field-appr-password');
+        const passConfirmInput = document.getElementById('field-appr-password-confirmation');
+        const passFeedback = document.getElementById('appr-password-feedback');
+
+        if (user && user.id) {
+            if (guestPassSection) guestPassSection.style.display = 'none';
+            if (passInput) passInput.removeAttribute('required');
+            if (passConfirmInput) passConfirmInput.removeAttribute('required');
+        } else {
+            if (guestPassSection) guestPassSection.style.display = 'block';
+            if (passInput) passInput.setAttribute('required', 'required');
+            if (passConfirmInput) passConfirmInput.setAttribute('required', 'required');
+
+            function checkPassMatch() {
+                if (!passInput || !passConfirmInput || !passFeedback) return;
+                if (!passConfirmInput.value) {
+                    passFeedback.textContent = 'Must match password above.';
+                    passFeedback.style.color = '#4b5563';
+                } else if (passInput.value === passConfirmInput.value) {
+                    passFeedback.innerHTML = '<span style="color: #16a34a; font-weight: 700;">✓ Passwords match</span>';
+                } else {
+                    passFeedback.innerHTML = '<span style="color: #ef4444; font-weight: 700;">✗ Passwords do not match</span>';
+                }
+            }
+            if (passInput) passInput.addEventListener('input', checkPassMatch);
+            if (passConfirmInput) passConfirmInput.addEventListener('input', checkPassMatch);
+        }
+
         // Load Dropdown Options (Provinces & Functions)
         (async () => {
             try {
@@ -377,6 +407,23 @@ window.init = async function(data) {
                     cvZone.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
                 return;
+            }
+
+            if (!user || !user.id) {
+                const pInput = document.getElementById('field-appr-password');
+                const pcInput = document.getElementById('field-appr-password-confirmation');
+                if (pInput && pcInput) {
+                    if (pInput.value.length < 6) {
+                        alert('Password must be at least 6 characters.');
+                        pInput.focus();
+                        return;
+                    }
+                    if (pInput.value !== pcInput.value) {
+                        alert('Passwords do not match. Please verify your password confirmation.');
+                        pcInput.focus();
+                        return;
+                    }
+                }
             }
 
             btnSubmit.disabled = true;
