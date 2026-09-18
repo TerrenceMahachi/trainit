@@ -28,7 +28,7 @@ define('_ENV', $isProduction ? 'production' : 'development');
 
 // Bump this when you change CSS/JS so browsers fetch the new version
 // (used as ?v= on asset URLs instead of a random value that defeats caching).
-define('_ASSET_VERSION', '20260909.2');
+define('_ASSET_VERSION', '20260918.1');
 
 // Public self-registration and multi-profile onboarding are active.
 // Registered users start as General User and can request specialized accounts.
