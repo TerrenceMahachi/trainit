@@ -273,57 +273,7 @@ class RosterApplicationController
      */
     public function showExpressForm(string $track, ?int $appId = null)
     {
-        global $siteConfig;
-        $trackCode = strtolower(trim($track));
-        $tracks = Applicationtrack::findByQuery("SELECT * FROM applicationtrack WHERE code = ?", [$trackCode]);
-        if (empty($tracks)) {
-            header("Location: " . $siteConfig->siteUrl . "/opportunities");
-            exit;
-        }
-        $trackObj = $tracks[0];
-
-        $application = null;
-        if ($appId) {
-            $application = $this->getAuthorizedApplication($appId);
-        } elseif (Auth::check()) {
-            // Check for existing submitted or active application for current user
-            $trackId = (int)$trackObj->iD;
-            $apps = Rosterapplication::findByQuery(
-                "SELECT * FROM rosterapplication WHERE user = ? AND applicationtrack = ? AND applicationstatus NOT IN (8, 9) ORDER BY iD DESC LIMIT 1",
-                [Auth::id(), $trackId]
-            );
-            if (!empty($apps)) {
-                $application = $apps[0];
-            }
-        }
-
-        $documents = [];
-        if ($application) {
-            $documents = Rosterdocument::findByQuery(
-                "SELECT * FROM rosterdocument WHERE rosterapplication = ? ORDER BY iD ASC",
-                [$application->iD]
-            );
-        }
-
-        $provinces = Zimprovince::findByQuery("SELECT * FROM zimprovince ORDER BY sort_order ASC");
-        $serviceFunctions = Servicefunction::findByQuery("SELECT * FROM servicefunction ORDER BY sort_order ASC");
-        $employmentStatuses = Employmentstatus::all();
-        $professionalBodies = Professionalbody::all();
-
-        $data = [
-            'title' => 'Express Apply: ' . $trackObj->name . ' Roster',
-            'track' => $trackObj,
-            'application' => $application,
-            'documents' => $documents,
-            'user' => Auth::check() ? (new AccountController())->getUser(Auth::id()) : null,
-            'provinces' => $provinces,
-            'serviceFunctions' => $serviceFunctions,
-            'employmentStatuses' => $employmentStatuses,
-            'professionalBodies' => $professionalBodies,
-        ];
-
-        $viewName = $trackCode === 'associate' ? 'roster.apply_express_associate' : 'roster.apply_express_apprentice';
-        return view($viewName, compact('data'));
+        return $this->showApplyForm($track, $appId);
     }
 
     /**
@@ -1053,7 +1003,7 @@ class RosterApplicationController
 
         // Load existing draft if editing/resuming
         $application = null;
-        if ($appId) {
+        if ($appId && $userId) {
             $existing = Rosterapplication::findByQuery(
                 "SELECT * FROM rosterapplication WHERE iD = ? AND user = ?",
                 [$appId, $userId]
@@ -1061,6 +1011,21 @@ class RosterApplicationController
             if (!empty($existing)) {
                 $application = $existing[0];
             }
+        } elseif ($userId) {
+            $existing = Rosterapplication::findByQuery(
+                "SELECT * FROM rosterapplication WHERE user = ? AND applicationtrack = ? AND applicationstatus NOT IN (8, 9) ORDER BY iD DESC LIMIT 1",
+                [$userId, $trackObj->iD]
+            );
+            if (!empty($existing)) {
+                $application = $existing[0];
+            }
+        }
+
+        // If the candidate already has an active submitted application, redirect to application tracking
+        if ($application && (int)$application->applicationstatus >= 2 && !isset($_GET['edit'])) {
+            global $siteConfig;
+            header("Location: " . $siteConfig->siteUrl . "/dashboard/application?id=" . $application->iD);
+            exit;
         }
 
         // Reference Lookups
@@ -1087,7 +1052,7 @@ class RosterApplicationController
             'title' => 'Apply: ' . $trackObj->name . ' Roster',
             'track' => $trackObj,
             'application' => $application,
-            'user' => (new AccountController())->getUser($userId),
+            'user' => $userId ? (new AccountController())->getUser($userId) : null,
             'serviceFunctions' => $serviceFunctions,
             'proficiencyLevels' => $proficiencyLevels,
             'provinces' => $provinces,
@@ -1104,9 +1069,218 @@ class RosterApplicationController
             'locationPreferences' => $locationPreferences,
             'employmentStatuses' => $employmentStatuses,
             'invoiceEntityTypes' => $invoiceEntityTypes,
+            'furthestStep' => $this->calculateFurthestStep($application),
         ];
 
         return view('roster.apply_wizard', compact('data'));
+    }
+
+    /**
+     * Determine furthest completed step in draft application.
+     */
+    private function calculateFurthestStep(?Rosterapplication $app): int
+    {
+        if (!$app) {
+            return !empty($_GET['step']) ? max(1, min(5, (int)$_GET['step'])) : 1;
+        }
+        if (!empty($_GET['step'])) {
+            return max(1, min(5, (int)$_GET['step']));
+        }
+        if (!empty($app->primaryfunction)) {
+            return 4;
+        }
+        if (!empty($app->qualifications()) || !empty($app->apprenticeProfile()->institution_name ?? null)) {
+            return 3;
+        }
+        if (!empty($app->legal_name)) {
+            return 2;
+        }
+        return 1;
+    }
+
+    /**
+     * Check candidate email: determines whether the user is new, resuming a draft,
+     * or has already applied for this track.
+     */
+    public function handleCheckEmail(): array
+    {
+        $email = strtolower(trim($_POST['email'] ?? ''));
+        if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return [
+                'status' => 0,
+                'msg' => 'Please enter a valid email address.'
+            ];
+        }
+
+        $trackCode = strtolower(trim($_POST['track'] ?? ''));
+        $tracks = Applicationtrack::findByQuery("SELECT * FROM applicationtrack WHERE code = ?", [$trackCode]);
+        if (empty($tracks) && !empty($_POST['track_id'])) {
+            $tracks = Applicationtrack::findByQuery("SELECT * FROM applicationtrack WHERE iD = ?", [(int)$_POST['track_id']]);
+        }
+        $trackObj = !empty($tracks) ? $tracks[0] : null;
+        $trackId = $trackObj ? (int)$trackObj->iD : 1;
+        $trackName = $trackObj ? $trackObj->name : 'Talent';
+
+        $users = User::findByQuery("SELECT * FROM user WHERE LOWER(email) = ? LIMIT 1", [$email]);
+
+        // Case 1: Brand New User
+        if (empty($users)) {
+            return [
+                'status' => 1,
+                'account_state' => 'new',
+                'email' => $email,
+                'track' => $trackCode,
+                'message' => 'Welcome to Tsigiro! Please enter your legal name and choose a secure password to register your candidate account.'
+            ];
+        }
+
+        $user = $users[0];
+        $apps = Rosterapplication::findByQuery(
+            "SELECT * FROM rosterapplication WHERE user = ? AND applicationtrack = ? AND applicationstatus NOT IN (8, 9) ORDER BY iD DESC",
+            [$user->iD, $trackId]
+        );
+
+        // Find if user has a submitted application or a draft
+        $submittedApp = null;
+        $draftApp = null;
+        foreach ($apps as $a) {
+            if ((int)$a->applicationstatus >= 2 && !$submittedApp) {
+                $submittedApp = $a;
+            } elseif ((int)$a->applicationstatus == 1 && !$draftApp) {
+                $draftApp = $a;
+            }
+        }
+
+        global $siteConfig;
+        $siteUrl = ($siteConfig && !empty($siteConfig->siteUrl)) ? rtrim($siteConfig->siteUrl, '/') : (defined('_BASEURL') ? rtrim(_BASEURL, '/') : '');
+
+        // Case 2: User has already submitted an application for this track
+        if ($submittedApp) {
+            $statusObj = $submittedApp->applicationstatus();
+            $statusName = $statusObj ? $statusObj->name : 'Submitted';
+
+            return [
+                'status' => 1,
+                'account_state' => 'already_applied',
+                'email' => $email,
+                'user_name' => $user->name,
+                'track' => $trackCode,
+                'application_id' => (int)$submittedApp->iD,
+                'application_status' => $statusName,
+                'redirect_url' => $siteUrl . '/dashboard/application?id=' . $submittedApp->iD,
+                'message' => 'Welcome back, ' . htmlspecialchars($user->name) . '! You have already submitted an application for the ' . $trackName . ' Roster (Application #' . $submittedApp->iD . ' &middot; Status: ' . $statusName . '). Please enter your password to view your application status.'
+            ];
+        }
+
+        // Case 3: User has an active unfinished draft for this track
+        if ($draftApp) {
+            $furthestStep = $this->calculateFurthestStep($draftApp);
+
+            return [
+                'status' => 1,
+                'account_state' => 'resuming',
+                'email' => $email,
+                'user_name' => $user->name,
+                'track' => $trackCode,
+                'application_id' => (int)$draftApp->iD,
+                'furthest_step' => $furthestStep,
+                'resume_url' => $siteUrl . '/opportunities/apply/' . $trackCode . '?id=' . $draftApp->iD . '&step=' . $furthestStep,
+                'message' => 'Welcome back, ' . htmlspecialchars($user->name) . '! You have an unfinished ' . $trackName . ' application draft. Enter your password to resume where you left off.'
+            ];
+        }
+
+        // Case 4: Existing user, but new application for this specific track
+        return [
+            'status' => 1,
+            'account_state' => 'existing_user_new_track',
+            'email' => $email,
+            'user_name' => $user->name,
+            'track' => $trackCode,
+            'message' => 'Welcome back, ' . htmlspecialchars($user->name) . '! Enter your password to sign in and apply for the ' . $trackName . ' Roster.'
+        ];
+    }
+
+    /**
+     * Authenticate returning/resuming candidate via password.
+     */
+    public function handleVerifyLogin(): array
+    {
+        $email = strtolower(trim($_POST['email'] ?? ''));
+        $password = $_POST['password'] ?? '';
+        $trackCode = strtolower(trim($_POST['track'] ?? ''));
+
+        if (!$email || !$password) {
+            return [
+                'status' => 0,
+                'msg' => 'Please provide both your email and password.'
+            ];
+        }
+
+        $accountController = new AccountController();
+        $authResult = $accountController->authenticate($email, $password);
+
+        if ($authResult['error']) {
+            return [
+                'status' => 0,
+                'msg' => $authResult['message'] ?: 'Incorrect password. Please verify and try again.'
+            ];
+        }
+
+        $user = $authResult['user'];
+        Auth::login($user->iD);
+
+        $tracks = Applicationtrack::findByQuery("SELECT * FROM applicationtrack WHERE code = ?", [$trackCode]);
+        $trackObj = !empty($tracks) ? $tracks[0] : null;
+        $trackId = $trackObj ? (int)$trackObj->iD : 1;
+
+        $apps = Rosterapplication::findByQuery(
+            "SELECT * FROM rosterapplication WHERE user = ? AND applicationtrack = ? AND applicationstatus NOT IN (8, 9) ORDER BY iD DESC",
+            [$user->iD, $trackId]
+        );
+
+        $submittedApp = null;
+        $draftApp = null;
+        foreach ($apps as $a) {
+            if ((int)$a->applicationstatus >= 2 && !$submittedApp) {
+                $submittedApp = $a;
+            } elseif ((int)$a->applicationstatus == 1 && !$draftApp) {
+                $draftApp = $a;
+            }
+        }
+
+        global $siteConfig;
+        $siteUrl = ($siteConfig && !empty($siteConfig->siteUrl)) ? rtrim($siteConfig->siteUrl, '/') : (defined('_BASEURL') ? rtrim(_BASEURL, '/') : '');
+
+        if ($submittedApp) {
+            return [
+                'status' => 1,
+                'action' => 'redirect_status',
+                'redirect_url' => $siteUrl . '/dashboard/application?id=' . $submittedApp->iD,
+                'msg' => 'Authenticated! Redirecting to your application status page...'
+            ];
+        } elseif ($draftApp) {
+            $furthestStep = $this->calculateFurthestStep($draftApp);
+            return [
+                'status' => 1,
+                'action' => 'resume_draft',
+                'redirect_url' => $siteUrl . '/opportunities/apply/' . $trackCode . '?id=' . $draftApp->iD . '&step=' . $furthestStep,
+                'furthest_step' => $furthestStep,
+                'application_id' => (int)$draftApp->iD,
+                'msg' => 'Welcome back! Loading your saved application draft...'
+            ];
+        }
+
+        return [
+            'status' => 1,
+            'action' => 'new_application_authenticated',
+            'redirect_url' => $siteUrl . '/opportunities/apply/' . $trackCode,
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone ?? ''
+            ],
+            'msg' => 'Authenticated! Loading application form...'
+        ];
     }
 
     /**
@@ -1116,7 +1290,62 @@ class RosterApplicationController
     {
         $userId = Auth::id();
         if (!$userId) {
-            return ['status' => 0, 'msg' => 'Authentication required. Please sign in.'];
+            $email = strtolower(trim($_POST['email'] ?? ''));
+            $password = trim($_POST['password'] ?? '');
+            if ($email && $password) {
+                if (strlen($password) < 6) {
+                    return ['status' => 0, 'msg' => 'Password must be at least 6 characters long.'];
+                }
+                $existingUsers = User::findByQuery("SELECT * FROM user WHERE email = ?", [$email]);
+                if (!empty($existingUsers)) {
+                    $u = $existingUsers[0];
+                    $authCheck = (new AccountController())->authenticate($email, $password);
+                    if (!empty($authCheck['error'])) {
+                        return ['status' => 0, 'msg' => 'An account with email ' . $email . ' already exists. Please enter your correct password or sign in first.'];
+                    }
+                    $userId = (int)$u->iD;
+                    Auth::login($userId);
+                } else {
+                    $legalName = trim($_POST['legal_name'] ?? '');
+                    $u = new User();
+                    $u->name = $legalName ?: $email;
+                    $u->email = $email;
+                    $u->role = 2; // General / Candidate
+                    $u->reg_by = 1;
+                    $u->save();
+                    $userId = (int)$u->iD;
+
+                    $login = new Login();
+                    $login->user = $userId;
+                    $login->password = password_hash($password, PASSWORD_BCRYPT);
+                    $login->reg_by = 1;
+                    $login->save();
+
+                    \App\Helpers\PasswordResume::enroll($userId, $password);
+
+                    try {
+                        $pdo = \App\Models\Database::sharedPdo();
+                        $insGen = $pdo->prepare("INSERT INTO userprofile (user, profiletype, profilestatus, display_title, is_default, reg_by, reg_date, status) VALUES (?, 1, 3, 'General User', 0, 1, CURRENT_TIMESTAMP, 1)");
+                        $insGen->execute([$userId]);
+
+                        $trackId = (int)($_POST['applicationtrack'] ?? 1);
+                        $trackObj = (new Applicationtrack())->find($trackId);
+                        $trackCode = $trackObj ? $trackObj->code : 'apprentice';
+                        $trackTypeId = ($trackCode === 'apprentice') ? 2 : (($trackCode === 'associate') ? 3 : null);
+                        if ($trackTypeId) {
+                            $title = ($trackTypeId === 2) ? 'Apprentice' : 'Associate Consultant';
+                            $insTrack = $pdo->prepare("INSERT INTO userprofile (user, profiletype, profilestatus, display_title, is_default, reg_by, reg_date, status) VALUES (?, ?, 2, ?, 1, 1, CURRENT_TIMESTAMP, 1)");
+                            $insTrack->execute([$userId, $trackTypeId, $title]);
+                        }
+                    } catch (\Throwable $e) {
+                        error_log("Failed to auto-provision userprofile in 5-step intake: " . $e->getMessage());
+                    }
+
+                    Auth::login($userId);
+                }
+            } else {
+                return ['status' => 0, 'msg' => 'Authentication required. Please sign in or provide your email and password (min 6 characters) on Step 1 to create your candidate account.'];
+            }
         }
 
         try {
@@ -1388,23 +1617,41 @@ class RosterApplicationController
             $judgement->save();
         }
 
-        // 8. If final submit, compute automated red flags and send email notifications
+        // 8. Supporting Documents to Rosterdocument
+        if (!empty($_FILES['cv_doc']['name'])) {
+            $this->saveRosterDocument($appId, 'CV_RESUME', $_FILES['cv_doc'], 'cv_' . $appId);
+        }
+        if (!empty($_FILES['proof_of_registration_doc']['name'])) {
+            $this->saveRosterDocument($appId, 'WRL_ATTACHMENT_LETTER', $_FILES['proof_of_registration_doc'], 'wrl_reg_' . $appId);
+        }
+        if (!empty($_FILES['transcript_doc']['name'])) {
+            $this->saveRosterDocument($appId, 'ACADEMIC_TRANSCRIPT', $_FILES['transcript_doc'], 'transcript_' . $appId);
+        }
+        if (!empty($_FILES['tax_clearance_doc']['name'])) {
+            $this->saveRosterDocument($appId, 'TAX_CLEARANCE_ITF263', $_FILES['tax_clearance_doc'], 'itf263_' . $appId);
+        }
+
+        // 9. If final submit, compute automated red flags and send email notifications
         if ($isFinalSubmit) {
             $this->evaluateAutomatedRedFlags($appId);
             $candidate = (new User())->find($userId);
             if ($candidate && $app) {
                 Mailer::sendApplicationSubmitted($app, $candidate);
             }
+            $this->logStatusEvent($appId, 2, 'Candidate submitted complete 5-stage application for vetting review.');
         }
 
-            return [
-                'status' => 1,
-                'application_id' => $appId,
-                'is_submit' => $isFinalSubmit,
-                'msg' => $isFinalSubmit
-                    ? 'Your application has been successfully submitted for review!'
-                    : 'Application draft saved successfully.'
-            ];
+        global $siteConfig;
+        $siteUrl = $siteConfig->siteUrl ?? _BASEURL;
+        return [
+            'status' => 1,
+            'application_id' => $appId,
+            'is_submit' => $isFinalSubmit,
+            'redirect_url' => $siteUrl . '/dashboard/application?id=' . $appId,
+            'msg' => $isFinalSubmit
+                ? 'Your application has been successfully submitted for review!'
+                : 'Application draft saved successfully.'
+        ];
         } catch (\Throwable $e) {
             error_log("handleSubmission error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
             return [
@@ -1614,8 +1861,8 @@ class RosterApplicationController
         $onboarding->country = trim($_POST['country'] ?? 'Zimbabwe');
         $onboarding->bank_name = trim($_POST['bank_name'] ?? '');
         $onboarding->bank_branch = trim($_POST['bank_branch'] ?? '');
-        $onboarding->account_name = trim($_POST['account_name'] ?? '');
-        $onboarding->account_number = trim($_POST['account_number'] ?? '');
+        $onboarding->account_name = trim($_POST['account_name'] ?? $_POST['bank_account_name'] ?? '');
+        $onboarding->account_number = trim($_POST['account_number'] ?? $_POST['bank_account_number'] ?? '');
         $onboarding->bank_currency = trim($_POST['bank_currency'] ?? 'USD');
         $onboarding->emergency_contact_name = trim($_POST['emergency_contact_name'] ?? '');
         $onboarding->emergency_contact_phone = trim($_POST['emergency_contact_phone'] ?? '');
@@ -1908,11 +2155,11 @@ class RosterApplicationController
         $assessment->reviewer = (int)(Auth::id() ?: 1);
         $assessment->vettingrecommendation = !empty($_POST['vettingrecommendation']) ? (int)$_POST['vettingrecommendation'] : null;
         $assessment->eligibility_gate_passed = isset($_POST['eligibility_gate_passed']) ? 1 : 0;
-        $assessment->technical_fit_score = (float)($_POST['technical_fit_score'] ?? 0);
-        $assessment->evidence_score = (float)($_POST['evidence_score'] ?? 0);
-        $assessment->judgement_score = (float)($_POST['judgement_score'] ?? 0);
-        $assessment->availability_score = (float)($_POST['availability_score'] ?? 0);
-        $assessment->motivation_score = (float)($_POST['motivation_score'] ?? 0);
+        $assessment->technical_fit_score = (float)($_POST['technical_fit_score'] ?? $_POST['score_technical_depth'] ?? 0);
+        $assessment->evidence_score = (float)($_POST['evidence_score'] ?? $_POST['score_work_experience'] ?? 0);
+        $assessment->judgement_score = (float)($_POST['judgement_score'] ?? $_POST['score_problem_solving'] ?? 0);
+        $assessment->availability_score = (float)($_POST['availability_score'] ?? $_POST['score_communication'] ?? 0);
+        $assessment->motivation_score = (float)($_POST['motivation_score'] ?? $_POST['score_cultural_alignment'] ?? 0);
 
         $assessment->total_score = $assessment->technical_fit_score +
                                    $assessment->evidence_score +
@@ -1920,7 +2167,7 @@ class RosterApplicationController
                                    $assessment->availability_score +
                                    $assessment->motivation_score;
 
-        $assessment->interview_notes = trim($_POST['interview_notes'] ?? '');
+        $assessment->interview_notes = trim($_POST['interview_notes'] ?? $_POST['review_notes'] ?? '');
         $assessment->technical_test_result = trim($_POST['technical_test_result'] ?? '');
         $assessment->vetted_at = date('Y-m-d H:i:s');
 
@@ -1935,7 +2182,7 @@ class RosterApplicationController
         // Update application status
         $statusChanged = false;
         $oldStatusId = (int)$app->applicationstatus;
-        $newStatusId = !empty($_POST['new_applicationstatus']) ? (int)$_POST['new_applicationstatus'] : $oldStatusId;
+        $newStatusId = !empty($_POST['new_applicationstatus']) ? (int)$_POST['new_applicationstatus'] : (!empty($_POST['status_transition']) ? (int)$_POST['status_transition'] : $oldStatusId);
 
         if ($newStatusId && $newStatusId !== $oldStatusId) {
             $app->applicationstatus = $newStatusId;
@@ -2006,6 +2253,7 @@ class RosterApplicationController
         return [
             'status' => 1,
             'total_score' => $assessment->total_score,
+            'new_status_id' => (int)$app->applicationstatus,
             'msg' => 'Assessment and scoring recorded successfully!'
         ];
     }

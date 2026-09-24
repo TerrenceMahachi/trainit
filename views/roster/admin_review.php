@@ -100,49 +100,15 @@ switch ($currentStatusCode) {
                 </div>
             <?php endif; ?>
 
-            <!-- Shortlist & Magic Link Dispatch Card -->
-            <?php if ($currentStatusId < 3): ?>
-                <div class="card border-0 shadow-sm mb-4 bg-primary bg-opacity-10 border-start border-primary border-4" style="border-radius: 12px;">
-                    <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
-                        <div>
-                            <h5 class="fw-bold text-primary mb-1"><i class="fa fa-envelope-open-text me-2"></i> Initial Express Application (Pending Shortlisting)</h5>
-                            <p class="text-muted small mb-0">Candidate has submitted their initial details and CV via the simplified application intake. Review their CV and profile below, then shortlist to dispatch their secure magic link for Stages 2–5 verification dossier.</p>
-                        </div>
-                        <button type="button" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm" id="btn_shortlist_action">
-                            <i class="fa fa-check-circle me-1"></i> Shortlist &amp; Send Dossier Invitation Link
-                        </button>
-                    </div>
-                </div>
-            <?php elseif ($currentStatusId === 3): ?>
+            <!-- Active On Roster Status Banner -->
+            <?php if ($currentStatusId === 5): ?>
                 <div class="card border-0 shadow-sm mb-4 bg-success bg-opacity-10 border-start border-success border-4" style="border-radius: 12px;">
-                    <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="card-body p-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
                         <div>
-                            <h5 class="fw-bold text-success mb-1"><i class="fa fa-clipboard-check me-2"></i> Candidate Shortlisted &ndash; Dossier Completion Pending</h5>
-                            <p class="text-muted small mb-0">Shortlist invitation link was emailed to <strong><?= htmlspecialchars($app->email); ?></strong>. Candidate has access to complete qualifications, skills matrix, and referee details.</p>
+                            <h5 class="fw-bold text-success mb-1"><i class="fa fa-check-double me-2"></i> Admitted to Active Talent Roster</h5>
+                            <p class="text-muted small mb-0">Candidate has been verified, assessed, and admitted to the active roster. Stage 3 Statutory Onboarding is active on their candidate dashboard.</p>
                         </div>
-                        <button type="button" class="btn btn-outline-success fw-bold rounded-pill px-3 btn-sm" id="btn_shortlist_action">
-                            <i class="fa fa-redo me-1"></i> Resend Dossier Invitation Link
-                        </button>
-                    </div>
-                </div>
-            <?php elseif ($currentStatusId === 4): ?>
-                <div class="card border-0 shadow-sm mb-4 bg-info bg-opacity-10 border-start border-info border-4" style="border-radius: 12px;">
-                    <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
-                        <div>
-                            <h5 class="fw-bold text-info-emphasis mb-1"><i class="fa fa-user-graduate me-2"></i> Verified Talent Dossier Completed</h5>
-                            <p class="text-muted small mb-0">Candidate has completed the verification dossier (Stages 2–5). Review their verified credentials, competency ratings, work history, and referees below to finalize assessment.</p>
-                        </div>
-                        <span class="badge bg-info text-dark px-3 py-2 rounded-pill fw-semibold"><i class="fa fa-clipboard-check me-1"></i> Dossier Filed</span>
-                    </div>
-                </div>
-            <?php elseif ($currentStatusId === 5): ?>
-                <div class="card border-0 shadow-sm mb-4 bg-success bg-opacity-10 border-start border-success border-4" style="border-radius: 12px;">
-                    <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
-                        <div>
-                            <h5 class="fw-bold text-success mb-1"><i class="fa fa-check-double me-2"></i> Active on Tsigiro Talent Roster</h5>
-                            <p class="text-muted small mb-0">Candidate has been successfully verified, assessed, and admitted to the active talent roster.</p>
-                        </div>
-                        <span class="badge bg-success px-3 py-2 rounded-pill fw-semibold"><i class="fa fa-shield me-1"></i> Verified Active</span>
+                        <span class="badge bg-success px-3 py-2 rounded-pill fw-semibold"><i class="fa fa-shield me-1"></i> Active on Roster</span>
                     </div>
                 </div>
             <?php endif; ?>
@@ -340,200 +306,178 @@ switch ($currentStatusCode) {
                         </div>
                     </div>
 
-                    <!-- Stages 2–5: Supplementary Verified Talent Dossier -->
-                    <?php if ($currentStatusId < 3 && empty($qualifications) && empty($skills) && empty($workHistories) && empty($referees)): ?>
-                        <!-- Gated Dossier State for Fresh Applications -->
-                        <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
-                            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                                <h5 class="fw-bold mb-0 text-dark"><i class="fa fa-folder-open text-primary me-2"></i> Stages 2–5: Verified Talent Dossier</h5>
-                                <span class="badge bg-secondary">Pending Shortlisting</span>
-                            </div>
-                            <div class="card-body p-4 text-center text-muted">
-                                <i class="fa fa-lock fa-2x mb-2 text-secondary"></i>
-                                <h6 class="fw-bold text-dark mb-1">Dossier Unlocked Upon Shortlisting</h6>
-                                <p class="small mb-0 text-muted max-w-600 mx-auto">
-                                    Under our streamlined 2-step intake at <code>/opportunities/apply</code>, detailed verification (qualifications, 1–5 skills matrix, work deliverables, and referees) is requested only after shortlisting. Click <strong>Shortlist &amp; Send Dossier Invitation Link</strong> above to invite the candidate to file this dossier.
-                                </p>
-                            </div>
+                    <!-- Stages 2–5: Talent Dossier -->
+                    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+                        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold mb-0 text-dark"><i class="fa fa-folder-open text-primary me-2"></i> Stages 2–5: Candidate Talent Dossier</h5>
+                            <span class="badge <?= $currentStatusId >= 5 ? 'bg-success' : ($currentStatusId >= 3 ? 'bg-primary' : 'bg-info text-dark'); ?> px-3 py-1">
+                                <?= $currentStatusId >= 5 ? 'Active on Roster' : ($currentStatusId >= 3 ? 'Under Evaluation' : 'Application Submitted'); ?>
+                            </span>
                         </div>
-                    <?php else: ?>
-                        <!-- Active or Submitted Dossier Sections -->
-                        <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
-                            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                                <h5 class="fw-bold mb-0 text-dark"><i class="fa fa-folder-open text-primary me-2"></i> Stages 2–5: Verified Talent Dossier</h5>
-                                <span class="badge <?= $currentStatusId >= 4 ? 'bg-success' : 'bg-info text-dark'; ?> px-3 py-1">
-                                    <?= $currentStatusId >= 4 ? 'Dossier Completed' : 'Dossier In Progress'; ?>
-                                </span>
-                            </div>
-                            <div class="card-body p-4">
+                        <div class="card-body p-4">
 
-                                <!-- Stage 2: Qualifications & Transcripts -->
-                                <div class="mb-4">
-                                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
-                                        <i class="fa fa-graduation-cap text-success me-2"></i> Stage 2: Qualifications &amp; Certifications (<?= count($qualifications); ?>)
-                                    </h6>
-                                    <?php if (empty($qualifications)): ?>
-                                        <p class="text-muted small fst-italic mb-0">No qualification records uploaded yet.</p>
-                                    <?php else: ?>
-                                        <div class="list-group list-group-flush">
-                                            <?php foreach ($qualifications as $q): ?>
-                                                <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                                    <div>
-                                                        <strong class="text-dark d-block"><?= htmlspecialchars($q->title); ?></strong>
-                                                        <small class="text-muted">
-                                                            <?= htmlspecialchars($q->institution_name ?: 'Institution'); ?>
-                                                            <?php if (!empty($q->field_of_study)): ?> &bull; <?= htmlspecialchars($q->field_of_study); ?><?php endif; ?>
-                                                            <?php if (!empty($q->date_obtained)): ?> &bull; Obtained <?= date('M Y', strtotime($q->date_obtained)); ?><?php endif; ?>
-                                                        </small>
-                                                    </div>
-                                                    <?php if (!empty($q->certificate_doc)): ?>
-                                                        <span class="badge bg-light text-primary border"><i class="fa fa-file-check me-1"></i> Doc Attached</span>
-                                                    <?php endif; ?>
+                            <!-- Stage 2: Qualifications & Transcripts -->
+                            <div class="mb-4">
+                                <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                                    <i class="fa fa-graduation-cap text-success me-2"></i> Stage 2: Qualifications &amp; Certifications (<?= count($qualifications); ?>)
+                                </h6>
+                                <?php if (empty($qualifications)): ?>
+                                    <p class="text-muted small fst-italic mb-0">No qualification records uploaded yet.</p>
+                                <?php else: ?>
+                                    <div class="list-group list-group-flush">
+                                        <?php foreach ($qualifications as $q): ?>
+                                            <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                                <div>
+                                                    <strong class="text-dark d-block"><?= htmlspecialchars($q->title); ?></strong>
+                                                    <small class="text-muted">
+                                                        <?= htmlspecialchars($q->institution_name ?: 'Institution'); ?>
+                                                        <?php if (!empty($q->field_of_study)): ?> &bull; <?= htmlspecialchars($q->field_of_study); ?><?php endif; ?>
+                                                        <?php if (!empty($q->date_obtained)): ?> &bull; Obtained <?= date('M Y', strtotime($q->date_obtained)); ?><?php endif; ?>
+                                                    </small>
                                                 </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-
-                                <!-- Stage 3: Skills & Competencies Matrix -->
-                                <div class="mb-4">
-                                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
-                                        <i class="fa fa-sliders text-primary me-2"></i> Stage 3: Self-Assessed Competencies (1–5 Anchored Scale)
-                                    </h6>
-                                    <?php if (empty($skills)): ?>
-                                        <p class="text-muted small fst-italic mb-0">No skill ratings submitted yet.</p>
-                                    <?php else: ?>
-                                        <div class="table-responsive">
-                                            <table class="table table-sm table-bordered align-middle mb-0">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th>Competency Item</th>
-                                                        <th style="width:140px;">Rating</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php foreach ($skills as $sk): ?>
-                                                        <?php $pl = $sk->proficiencylevel(); ?>
-                                                        <tr>
-                                                            <td class="small fw-semibold"><?= htmlspecialchars($sk->skillitem()->name ?? 'Skill'); ?></td>
-                                                            <td>
-                                                                <span class="badge <?= ($pl && $pl->level_number >= 4) ? 'bg-success' : (($pl && $pl->level_number == 3) ? 'bg-primary' : 'bg-secondary'); ?>">
-                                                                    <?= htmlspecialchars($pl->name ?? 'Level'); ?>
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    <?php endforeach; ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-
-                                <!-- Stage 4: Practical Deliverables & Work History -->
-                                <div class="mb-4">
-                                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
-                                        <i class="fa fa-briefcase text-warning me-2"></i> Stage 4: Work Experience &amp; Deliverables (<?= count($workHistories); ?>)
-                                    </h6>
-                                    <?php if (empty($workHistories)): ?>
-                                        <p class="text-muted small fst-italic mb-0">No work experience records submitted yet.</p>
-                                    <?php else: ?>
-                                        <div class="list-group list-group-flush">
-                                            <?php foreach ($workHistories as $wh): ?>
-                                                <div class="list-group-item px-0 py-3">
-                                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                                        <strong class="text-dark"><?= htmlspecialchars($wh->position_title); ?> &bull; <?= htmlspecialchars($wh->organization_name); ?></strong>
-                                                        <small class="text-muted">
-                                                            <?= $wh->start_date ? date('M Y', strtotime($wh->start_date)) : ''; ?> &ndash; 
-                                                            <?= $wh->is_current ? 'Present' : ($wh->end_date ? date('M Y', strtotime($wh->end_date)) : 'Completed'); ?>
-                                                        </small>
-                                                    </div>
-                                                    <?php if (!empty($wh->key_deliverables)): ?>
-                                                        <p class="small text-muted mb-0 bg-light p-2 rounded border">
-                                                            <?= nl2br(htmlspecialchars($wh->key_deliverables)); ?>
-                                                        </p>
-                                                    <?php endif; ?>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-
-                                <!-- Stage 4: Verified Referees -->
-                                <div class="mb-4">
-                                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
-                                        <i class="fa fa-user-check text-info me-2"></i> Stage 4: Referees &amp; Academic Supervisors (<?= count($referees); ?>)
-                                    </h6>
-                                    <?php if (empty($referees)): ?>
-                                        <p class="text-muted small fst-italic mb-0">No referees submitted yet.</p>
-                                    <?php else: ?>
-                                        <div class="row g-3">
-                                            <?php foreach ($referees as $rf): ?>
-                                                <div class="col-md-6">
-                                                    <div class="p-3 bg-light rounded border h-100">
-                                                        <strong class="text-dark d-block"><?= htmlspecialchars($rf->referee_name); ?></strong>
-                                                        <small class="text-muted d-block"><?= htmlspecialchars($rf->position); ?> &bull; <?= htmlspecialchars($rf->organization); ?></small>
-                                                        <span class="badge bg-secondary small mb-2"><?= htmlspecialchars($rf->relationship ?: 'Professional Reference'); ?></span>
-                                                        <div class="small mt-1">
-                                                            <div><i class="fa fa-envelope text-primary me-1"></i> <a href="mailto:<?= htmlspecialchars($rf->email); ?>"><?= htmlspecialchars($rf->email); ?></a></div>
-                                                            <div><i class="fa fa-phone text-success me-1"></i> <a href="tel:<?= htmlspecialchars($rf->phone); ?>"><?= htmlspecialchars($rf->phone); ?></a></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-
-                                <!-- Stage 5: Digital E-Signature & Consent -->
-                                <?php if (!empty($app->e_signature)): ?>
-                                    <div class="p-3 bg-light rounded-3 border">
-                                        <h6 class="fw-bold text-dark mb-1"><i class="fa fa-signature text-primary me-2"></i> Digital Declaration &amp; E-Signature</h6>
-                                        <p class="small text-muted mb-0">
-                                            Digitally signed by <strong><?= htmlspecialchars($app->e_signature); ?></strong> 
-                                            on <?= date('d M Y, H:i:s', strtotime($app->consent_timestamp)); ?> 
-                                            (IP: <code><?= htmlspecialchars($app->consent_ip_address ?: '127.0.0.1'); ?></code>).
-                                        </p>
+                                                <?php if (!empty($q->certificate_doc)): ?>
+                                                    <span class="badge bg-light text-primary border"><i class="fa fa-file-check me-1"></i> Doc Attached</span>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php endforeach; ?>
                                     </div>
                                 <?php endif; ?>
-
                             </div>
-                        </div>
-                    <?php endif; ?>
 
-                    <!-- Optional: Historical Questionnaire Archive (for legacy records only) -->
-                    <?php if ($judgement && (!empty($judgement->primary_function_evidence) || !empty($judgement->shared_client_management_plan) || !empty($judgement->urgent_friday_deadline_dilemma))): ?>
-                        <div class="accordion mb-4" id="legacyDataAccordion">
-                            <div class="accordion-item border-0 shadow-sm rounded-3 overflow-hidden">
-                                <h2 class="accordion-header" id="headingLegacy">
-                                    <button class="accordion-button collapsed py-2 px-3 bg-light text-muted small" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLegacy" aria-expanded="false" aria-controls="collapseLegacy">
-                                        <i class="fa fa-history text-secondary me-2"></i> Historical Legacy Questionnaire Responses (Pre-2026 Archive)
-                                    </button>
-                                </h2>
-                                <div id="collapseLegacy" class="accordion-collapse collapse" aria-labelledby="headingLegacy" data-bs-parent="#legacyDataAccordion">
-                                    <div class="accordion-body p-3 small text-muted">
+                            <!-- Stage 3: Skills & Competencies Matrix -->
+                            <div class="mb-4">
+                                <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                                    <i class="fa fa-sliders text-primary me-2"></i> Stage 3: Self-Assessed Competencies (1–5 Anchored Scale)
+                                </h6>
+                                <?php if (empty($skills)): ?>
+                                    <p class="text-muted small fst-italic mb-0">No skill ratings submitted yet.</p>
+                                <?php else: ?>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Competency Item</th>
+                                                    <th style="width:140px;">Rating</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($skills as $sk): ?>
+                                                    <?php $pl = $sk->proficiencylevel(); ?>
+                                                    <tr>
+                                                        <td class="small fw-semibold"><?= htmlspecialchars($sk->skillitem()->name ?? 'Skill'); ?></td>
+                                                        <td>
+                                                            <span class="badge <?= ($pl && $pl->level_number >= 4) ? 'bg-success' : (($pl && $pl->level_number == 3) ? 'bg-primary' : 'bg-secondary'); ?>">
+                                                                <?= htmlspecialchars($pl->name ?? 'Level'); ?>
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Stage 4: Practical Deliverables & Work History -->
+                            <div class="mb-4">
+                                <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                                    <i class="fa fa-briefcase text-warning me-2"></i> Stage 4: Work Experience &amp; Deliverables (<?= count($workHistories); ?>)
+                                </h6>
+                                <?php if (empty($workHistories)): ?>
+                                    <p class="text-muted small fst-italic mb-0">No work experience records submitted yet.</p>
+                                <?php else: ?>
+                                    <div class="list-group list-group-flush">
+                                        <?php foreach ($workHistories as $wh): ?>
+                                            <div class="list-group-item px-0 py-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <strong class="text-dark"><?= htmlspecialchars($wh->position_title); ?> &bull; <?= htmlspecialchars($wh->organization_name); ?></strong>
+                                                    <small class="text-muted">
+                                                        <?= $wh->start_date ? date('M Y', strtotime($wh->start_date)) : ''; ?> &ndash; 
+                                                        <?= $wh->is_current ? 'Present' : ($wh->end_date ? date('M Y', strtotime($wh->end_date)) : 'Completed'); ?>
+                                                    </small>
+                                                </div>
+                                                <?php if (!empty($wh->key_deliverables)): ?>
+                                                    <p class="small text-muted mb-0 bg-light p-2 rounded border">
+                                                        <?= nl2br(htmlspecialchars($wh->key_deliverables)); ?>
+                                                    </p>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Stage 4: Verified Referees -->
+                            <div class="mb-4">
+                                <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                                    <i class="fa fa-user-check text-info me-2"></i> Stage 4: Referees &amp; Academic Supervisors (<?= count($referees); ?>)
+                                </h6>
+                                <?php if (empty($referees)): ?>
+                                    <p class="text-muted small fst-italic mb-0">No referees submitted yet.</p>
+                                <?php else: ?>
+                                    <div class="row g-3">
+                                        <?php foreach ($referees as $rf): ?>
+                                            <div class="col-md-6">
+                                                <div class="p-3 bg-light rounded border h-100">
+                                                    <strong class="text-dark d-block"><?= htmlspecialchars($rf->referee_name); ?></strong>
+                                                    <small class="text-muted d-block"><?= htmlspecialchars($rf->position); ?> &bull; <?= htmlspecialchars($rf->organization); ?></small>
+                                                    <span class="badge bg-secondary small mb-2"><?= htmlspecialchars($rf->relationship ?: 'Professional Reference'); ?></span>
+                                                    <div class="small mt-1">
+                                                        <div><i class="fa fa-envelope text-primary me-1"></i> <a href="mailto:<?= htmlspecialchars($rf->email); ?>"><?= htmlspecialchars($rf->email); ?></a></div>
+                                                        <div><i class="fa fa-phone text-success me-1"></i> <a href="tel:<?= htmlspecialchars($rf->phone); ?>"><?= htmlspecialchars($rf->phone); ?></a></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Stage 5: Situational Judgement & Evidence Narratives -->
+                            <div class="mb-4">
+                                <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                                    <i class="fa fa-scale-balanced text-primary me-2"></i> Stage 5: Situational Judgement &amp; Evidence Narratives
+                                </h6>
+                                <?php if (!$judgement || (empty($judgement->primary_function_evidence) && empty($judgement->shared_client_management_plan) && empty($judgement->urgent_friday_deadline_dilemma))): ?>
+                                    <p class="text-muted small fst-italic mb-0">No situational judgement responses submitted.</p>
+                                <?php else: ?>
+                                    <div class="vstack gap-3">
                                         <?php if (!empty($judgement->primary_function_evidence)): ?>
-                                            <div class="mb-2">
-                                                <strong>Evidence Narrative:</strong>
-                                                <p class="mb-1 text-dark"><?= nl2br(htmlspecialchars($judgement->primary_function_evidence)); ?></p>
+                                            <div class="p-3 bg-light rounded border">
+                                                <strong class="text-dark d-block mb-1"><i class="fa fa-lightbulb text-warning me-1"></i> Core Domain Competence &amp; Evidence Narrative:</strong>
+                                                <div class="text-secondary small"><?= nl2br(htmlspecialchars($judgement->primary_function_evidence)); ?></div>
                                             </div>
                                         <?php endif; ?>
                                         <?php if (!empty($judgement->shared_client_management_plan)): ?>
-                                            <div class="mb-2">
-                                                <strong>Workload Balance Plan:</strong>
-                                                <p class="mb-1 text-dark"><?= nl2br(htmlspecialchars($judgement->shared_client_management_plan)); ?></p>
+                                            <div class="p-3 bg-light rounded border">
+                                                <strong class="text-dark d-block mb-1"><i class="fa fa-tasks text-info me-1"></i> Multi-Client Workload Prioritization Plan:</strong>
+                                                <div class="text-secondary small"><?= nl2br(htmlspecialchars($judgement->shared_client_management_plan)); ?></div>
                                             </div>
                                         <?php endif; ?>
                                         <?php if (!empty($judgement->urgent_friday_deadline_dilemma)): ?>
-                                            <div class="mb-0">
-                                                <strong>Urgent Deadline Dilemma:</strong>
-                                                <p class="mb-0 text-dark"><?= nl2br(htmlspecialchars($judgement->urgent_friday_deadline_dilemma)); ?></p>
+                                            <div class="p-3 bg-light rounded border">
+                                                <strong class="text-dark d-block mb-1"><i class="fa fa-fire text-danger me-1"></i> Critical Production / Urgent Deadline Dilemma:</strong>
+                                                <div class="text-secondary small"><?= nl2br(htmlspecialchars($judgement->urgent_friday_deadline_dilemma)); ?></div>
                                             </div>
                                         <?php endif; ?>
                                     </div>
-                                </div>
+                                <?php endif; ?>
                             </div>
+
+                            <!-- Stage 5: Digital E-Signature & Consent -->
+                            <?php if (!empty($app->e_signature)): ?>
+                                <div class="p-3 bg-light rounded-3 border">
+                                    <h6 class="fw-bold text-dark mb-1"><i class="fa fa-signature text-primary me-2"></i> Digital Declaration &amp; E-Signature</h6>
+                                    <p class="small text-muted mb-0">
+                                        Digitally signed by <strong><?= htmlspecialchars($app->e_signature); ?></strong> 
+                                        on <?= date('d M Y, H:i:s', strtotime($app->consent_timestamp)); ?> 
+                                        (IP: <code><?= htmlspecialchars($app->consent_ip_address ?: '127.0.0.1'); ?></code>).
+                                    </p>
+                                </div>
+                            <?php endif; ?>
+
                         </div>
-                    <?php endif; ?>
+                    </div>
 
                 </div>
 
@@ -817,48 +761,6 @@ $(document).ready(function () {
                         <div><strong>Error:</strong> Server communication failed. Please try again.</div>
                     </div>
                 `);
-            }
-        });
-    });
-
-    // Shortlist Candidate & Email Magic Link Handler
-    $('#btn_shortlist_action').on('click', function (e) {
-        e.preventDefault();
-        const $btn = $(this);
-        const origHtml = $btn.html();
-        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Processing...');
-
-        $.ajax({
-            url: '<?= $siteConfig->siteUrl; ?>/admin/roster/shortlist',
-            type: 'POST',
-            data: { rosterapplication: <?= $app->iD; ?> },
-            dataType: 'json',
-            success: function(res) {
-                if (res.status === 1) {
-                    $btn.attr('class', 'btn btn-success fw-bold rounded-pill px-4 shadow-sm')
-                        .html('<i class="fa fa-check me-1"></i> Shortlisted &amp; Link Sent!');
-
-                    const copyBox = res.dossier_link ? `
-                        <div class="mt-2 input-group input-group-sm">
-                            <input type="text" class="form-control" value="${res.dossier_link}" id="shortlist_link_input" readonly>
-                            <button class="btn btn-outline-dark" type="button" onclick="navigator.clipboard.writeText('${res.dossier_link}'); alert('Link copied to clipboard!');">Copy Link</button>
-                        </div>
-                    ` : '';
-
-                    $('#review_alert').show().attr('class', 'alert alert-success d-flex align-items-start p-3 shadow-sm mb-4')
-                        .html(`<i class="fa fa-check-circle fa-2x me-3 text-success"></i> <div><h6 class="mb-1 fw-bold">Candidate Shortlisted!</h6><div>${res.msg}</div>${copyBox}</div>`);
-
-                    setTimeout(function() {
-                        location.reload();
-                    }, 2000);
-                } else {
-                    $btn.prop('disabled', false).html(origHtml);
-                    alert(res.msg || 'Failed to shortlist candidate.');
-                }
-            },
-            error: function() {
-                $btn.prop('disabled', false).html(origHtml);
-                alert('Server error while shortlisting candidate.');
             }
         });
     });

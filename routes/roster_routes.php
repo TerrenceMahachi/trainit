@@ -7,7 +7,7 @@ use App\Helpers\Auth;
 
 global $router;
 
-// 1. Simplified Public Express Intake (Zero friction, initiated on Opportunities page)
+// 1. Full 5-Stage Wizard Intake (Initiated publicly or from dashboard)
 $router->addRoute('GET', '/opportunities/apply', function () {
     global $siteConfig;
     $data = ['title' => 'Apply: Choose Application Track'];
@@ -17,18 +17,46 @@ $router->addRoute('GET', '/opportunities/apply', function () {
 
 $router->addRoute('GET', '/opportunities/apply/apprentice', function () {
     $appId = isset($_GET['id']) ? (int)$_GET['id'] : null;
-    echo (new RosterApplicationController())->showExpressForm('apprentice', $appId);
+    echo (new RosterApplicationController())->showApplyForm('apprentice', $appId);
     exit;
 });
 
 $router->addRoute('GET', '/opportunities/apply/associate', function () {
     $appId = isset($_GET['id']) ? (int)$_GET['id'] : null;
-    echo (new RosterApplicationController())->showExpressForm('associate', $appId);
+    echo (new RosterApplicationController())->showApplyForm('associate', $appId);
+    exit;
+});
+
+$router->addRoute('POST', '/opportunities/apply/check-email', function () {
+    $res = (new RosterApplicationController())->handleCheckEmail();
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+});
+
+$router->addRoute('POST', '/dashboard/apply/check-email', function () {
+    $res = (new RosterApplicationController())->handleCheckEmail();
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+});
+
+$router->addRoute('POST', '/opportunities/apply/verify-login', function () {
+    $res = (new RosterApplicationController())->handleVerifyLogin();
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+});
+
+$router->addRoute('POST', '/dashboard/apply/verify-login', function () {
+    $res = (new RosterApplicationController())->handleVerifyLogin();
+    header('Content-Type: application/json');
+    echo json_encode($res);
     exit;
 });
 
 $router->addRoute('POST', '/opportunities/apply/express', function () {
-    $res = (new RosterApplicationController())->handleExpressSubmit();
+    $res = (new RosterApplicationController())->handleSubmission();
     if (is_array($res)) {
         header('Content-Type: application/json');
         echo json_encode($res);
@@ -54,51 +82,41 @@ $router->addRoute('POST', '/roster/application/revoke', function () {
     exit;
 });
 
-// Stage 2: Credentials & Supporting Documents
+// Legacy multi-step & shortlist magic link redirects
 $router->addRoute('GET', '/roster/apply/credentials', function () {
+    global $siteConfig;
     $appId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-    echo (new RosterApplicationController())->showCredentialsForm($appId);
+    header("Location: " . $siteConfig->siteUrl . ($appId ? "/dashboard/application?id=" . $appId : "/dashboard/apply"));
     exit;
 });
 
-$router->addRoute('POST', '/roster/apply/credentials', function () {
-    (new RosterApplicationController())->handleCredentialsSubmit();
-    exit;
-});
-
-// Stage 3: Skills & Competency Matrix
 $router->addRoute('GET', '/roster/apply/skills', function () {
+    global $siteConfig;
     $appId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-    echo (new RosterApplicationController())->showSkillsForm($appId);
+    header("Location: " . $siteConfig->siteUrl . ($appId ? "/dashboard/application?id=" . $appId : "/dashboard/apply"));
     exit;
 });
 
-$router->addRoute('POST', '/roster/apply/skills', function () {
-    (new RosterApplicationController())->handleSkillsSubmit();
-    exit;
-});
-
-// Stage 4: Practical Experience & Referees
 $router->addRoute('GET', '/roster/apply/experience', function () {
+    global $siteConfig;
     $appId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-    echo (new RosterApplicationController())->showExperienceForm($appId);
+    header("Location: " . $siteConfig->siteUrl . ($appId ? "/dashboard/application?id=" . $appId : "/dashboard/apply"));
     exit;
 });
 
-$router->addRoute('POST', '/roster/apply/experience', function () {
-    (new RosterApplicationController())->handleExperienceSubmit();
-    exit;
-});
-
-// Stage 5: Review & Digital Declaration
 $router->addRoute('GET', '/roster/apply/review', function () {
+    global $siteConfig;
     $appId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-    echo (new RosterApplicationController())->showReviewForm($appId);
+    header("Location: " . $siteConfig->siteUrl . ($appId ? "/dashboard/application?id=" . $appId : "/dashboard/apply"));
     exit;
 });
 
 $router->addRoute('POST', '/roster/apply/submit', function () {
-    (new RosterApplicationController())->handleFinalSubmit();
+    $res = (new RosterApplicationController())->handleSubmission();
+    if (is_array($res)) {
+        header('Content-Type: application/json');
+        echo json_encode($res);
+    }
     exit;
 });
 
@@ -109,13 +127,13 @@ $router->addRoute('GET', '/roster/application/status', function () {
     exit;
 });
 
-// Candidate Shortlist Magic Link Access (Direct authentication into Stage 2 Dossier)
+// Candidate Shortlist Magic Link Access
 $router->addRoute('GET', '/roster/shortlist/complete', function () {
     (new RosterApplicationController())->handleShortlistTokenLogin();
     exit;
 });
 
-// Legacy / Direct Link Redirections to Express Intake
+// Legacy / Direct Link Redirections to Application Track
 $router->addRoute('GET', '/apply/apprentice', function () {
     global $siteConfig;
     header("Location: " . $siteConfig->siteUrl . "/opportunities/apply/apprentice");
@@ -142,16 +160,14 @@ $router->addRoute('GET', '/dashboard/apply', function () {
 });
 
 $router->addRoute('GET', '/dashboard/apply/apprentice', function () {
-    global $siteConfig;
     $appId = isset($_GET['id']) ? (int)$_GET['id'] : null;
-    header("Location: " . $siteConfig->siteUrl . "/opportunities/apply/apprentice" . ($appId ? '?id=' . $appId : ''));
+    echo (new RosterApplicationController())->showApplyForm('apprentice', $appId);
     exit;
 });
 
 $router->addRoute('GET', '/dashboard/apply/associate', function () {
-    global $siteConfig;
     $appId = isset($_GET['id']) ? (int)$_GET['id'] : null;
-    header("Location: " . $siteConfig->siteUrl . "/opportunities/apply/associate" . ($appId ? '?id=' . $appId : ''));
+    echo (new RosterApplicationController())->showApplyForm('associate', $appId);
     exit;
 });
 

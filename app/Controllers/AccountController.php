@@ -25,7 +25,7 @@ class AccountController
      *
      * @return array{error:bool, message:string, user:?User}
      */
-    private function authenticate($email, $password): array
+    public function authenticate($email, $password): array
     {
         if ($email === "" || $email === null) {
             return ['error' => true, 'message' => 'Error: Email cannot be blank', 'user' => null];
