@@ -484,7 +484,12 @@ class RosterApplicationController
             }
 
             $app->legal_name = $legalName;
-            $app->preferred_name = trim($_POST['preferred_name'] ?? '');
+            $preferredName = trim($_POST['preferred_name'] ?? '');
+            if ($preferredName === '' && $legalName !== '') {
+                $parts = preg_split('/\s+/', $legalName);
+                $preferredName = !empty($parts[0]) ? $parts[0] : $legalName;
+            }
+            $app->preferred_name = $preferredName;
             $app->email = $email;
             $app->mobile_number = trim($_POST['mobile_number'] ?? '');
             $app->city = trim($_POST['city'] ?? '');
@@ -1284,6 +1289,129 @@ class RosterApplicationController
     }
 
     /**
+     * Register a new candidate (Phase 2): validates email, legal_name, password,
+     * provisions User and Login, initializes draft application, and authenticates session.
+     */
+    public function handleRegisterCandidate(): array
+    {
+        $email = strtolower(trim($_POST['email'] ?? ''));
+        $legalName = trim($_POST['legal_name'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $trackCode = strtolower(trim($_POST['track'] ?? 'apprentice'));
+
+        if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return [
+                'status' => 0,
+                'msg' => 'Please enter a valid email address.'
+            ];
+        }
+
+        if (empty($legalName) || strlen($legalName) < 2) {
+            return [
+                'status' => 0,
+                'msg' => 'Please enter your full legal name as it appears on your National ID.'
+            ];
+        }
+
+        if (empty($password) || strlen($password) < 6) {
+            return [
+                'status' => 0,
+                'msg' => 'Password must be at least 6 characters long.'
+            ];
+        }
+
+        // Verify that user does not already exist
+        $existing = User::findByQuery("SELECT * FROM user WHERE LOWER(email) = ? LIMIT 1", [$email]);
+        if (!empty($existing)) {
+            return [
+                'status' => 0,
+                'msg' => 'An account with this email address already exists. Please sign in.'
+            ];
+        }
+
+        // Derive preferred name from legal name (first word)
+        $nameParts = preg_split('/\s+/', $legalName);
+        $preferredName = !empty($nameParts[0]) ? $nameParts[0] : $legalName;
+
+        // Resolve track ID
+        $tracks = Applicationtrack::findByQuery("SELECT * FROM applicationtrack WHERE code = ?", [$trackCode]);
+        $trackObj = !empty($tracks) ? $tracks[0] : null;
+        $trackId = $trackObj ? (int)$trackObj->iD : 1;
+
+        // 1. Create User
+        $user = new User();
+        $user->name = $legalName;
+        $user->email = $email;
+        $user->role = 2; // candidate
+        $user->status = 1;
+        $user->reg_by = 1;
+        $user->save();
+        $userId = (int)$user->iD;
+
+        // 2. Create Login credentials
+        $login = new Login();
+        $login->user = $userId;
+        $login->password = password_hash($password, PASSWORD_BCRYPT);
+        $login->status = 1;
+        $login->reg_by = $userId;
+        $login->save();
+
+        // 3. Enroll PasswordResume helper
+        \App\Helpers\PasswordResume::enroll($userId, $password);
+
+        // 4. Provision user profile
+        try {
+            $pdo = \App\Models\Database::sharedPdo();
+            $insGen = $pdo->prepare("INSERT INTO userprofile (user, profiletype, profilestatus, display_title, is_default, reg_by, reg_date, status) VALUES (?, 1, 3, 'General User', 0, 1, CURRENT_TIMESTAMP, 1)");
+            $insGen->execute([$userId]);
+
+            $trackTypeId = ($trackCode === 'apprentice') ? 2 : (($trackCode === 'associate') ? 3 : null);
+            if ($trackTypeId) {
+                $title = ($trackTypeId === 2) ? 'Apprentice' : 'Associate Consultant';
+                $insTrack = $pdo->prepare("INSERT INTO userprofile (user, profiletype, profilestatus, display_title, is_default, reg_by, reg_date, status) VALUES (?, ?, 2, ?, 1, 1, CURRENT_TIMESTAMP, 1)");
+                $insTrack->execute([$userId, $trackTypeId, $title]);
+            }
+        } catch (\Throwable $e) {
+            // Ignore duplicate profile errors if any
+        }
+
+        // 5. Initialize draft Rosterapplication
+        $app = new Rosterapplication();
+        $app->user = $userId;
+        $app->applicationtrack = $trackId;
+        $app->applicationstatus = 1; // draft
+        $app->primaryfunction = 1;
+        $app->legal_name = $legalName;
+        $app->preferred_name = $preferredName;
+        $app->email = $email;
+        $app->mobile_number = '';
+        $app->city = 'Harare';
+        $app->zimprovince = 1;
+        $app->workrightstatus = 1;
+        $app->country = 'Zimbabwe';
+        $app->nationality = 'Zimbabwean';
+        $app->reg_by = $userId;
+        $app->status = 1;
+        $app->save();
+        $appId = (int)$app->iD;
+
+        // 6. Log the candidate in
+        Auth::login($userId);
+
+        global $siteConfig;
+        $siteUrl = ($siteConfig && !empty($siteConfig->siteUrl)) ? rtrim($siteConfig->siteUrl, '/') : (defined('_BASEURL') ? rtrim(_BASEURL, '/') : '');
+        $redirectUrl = $siteUrl . '/opportunities/apply/' . $trackCode . '?id=' . $appId . '&step=1';
+
+        return [
+            'status' => 1,
+            'msg' => 'Account registered successfully! Loading your application...',
+            'user_id' => $userId,
+            'application_id' => $appId,
+            'redirect_url' => $redirectUrl
+        ];
+    }
+
+    /**
      * Submit or Save Draft of Application.
      */
     public function handleSubmission(): array
@@ -1366,9 +1494,14 @@ class RosterApplicationController
         $app->applicationtrack = $trackId;
         $app->applicationstatus = $isFinalSubmit ? 2 : 1; // 2: Submitted, 1: Draft
         $app->primaryfunction = (int) ($_POST['primaryfunction'] ?? 1);
-        $app->secondary_functions = json_encode($_POST['secondary_functions'] ?? []);
-        $app->legal_name = trim($_POST['legal_name'] ?? '');
-        $app->preferred_name = trim($_POST['preferred_name'] ?? '');
+        $legalName = trim($_POST['legal_name'] ?? '');
+        $preferredName = trim($_POST['preferred_name'] ?? '');
+        if ($preferredName === '' && $legalName !== '') {
+            $parts = preg_split('/\s+/', $legalName);
+            $preferredName = !empty($parts[0]) ? $parts[0] : $legalName;
+        }
+        $app->legal_name = $legalName;
+        $app->preferred_name = $preferredName;
         $app->email = trim($_POST['email'] ?? '');
         $app->mobile_number = trim($_POST['mobile_number'] ?? '');
         $app->whatsapp_number = trim($_POST['whatsapp_number'] ?? '');

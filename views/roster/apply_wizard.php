@@ -1011,61 +1011,73 @@ textarea.form-control {
                                                 <div id="error_existing_new_track" class="small text-danger mt-2" style="display:none;"></div>
                                             </div>
 
-                                            <!-- State D: New Candidate - Welcome Confirmation -->
-                                            <div id="box_new_candidate" class="p-3 bg-light rounded-3 border mt-3" style="display:none;">
-                                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                                    <div class="d-flex align-items-center gap-2 text-success fw-bold">
-                                                        <i class="fa fa-check-circle fs-5"></i>
-                                                        <span>New Candidate Account: <strong id="new_candidate_email_display" class="text-dark"></strong></span>
+                                            <!-- State D: New Candidate - Phase 2 Registration Card -->
+                                            <div id="box_new_candidate" class="p-4 bg-white rounded-3 border mt-3" style="display:none; border-color: rgba(50, 201, 154, 0.45) !important; box-shadow: 0 4px 18px rgba(50, 201, 154, 0.08);">
+                                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pb-3 mb-3 border-bottom">
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="step-num-circle" style="background:#daf8ee; color:#159b75; width:34px; height:34px; font-size:0.95rem;">
+                                                            <i class="fa fa-user-plus"></i>
+                                                        </span>
+                                                        <div>
+                                                            <strong class="d-block text-dark" style="font-size: 0.98rem;">New Candidate Account Registration</strong>
+                                                            <span class="small text-muted">Registering as <strong id="new_candidate_email_display" class="text-dark"></strong></span>
+                                                        </div>
                                                     </div>
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn_change_email">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" id="btn_change_email">
                                                         <i class="fa fa-pencil-alt me-1"></i> Change Email
                                                     </button>
                                                 </div>
-                                                <p class="small text-muted mt-2 mb-0">
-                                                    Please enter your legal name and choose a secure password below to register your candidate account and continue.
-                                                </p>
+
+                                                <div class="row g-3">
+                                                    <div class="col-12">
+                                                        <label class="form-label">Email Address</label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-light text-muted"><i class="fa fa-envelope"></i></span>
+                                                            <input type="email" class="form-control bg-light" id="reg_email_display" readonly>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Full Legal Name (as on National ID) <span class="text-danger">*</span></label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-white text-muted"><i class="fa fa-user"></i></span>
+                                                            <input type="text" class="form-control" name="reg_legal_name" id="reg_legal_name" placeholder="e.g. Tendai Samuel Moyo" required autocomplete="name">
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Create Account Password <span class="text-danger">*</span></label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-white text-muted"><i class="fa fa-lock"></i></span>
+                                                            <input type="password" class="form-control" name="reg_password" id="reg_password" placeholder="Password (min 6 characters)" required minlength="6" autocomplete="new-password">
+                                                            <button class="btn btn-outline-secondary" type="button" onclick="const p = document.getElementById('reg_password'); p.type = p.type === 'password' ? 'text' : 'password'; this.querySelector('i').classList.toggle('fa-eye'); this.querySelector('i').classList.toggle('fa-eye-slash');"><i class="fa fa-eye"></i></button>
+                                                        </div>
+                                                        <small class="text-muted" style="font-size:0.75rem;">Minimum 6 characters. Used to sign in and view application status.</small>
+                                                    </div>
+
+                                                    <div class="col-12 mt-3">
+                                                        <button type="button" class="btn btn-wiz-next w-100 py-3 rounded-pill fw-bold" id="btn_submit_registration">
+                                                            <span id="btn_submit_registration_text">Register &amp; Continue to Application</span> <i class="fa fa-arrow-right ms-2"></i>
+                                                        </button>
+                                                        <div id="reg_error_feedback" class="small text-danger mt-2 text-center" style="display:none;"></div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         <?php endif; ?>
 
-                                        <!-- Profile Inputs Grid -->
+                                        <!-- Profile Inputs Grid (Unlocked after registration / authentication) -->
                                         <div id="stage1_profile_fields" class="row g-3" style="<?= ($isLoggedIn || $appId > 0) ? '' : 'display:none;'; ?>">
-                                            <div class="col-md-6">
+                                            <div class="col-12">
                                                 <label class="form-label">Full Legal Name (as on National ID) <span class="text-danger">*</span></label>
                                                 <input type="text" class="form-control track-progress req-field" name="legal_name" id="field_legal_name" data-label="Full Legal Name" value="<?= htmlspecialchars($app->legal_name ?? $data['user']->name ?? ''); ?>" required placeholder="e.g. Tendai Samuel Moyo">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Preferred Name (What we should call you)</label>
-                                                <input type="text" class="form-control track-progress" name="preferred_name" value="<?= htmlspecialchars($app->preferred_name ?? ''); ?>" placeholder="e.g. Tendai">
+                                                <input type="hidden" name="preferred_name" id="field_preferred_name" value="<?= htmlspecialchars($app->preferred_name ?? ''); ?>">
                                             </div>
 
                                             <?php if (!$isLoggedIn): ?>
-                                            <div class="col-12 mt-2" id="guest_password_container">
-                                                <div class="guest-account-box">
-                                                    <div class="d-flex align-items-center gap-2 mb-2">
-                                                        <span class="badge bg-dark text-white"><i class="fa fa-lock me-1"></i> Account Security</span>
-                                                        <strong class="text-dark small">Create Account Password for Candidate Portal Access</strong>
-                                                    </div>
-                                                    <p class="small text-muted mb-3">Set a secure password so you can return, check your vetting status, and manage active client placements.</p>
-                                                    <div class="row g-3">
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">Create Account Password <span class="text-danger">*</span></label>
-                                                            <div class="input-group">
-                                                                <input type="password" class="form-control track-progress req-field" name="password" id="field_password" data-label="Account Password" required minlength="6" placeholder="Password (min 6 chars)">
-                                                                <button class="btn btn-outline-secondary" type="button" onclick="const p = document.getElementById('field_password'); p.type = p.type === 'password' ? 'text' : 'password'; this.querySelector('i').classList.toggle('fa-eye'); this.querySelector('i').classList.toggle('fa-eye-slash');"><i class="fa fa-eye"></i></button>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
-                                                            <div class="input-group">
-                                                                <input type="password" class="form-control track-progress req-field" name="password_confirmation" id="field_password_confirmation" data-label="Confirm Password" required minlength="6" placeholder="Re-enter password">
-                                                                <button class="btn btn-outline-secondary" type="button" onclick="const p = document.getElementById('field_password_confirmation'); p.type = p.type === 'password' ? 'text' : 'password'; this.querySelector('i').classList.toggle('fa-eye'); this.querySelector('i').classList.toggle('fa-eye-slash');"><i class="fa fa-eye"></i></button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <!-- Fallback hidden password inputs for test compatibility -->
+                                            <input type="hidden" name="password" id="field_password" value="">
+                                            <input type="hidden" name="password_confirmation" id="field_password_confirmation" value="">
                                             <?php endif; ?>
 
                                             <div class="col-md-3">
@@ -1900,20 +1912,20 @@ document.addEventListener('DOMContentLoaded', function () {
             } else if (data.account_state === 'new') {
                 boxNewCandidate.style.display = 'block';
                 document.getElementById('new_candidate_email_display').textContent = email;
+                const regEmailDisplay = document.getElementById('reg_email_display');
+                if (regEmailDisplay) regEmailDisplay.value = email;
                 btnCheckEmail.innerHTML = '<i class="fa fa-check text-success me-1"></i> Verified';
                 btnCheckEmail.classList.remove('btn-wiz-next');
                 btnCheckEmail.classList.add('btn-outline-success');
                 fieldEmail.readOnly = true;
 
-                if (stage1ProfileFields) stage1ProfileFields.style.display = 'flex';
-                if (stage1CardFooter) stage1CardFooter.style.display = 'flex';
+                if (stage1ProfileFields) stage1ProfileFields.style.display = 'none';
+                if (stage1CardFooter) stage1CardFooter.style.display = 'none';
 
-                updateFormProgress();
-
-                const legalNameInput = document.getElementById('field_legal_name');
-                if (legalNameInput) {
-                    legalNameInput.focus();
-                    legalNameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const regLegalName = document.getElementById('reg_legal_name');
+                if (regLegalName) {
+                    regLegalName.focus();
+                    regLegalName.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             }
         })
@@ -1941,6 +1953,7 @@ document.addEventListener('DOMContentLoaded', function () {
         btnCheckEmail.innerHTML = '<span id="btn_check_email_text">Continue</span> <i class="fa fa-arrow-right ms-1"></i>';
         btnCheckEmail.classList.remove('btn-outline-success');
         btnCheckEmail.classList.add('btn-wiz-next');
+        btnCheckEmail.disabled = false;
         fieldEmail.readOnly = false;
         fieldEmail.focus();
 
@@ -1951,17 +1964,106 @@ document.addEventListener('DOMContentLoaded', function () {
         updateFormProgress();
     });
 
-    // Guard stepper navigation tabs if candidate has not verified email
+    // --- 1.1 Phase 2 Registration Submission ---
+    function submitRegistration() {
+        const regLegalName = document.getElementById('reg_legal_name');
+        const regPassword = document.getElementById('reg_password');
+        const regError = document.getElementById('reg_error_feedback');
+        const btnReg = document.getElementById('btn_submit_registration');
+        const btnRegText = document.getElementById('btn_submit_registration_text');
+
+        const email = fieldEmail.value.trim();
+        const legalName = regLegalName ? regLegalName.value.trim() : '';
+        const password = regPassword ? regPassword.value : '';
+
+        if (!legalName || legalName.length < 2) {
+            regError.style.display = 'block';
+            regError.innerHTML = '<i class="fa fa-exclamation-triangle me-1"></i> Please enter your full legal name as it appears on your National ID.';
+            if (regLegalName) regLegalName.focus();
+            return;
+        }
+
+        if (!password || password.length < 6) {
+            regError.style.display = 'block';
+            regError.innerHTML = '<i class="fa fa-exclamation-triangle me-1"></i> Password must be at least 6 characters long.';
+            if (regPassword) regPassword.focus();
+            return;
+        }
+
+        regError.style.display = 'none';
+        btnReg.disabled = true;
+        const originalText = btnRegText.textContent;
+        btnRegText.innerHTML = '<i class="fa fa-spinner fa-spin me-2"></i> Registering Account...';
+
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('legal_name', legalName);
+        formData.append('password', password);
+        formData.append('track', trackCode);
+
+        fetch(siteUrl + '/opportunities/apply/register-candidate', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 1) {
+                btnRegText.innerHTML = '<i class="fa fa-check me-2"></i> Account Registered! Loading application...';
+                btnReg.classList.remove('btn-wiz-next');
+                btnReg.classList.add('btn-success');
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 350);
+            } else {
+                btnReg.disabled = false;
+                btnRegText.textContent = originalText;
+                regError.style.display = 'block';
+                regError.innerHTML = '<i class="fa fa-exclamation-triangle me-1"></i> ' + (data.msg || 'Registration failed.');
+            }
+        })
+        .catch(err => {
+            btnReg.disabled = false;
+            btnRegText.textContent = originalText;
+            regError.style.display = 'block';
+            regError.innerHTML = '<i class="fa fa-exclamation-triangle me-1"></i> Network error registering account. Please try again.';
+        });
+    }
+
+    document.getElementById('btn_submit_registration')?.addEventListener('click', submitRegistration);
+    document.getElementById('reg_legal_name')?.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('reg_password')?.focus();
+        }
+    });
+    document.getElementById('reg_password')?.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            submitRegistration();
+        }
+    });
+
+    // Auto-sync preferred name from legal name in Stage 1
+    const fieldLegalName = document.getElementById('field_legal_name');
+    const fieldPreferredName = document.getElementById('field_preferred_name');
+    if (fieldLegalName && fieldPreferredName) {
+        fieldLegalName.addEventListener('input', function() {
+            const first = this.value.trim().split(/\s+/)[0] || '';
+            fieldPreferredName.value = first;
+        });
+    }
+
+    // Guard stepper navigation tabs if candidate has not verified email or registered
     document.querySelectorAll('.stepper-tab-btn').forEach(tabBtn => {
         tabBtn.addEventListener('click', function (e) {
-            const isEmailVerified = isLoggedIn || initialAppId > 0 || (boxNewCandidate && boxNewCandidate.style.display !== 'none');
+            const isEmailVerified = isLoggedIn || initialAppId > 0;
             if (!isEmailVerified) {
                 e.preventDefault();
                 e.stopPropagation();
                 if (emailFeedback) {
                     emailFeedback.style.display = 'block';
                     emailFeedback.className = 'small text-danger';
-                    emailFeedback.innerHTML = '<i class="fa fa-info-circle me-1"></i> Please enter and verify your email address below to begin or resume your application.';
+                    emailFeedback.innerHTML = '<i class="fa fa-info-circle me-1"></i> Please complete your email check and account registration first.';
                 }
                 if (fieldEmail) {
                     fieldEmail.focus();

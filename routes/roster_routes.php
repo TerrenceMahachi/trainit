@@ -55,6 +55,20 @@ $router->addRoute('POST', '/dashboard/apply/verify-login', function () {
     exit;
 });
 
+$router->addRoute('POST', '/opportunities/apply/register-candidate', function () {
+    $res = (new RosterApplicationController())->handleRegisterCandidate();
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+});
+
+$router->addRoute('POST', '/dashboard/apply/register-candidate', function () {
+    $res = (new RosterApplicationController())->handleRegisterCandidate();
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+});
+
 $router->addRoute('POST', '/opportunities/apply/express', function () {
     $res = (new RosterApplicationController())->handleSubmission();
     if (is_array($res)) {
